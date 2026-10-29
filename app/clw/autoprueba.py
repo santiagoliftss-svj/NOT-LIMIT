@@ -295,7 +295,7 @@ def _ventana_y_e2e(salida):
             pruebas["opcion"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, e2e_escribir)
 
-    # -------- E2E 2: escribir en un campo de texto (con acentos)
+    # -------- E2E 2: escribir en un campo de texto de Tk (con acentos)
     def e2e_escribir():
         try:
             top = tk.Toplevel(root)
@@ -307,36 +307,85 @@ def _ventana_y_e2e(salida):
             ent = tk.Entry(top, font=("Arial", 18), relief="solid", bd=1, fg="#888")
             ent.insert(0, "Escriba su respuesta")
             ent.place(x=40, y=110, width=600, height=44)
+            diag = {"teclas": [], "foco": [], "clics": []}
+            top.bind("<Key>", lambda e: diag["teclas"].append((e.keysym, e.char)) if len(diag["teclas"]) < 60 else None)
+            ent.bind("<FocusIn>", lambda e: diag["foco"].append("entry"), add="+")
+            ent.bind("<Button-1>", lambda e: diag["clics"].append((e.x, e.y)), add="+")
             top.update()
-            esperado = "Cuatro, señor ¿sí?"
 
             def elegir(t):
                 campo = _buscar(t, "", campos=True) or _buscar(t, "Escriba")
                 obj = campo if (campo or "").startswith("C") else int(campo or 0)
-                return json.dumps({"tipo": "abierta", "respuestas": [{"campo": obj, "texto": esperado}]})
+                diag["ia_campo"] = obj
+                return json.dumps({"tipo": "abierta", "respuestas": [{"campo": obj, "texto": ESPERADO}]})
             _IAFalsa.elegir = elegir
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            diag["entry_pantalla"] = (ent.winfo_rootx(), ent.winfo_rooty(), ent.winfo_width(), ent.winfo_height())
             threading.Thread(target=_ctrl_clic, args=(lx + 120, ly + 55), daemon=True).start()
             inicio = time.time()
 
             def revisar():
-                if ent.get() == esperado or time.time() - inicio > 25:
-                    pruebas["escribir"] = {"ok": ent.get() == esperado, "texto": ent.get(), "actividad": list(v.ui.actividad)}
+                if ESPERADO in ent.get() or time.time() - inicio > 25:
+                    time.sleep(0.3)
+                    pruebas["escribir_tk"] = {"ok": ESPERADO in ent.get(), "exacto": ent.get() == ESPERADO,
+                                              "texto": ent.get(), "diag": diag, "actividad": list(v.ui.actividad)[:2]}
                     try:
-                        grab_ventana("e2e_escribir", top)
+                        grab_ventana("e2e_escribir_tk", top)
                     except Exception:
                         pass
+                    top.destroy()
+                    root.after(300, e2e_nativo)
+                else:
+                    root.after(200, revisar)
+            root.after(500, revisar)
+        except Exception as e:
+            pruebas["escribir_tk"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_nativo)
+
+    # -------- E2E 3: escribir en un campo nativo de Windows (como los de los navegadores)
+    def e2e_nativo():
+        try:
+            top = tk.Toplevel(root)
+            top.title("Prueba nativo")
+            top.geometry("820x360+0+0")
+            top.configure(bg="white")
+            top.attributes("-topmost", True)
+            tk.Label(top, text="2. ¿Cómo se dice hola en inglés?", font=("Arial", 20), bg="white", fg="#222").place(x=40, y=40)
+            top.update()
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            hwnd = _edit_nativo(lx + 40, ly + 110, 600, 44, "Escriba su respuesta")
+            diag = {"hwnd": hwnd}
+
+            def elegir(t):
+                campo = _buscar(t, "", campos=True) or _buscar(t, "Escriba")
+                obj = campo if (campo or "").startswith("C") else int(campo or 0)
+                diag["ia_campo"] = obj
+                return json.dumps({"tipo": "abierta", "respuestas": [{"campo": obj, "texto": ESPERADO}]})
+            _IAFalsa.elegir = elegir
+            threading.Thread(target=_ctrl_clic, args=(lx + 120, ly + 55), daemon=True).start()
+            inicio = time.time()
+
+            def revisar():
+                texto = _texto_nativo(hwnd)
+                if ESPERADO in texto or time.time() - inicio > 25:
+                    pruebas["escribir_nativo"] = {"ok": ESPERADO in texto, "exacto": texto == ESPERADO, "texto": texto,
+                                                  "diag": diag, "actividad": list(v.ui.actividad)[:2]}
+                    try:
+                        grab_ventana("e2e_escribir_nativo", top)
+                    except Exception:
+                        pass
+                    _cerrar_nativo(hwnd)
                     top.destroy()
                     root.after(200, terminar)
                 else:
                     root.after(200, revisar)
             root.after(500, revisar)
         except Exception as e:
-            pruebas["escribir"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            pruebas["escribir_nativo"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, terminar)
 
     def terminar():
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 2,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 3,
                              "detalle": pruebas}
         try:
             for f in os.listdir(os.path.join(d, "revision")):
@@ -353,6 +402,56 @@ def _ventana_y_e2e(salida):
     root.after(900, paso_ventana)
     root.after(120000, lambda: (not estado["fin"]) and terminar())
     root.mainloop()
+
+
+ESPERADO = "Cuatro, señor ¿sí?"
+
+
+def _edit_nativo(x, y, w, h, texto):
+    """Caja de texto nativa de Windows (EDIT) en su propio hilo con su bucle de mensajes."""
+    import ctypes
+    from ctypes import wintypes
+    u32, gdi = ctypes.windll.user32, ctypes.windll.gdi32
+    u32.CreateWindowExW.restype = ctypes.c_void_p
+    u32.CreateWindowExW.argtypes = [wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
+                                    ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+                                    ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    u32.SendMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+    gdi.CreateFontW.restype = ctypes.c_void_p
+    datos = {}
+    listo = threading.Event()
+
+    def hilo():
+        h_ = u32.CreateWindowExW(0x8, "EDIT", texto, 0x80000000 | 0x10000000 | 0x00800000 | 0x80,
+                                 int(x), int(y), int(w), int(h), None, None, None, None)
+        fuente = gdi.CreateFontW(-24, 0, 0, 0, 400, 0, 0, 0, 0, 0, 0, 0, 0, "Arial")
+        u32.SendMessageW(h_, 0x0030, fuente, 1)
+        datos["hwnd"] = h_
+        listo.set()
+        msg = wintypes.MSG()
+        while u32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
+            u32.TranslateMessage(ctypes.byref(msg))
+            u32.DispatchMessageW(ctypes.byref(msg))
+
+    threading.Thread(target=hilo, daemon=True).start()
+    listo.wait(5)
+    return datos.get("hwnd")
+
+
+def _texto_nativo(hwnd):
+    import ctypes
+    u32 = ctypes.windll.user32
+    u32.GetWindowTextW.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_int]
+    buf = ctypes.create_unicode_buffer(512)
+    u32.GetWindowTextW(hwnd, buf, 512)
+    return buf.value
+
+
+def _cerrar_nativo(hwnd):
+    import ctypes
+    u32 = ctypes.windll.user32
+    u32.PostMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+    u32.PostMessageW(hwnd, 0x0010, None, None)
 
 
 def _ctrl_clic(x, y):
@@ -372,6 +471,11 @@ def _ctrl_clic(x, y):
 
 def main(salida):
     os.makedirs(salida, exist_ok=True)
+    import logging
+    h = logging.FileHandler(os.path.join(salida, "registro.txt"), encoding="utf-8")
+    h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logging.getLogger("clw").addHandler(h)
+    logging.getLogger("clw").setLevel(logging.INFO)
     srv = _servidor_ia()
     _paso("ocr", p_ocr)
     _paso("motor", p_motor)

@@ -57,12 +57,31 @@ jobs:
           Write-Host ("App: {0:N1} MB" -f $tam)
 
       - name: Autoprueba del .exe (en Windows de verdad)
+        id: autoprueba
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath "dist\CLW GANG\CLW GANG.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -Wait -PassThru
-          Write-Host "Codigo de salida: $($p.ExitCode)"
-          python build/resumen.py autoprueba/resultado.json
-          if ($LASTEXITCODE -ne 0 -or $p.ExitCode -ne 0) { exit 1 }
+          Start-Process -FilePath "dist\CLW GANG\CLW GANG.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -Wait
+          python build/resumen.py autoprueba/resultado.json *>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP\resumen.txt"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Subir autoprueba a la rama ci-autoprueba (para revisarla)
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $dst = "$env:RUNNER_TEMP\ci"
+          New-Item -ItemType Directory -Force $dst | Out-Null
+          if (Test-Path autoprueba) { Copy-Item autoprueba\* $dst -Recurse }
+          if (Test-Path "$env:RUNNER_TEMP\resumen.txt") { Copy-Item "$env:RUNNER_TEMP\resumen.txt" $dst }
+          "${{ github.sha }}" | Out-File "$dst\commit.txt"
+          Set-Location $dst
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -q -b ci-autoprueba
+          git add -A
+          git commit -q -m "autoprueba ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-autoprueba
 
       - name: Instalador (Inno Setup)
         shell: pwsh
