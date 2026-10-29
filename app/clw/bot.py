@@ -136,14 +136,22 @@ class Bot:
             self._emitir("estado", "activo" if self.activo else "apagado")
             self._ocupado.release()
 
-    def _tapar_ventana_propia(self, img, left, top):
-        """Pinta de negro la ventana de CLW GANG en la captura para que no la confunda con la pregunta."""
+    def _tapar_ventana_propia(self, img, left, top, paso=16):
+        """Pinta de negro solo la parte VISIBLE de la ventana de CLW GANG en la captura
+        (si esta detras del navegador no se tapa nada)."""
         if not self.hwnd_propio:
             return
         r = entrada.rect_ventana(self.hwnd_propio)
-        if r:
-            from PIL import ImageDraw
-            ImageDraw.Draw(img).rectangle((r[0] - left, r[1] - top, r[2] - left, r[3] - top), fill=(0, 0, 0))
+        if not r:
+            return
+        from PIL import ImageDraw
+        dib = ImageDraw.Draw(img)
+        for y in range(r[1], r[3], paso):
+            for x in range(r[0], r[2], paso):
+                cx, cy = min(x + paso // 2, r[2] - 1), min(y + paso // 2, r[3] - 1)
+                if entrada.ventana_raiz_en(cx, cy) == self.hwnd_propio:
+                    dib.rectangle((x - left, y - top, min(x + paso, r[2]) - 1 - left, min(y + paso, r[3]) - 1 - top),
+                                  fill=(0, 0, 0))
 
     def analizar(self, img, px, py, zoom=1.0):
         """Lee la captura y pregunta a la IA. Devuelve motor.Resultado (lanza ErrorIA si falla)."""
