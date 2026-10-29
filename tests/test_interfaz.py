@@ -190,3 +190,14 @@ def prueba_cambiar_modelo_activo_sin_clave_detiene():
     _clic(ui, "modelo")
     _clic(ui, "modelo:gpt-6-luna")
     assert app.log[-1] == "detener" and ui.estado == "apagado"
+
+
+def prueba_atajo_gemini():
+    ui, app, c = _nuevo(1.0)
+    _clic(ui, "inyectar")
+    assert ui.pantalla == "clave" and ui.clave["prov"] == "claude"
+    _guardar(ui, "16_clave_con_atajo")
+    _clic(ui, "usar_gemini")
+    assert c["modelo"] == "gemini-flash-latest" and ui.pantalla == "clave" and ui.clave["prov"] == "gemini"
+    assert ui.clave["iniciar"] is True
+    assert not any(z[0] == "usar_gemini" for z in ui.zonas)

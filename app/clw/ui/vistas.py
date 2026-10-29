@@ -130,6 +130,15 @@ class Interfaz:
             if texto:
                 self.clave["texto"] = "".join(texto.split())
                 self.clave["msg"], self.clave["tipo"] = "", ""
+        elif zid == "usar_gemini":
+            c["modelo"] = "gemini-flash-latest"
+            k = self.clave
+            if c.tiene_clave("gemini"):
+                self.pantalla = k["volver"]
+                if k["iniciar"]:
+                    self.app.iniciar()
+            else:
+                self.abrir_clave("gemini", volver=k["volver"], iniciar=k["iniciar"])
         elif zid == "sacar_clave":
             self.app.abrir_url(PROVEEDORES[self.clave["prov"]].url_clave)
         elif zid == "guardar_clave":
@@ -502,6 +511,15 @@ class Interfaz:
             col = ERROR if k["tipo"] == "error" else TEXTO if k["tipo"] == "ok" else SUAVE
             for j, linea in enumerate(E.partir(k["msg"], "cuerpo", self.e, 320 * self.e)[:4]):
                 l.texto(30, 276 + j * 19, linea, "cuerpo", col)
+
+        if k["prov"] != "gemini" and not self.config.tiene_clave(k["prov"]):
+            # atajo para quien no tiene saldo: Gemini Flash con clave gratis
+            hov = self.hover == "usar_gemini"
+            l.linea_h(30, 452, 320)
+            l.texto(30, 468, "¿Sin saldo?", "chico", TENUE)
+            ancho = l.texto(30, 486, "Usa Gemini Flash con una clave gratis", "chico", TEXTO if hov else SUAVE)
+            l.linea_h(30, 501, ancho, (255, 255, 255, 140 if hov else 60))
+            l.zona("usar_gemini", 26, 480, ancho + 8, 26)
 
         self._boton_fantasma(l, "cancelar_clave", 30, 516, 148, 52, "CANCELAR")
         self._boton_blanco(l, "guardar_clave", 190, 516, 160, 52, "GUARDAR",

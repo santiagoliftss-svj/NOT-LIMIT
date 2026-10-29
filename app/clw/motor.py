@@ -301,6 +301,19 @@ def _dentro(x, y, caja, margen=0):
     return caja[0] - margen <= x <= caja[2] + margen and caja[1] - margen <= y <= caja[3] + margen
 
 
+def _renglones(textos):
+    """Cuantos renglones distintos forman estas cajas de texto."""
+    if not textos:
+        return 0
+    alto = sorted(c["caja"][3] - c["caja"][1] for c in textos)[len(textos) // 2] or 1
+    ys = sorted(c["cy"] for c in textos)
+    renglones = 1
+    for a, b in zip(ys, ys[1:]):
+        if b - a > 0.8 * alto:
+            renglones += 1
+    return renglones
+
+
 def filtrar_campos(rects, cajas, px, py):
     campos = []
     for r in rects:
@@ -308,8 +321,8 @@ def filtrar_campos(rects, cajas, px, py):
         otros = [f for f in rects if f is not r and _dentro((f[0] + f[2]) / 2, (f[1] + f[3]) / 2, r)
                  and (f[2] - f[0]) * (f[3] - f[1]) < (r[2] - r[0]) * (r[3] - r[1])]
         textos = [c for c in cajas if _dentro(c["cx"], c["cy"], r)]
-        if otros or len(textos) >= 2:
-            continue
+        if otros or _renglones(textos) >= 2:
+            continue   # tiene varias lineas de texto adentro: es un cuadro con la pregunta, no un campo
         if any(c["caja"][0] - 2 <= r[0] and r[2] <= c["caja"][2] + 2 and c["caja"][1] - 2 <= r[1]
                and r[3] <= c["caja"][3] + 2 and (c["caja"][3] - c["caja"][1]) < 1.4 * (r[3] - r[1])
                and (c["caja"][2] - c["caja"][0]) > 1.8 * (r[2] - r[0]) for c in cajas):
