@@ -59,6 +59,26 @@ def formulario_claro():
     return img, [caja1, caja2], (300, 90)
 
 
+def pantalla_mixta():
+    """Pantalla con partes oscuras (consola) y una ventana blanca con un campo de texto de borde fino.
+    Devuelve (img, caja_del_campo, puntero)."""
+    img = Image.new("RGB", (1024, 768), (12, 12, 12))
+    d = ImageDraw.Draw(img)
+    for i in range(30):
+        d.text((20, 10 + i * 25), '{"level":"INFO","ts":1793315075,"msg":"job started"}' * 2, font=_f(15, 400),
+               fill=(200, 200, 200))
+    d.rectangle((0, 0, 820, 390), fill="white")
+    d.rectangle((0, 0, 820, 30), fill=(240, 240, 240))
+    d.text((12, 6), "Prueba", font=_f(14, 400), fill=(30, 30, 30))
+    d.text((48, 72), "1. ¿Cuánto es dos más dos?", font=_f(26, 400), fill=(34, 34, 34))
+    caja = (48, 141, 648, 185)
+    d.rectangle(caja, outline=(0, 0, 0), width=1)
+    d.text((52, 150), "Escriba su respuesta", font=_f(22, 400), fill=(136, 136, 136))
+    d.rounded_rectangle((330, 420, 710, 700), 12, fill=(0, 0, 0), outline=(60, 60, 60))
+    d.rounded_rectangle((402, 440, 638, 504), 32, fill=(255, 255, 255))
+    return img, caja, (160, 86)
+
+
 def cajitas_mate():
     """Tres cajitas azules chiquitas tipo plataforma de mate. Devuelve (img, cajitas, puntero)."""
     img = Image.new("RGB", (700, 520), "white")

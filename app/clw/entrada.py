@@ -85,6 +85,29 @@ def ventana_raiz_en(x, y):
         return None
 
 
+class _RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long), ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+
+def rect_ventana(hwnd):
+    """(x0, y0, x1, y1) de una ventana visible, o None si esta oculta o minimizada."""
+    try:
+        h = ctypes.c_void_p(hwnd)
+        if not U32.IsWindowVisible(h) or U32.IsIconic(h):
+            return None
+        r = _RECT()
+        try:
+            if ctypes.windll.dwmapi.DwmGetWindowAttribute(h, 9, ctypes.byref(r), ctypes.sizeof(r)) == 0:
+                return r.left, r.top, r.right, r.bottom
+        except Exception:
+            pass
+        if U32.GetWindowRect(h, ctypes.byref(r)):
+            return r.left, r.top, r.right, r.bottom
+    except Exception:
+        pass
+    return None
+
+
 def clic(x, y):
     U32.SetCursorPos(int(round(x)), int(round(y)))
     time.sleep(0.05)

@@ -4,6 +4,11 @@ import json
 import os
 import sys
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 ruta = sys.argv[1] if len(sys.argv) > 1 else "autoprueba/resultado.json"
 if not os.path.exists(ruta):
     print("::error title=autoprueba::No se genero resultado.json (la app no arranco)")

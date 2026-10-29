@@ -362,7 +362,8 @@ def _ventana_y_e2e(salida):
                 diag["ia_campo"] = obj
                 return json.dumps({"tipo": "abierta", "respuestas": [{"campo": obj, "texto": ESPERADO}]})
             _IAFalsa.elegir = elegir
-            threading.Thread(target=_ctrl_clic, args=(lx + 120, ly + 55), daemon=True).start()
+            # el Ctrl + clic va sobre la caja nativa (si se pica la ventana de Tk, esa se pone encima)
+            threading.Thread(target=_ctrl_clic, args=(lx + 500, ly + 132), daemon=True).start()
             inicio = time.time()
 
             def revisar():

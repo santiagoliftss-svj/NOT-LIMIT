@@ -3,6 +3,7 @@
 import logging
 import os
 import queue
+import re
 import threading
 import time
 import traceback
@@ -30,6 +31,7 @@ def configurar_registro():
 
 def _corto(texto, n=60):
     texto = " ".join(str(texto or "").split())
+    texto = re.sub(r"^(?:[©®°@•·*.]{1,4}\s+)+(?=\S)", "", texto)   # circulitos de opcion leidos como simbolos
     return texto if len(texto) <= n else texto[: n - 1] + "…"
 
 
@@ -111,6 +113,7 @@ class Bot:
             self._emitir("estado", "leyendo")
             self._esperar_que_suelte_ctrl()
             img, left, top = motor.capturar(x, y)
+            self._tapar_ventana_propia(img, left, top)
             res = self.analizar(img, x - left, y - top, motor.factor_zoom())
             if res is None:
                 return
@@ -132,6 +135,15 @@ class Bot:
         finally:
             self._emitir("estado", "activo" if self.activo else "apagado")
             self._ocupado.release()
+
+    def _tapar_ventana_propia(self, img, left, top):
+        """Pinta de negro la ventana de CLW GANG en la captura para que no la confunda con la pregunta."""
+        if not self.hwnd_propio:
+            return
+        r = entrada.rect_ventana(self.hwnd_propio)
+        if r:
+            from PIL import ImageDraw
+            ImageDraw.Draw(img).rectangle((r[0] - left, r[1] - top, r[2] - left, r[3] - top), fill=(0, 0, 0))
 
     def analizar(self, img, px, py, zoom=1.0):
         """Lee la captura y pregunta a la IA. Devuelve motor.Resultado (lanza ErrorIA si falla)."""
@@ -158,7 +170,8 @@ class Bot:
         if hecho == "clic":
             textos = [p["punto"][2] for p in res.pasos if p["punto"]]
             if n == 1:
-                self._emitir("actividad", f"Marcó: {_corto(textos[0] if textos else 'la opción')}", "ok")
+                nombre = res.datos.get("respuesta") if isinstance(res.datos.get("respuesta"), str) else ""
+                self._emitir("actividad", f"Marcó: {_corto(nombre or (textos[0] if textos else 'la opción'))}", "ok")
             else:
                 self._emitir("actividad", f"Marcó {n} opciones", "ok")
         elif hecho == "escrita":

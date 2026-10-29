@@ -10,7 +10,7 @@ import re
 import threading
 import time
 
-from PIL import Image, ImageDraw, ImageFont, ImageGrab, ImageOps, ImageStat
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageGrab, ImageOps, ImageStat
 
 from . import entrada
 
@@ -191,16 +191,27 @@ def detectar_cajas(img, px, py, zoom, ocr):
 
 # ================================================================ cajitas para escribir
 
+def fondo_por_zonas(gris, lado):
+    """Color de fondo de cada zona (el tono que mas se repite), del tamano de la imagen."""
+    W, H = gris.size
+    cw, ch = (W + lado - 1) // lado, (H + lado - 1) // lado
+    valores = []
+    for j in range(ch):
+        for i in range(cw):
+            h = gris.crop((i * lado, j * lado, min(W, (i + 1) * lado), min(H, (j + 1) * lado))).histogram()
+            valores.append(max(range(256), key=h.__getitem__))
+    mapa = Image.new("L", (cw, ch))
+    mapa.putdata(valores)
+    return mapa.resize((cw * lado, ch * lado), Image.NEAREST).crop((0, 0, W, H))
+
 def rectangulos(img, zoom=1.0, relajado=False):
-    """Busca rectangulos huecos (cajas de respuesta) en la imagen. Devuelve [(x0, y0, x1, y1), ...]."""
+    """Busca rectangulos huecos (cajas de respuesta) en la imagen. Devuelve [(x0, y0, x1, y1), ...].
+    Compara cada pixel con su alrededor (no con un solo fondo), asi funciona aunque en la pantalla
+    haya partes claras y oscuras al mismo tiempo."""
     gris = ImageOps.grayscale(img)
-    hist = gris.histogram()
-    fondo = max(range(256), key=lambda v: hist[v])
-    if fondo < 110:
-        gris = ImageOps.invert(gris)
-        fondo = 255 - fondo
-    umbral = max(120, min(240, fondo - (14 if relajado else 28)))
-    mascara = gris.point(lambda v: 255 if v < umbral else 0)
+    umbral = 16 if relajado else 26
+    mascara = ImageChops.difference(gris, fondo_por_zonas(gris, max(24, int(40 * zoom)))).point(
+        lambda v: 255 if v > umbral else 0)
     W, H = mascara.size
     filas = mascara.tobytes()
     columnas = mascara.transpose(Image.Transpose.TRANSPOSE).tobytes()
@@ -257,8 +268,10 @@ def rectangulos(img, zoom=1.0, relajado=False):
                 if ancho < min_w or ancho_banda < 0.6 * ancho:
                     continue
                 radio = max(x0 - izq, der - x1, 0)
-                if (b0 - t1 - 2 * radio) < 0.4 * (b0 - t1) or tinta_col(izq, t1 + 1 + radio, b0 - radio) < 0.9:
-                    continue
+                if (b0 - t1 - 2 * radio) < 0.55 * (b0 - t1) or tinta_col(izq, t1 + 1 + radio, b0 - radio) < 0.9:
+                    continue   # lados curvos: es una letra (o, 0, D), no una caja
+                if ancho < 28 * zoom and (h < 1.5 * ancho or h < 24 * zoom):
+                    continue   # cuadrito chico: casilla o letra, no un campo para escribir
                 tinta = total = 0
                 for y in range(t1 + 2, b0 - 1):
                     seg = filas[y * W + izq + 3: y * W + der - 2]
@@ -297,6 +310,10 @@ def filtrar_campos(rects, cajas, px, py):
         textos = [c for c in cajas if _dentro(c["cx"], c["cy"], r)]
         if otros or len(textos) >= 2:
             continue
+        if any(c["caja"][0] - 2 <= r[0] and r[2] <= c["caja"][2] + 2 and c["caja"][1] - 2 <= r[1]
+               and r[3] <= c["caja"][3] + 2 and (c["caja"][3] - c["caja"][1]) < 1.4 * (r[3] - r[1])
+               and (c["caja"][2] - c["caja"][0]) > 1.8 * (r[2] - r[0]) for c in cajas):
+            continue   # es una letra dentro de un renglon de texto
         campos.append({"caja": r, "cx": cx, "cy": cy})
     if len(campos) > MAX_CAMPOS:
         campos.sort(key=lambda c: (c["cx"] - px) ** 2 + (c["cy"] - py) ** 2)
