@@ -151,8 +151,12 @@ def detectar_cajas(img, px, py, zoom, ocr):
     """Lee el texto y lo junta en cajas (una por opcion, aunque esten en columnas).
     Dos lecturas en paralelo con modos distintos para que no se escape nada."""
     gris = ImageOps.grayscale(img)
-    if ImageStat.Stat(gris).mean[0] < 110:
-        gris = ImageOps.invert(gris)  # pantalla oscura: el OCR lee mejor negro sobre blanco
+    # zonas oscuras se invierten (el OCR lee mejor negro sobre blanco), zona por zona:
+    # asi sirve aunque la pantalla tenga partes claras y oscuras al mismo tiempo
+    fondo = fondo_por_zonas(gris, max(24, int(40 * zoom)), suavizar=True)
+    oscuras = fondo.point(lambda v: 255 if v < 110 else 0)
+    if oscuras.getbbox():
+        gris = Image.composite(ImageOps.invert(gris), gris, oscuras.filter(ImageFilter.MaxFilter(3)))
     gris = ImageOps.autocontrast(gris, cutoff=1)
     escala = 2 if zoom < 1.5 else 1
     if escala != 1:
@@ -191,8 +195,9 @@ def detectar_cajas(img, px, py, zoom, ocr):
 
 # ================================================================ cajitas para escribir
 
-def fondo_por_zonas(gris, lado):
-    """Color de fondo de cada zona (el tono que mas se repite), del tamano de la imagen."""
+def fondo_por_zonas(gris, lado, suavizar=False):
+    """Color de fondo de cada zona (el tono que mas se repite), del tamano de la imagen.
+    suavizar: cada zona toma el valor mediano de sus vecinas (para que letras grandes no cambien el fondo)."""
     W, H = gris.size
     cw, ch = (W + lado - 1) // lado, (H + lado - 1) // lado
     valores = []
@@ -202,6 +207,8 @@ def fondo_por_zonas(gris, lado):
             valores.append(max(range(256), key=h.__getitem__))
     mapa = Image.new("L", (cw, ch))
     mapa.putdata(valores)
+    if suavizar and cw >= 3 and ch >= 3:
+        mapa = mapa.filter(ImageFilter.MedianFilter(3))
     return mapa.resize((cw * lado, ch * lado), Image.NEAREST).crop((0, 0, W, H))
 
 def rectangulos(img, zoom=1.0, relajado=False):
@@ -302,7 +309,8 @@ def _dentro(x, y, caja, margen=0):
 
 
 def _renglones(textos):
-    """Cuantos renglones distintos forman estas cajas de texto."""
+    """Cuantos renglones distintos forman estas cajas de texto (ignora basura muy chaparra del OCR)."""
+    textos = [c for c in textos if c["caja"][3] - c["caja"][1] >= 6]
     if not textos:
         return 0
     alto = sorted(c["caja"][3] - c["caja"][1] for c in textos)[len(textos) // 2] or 1
