@@ -229,6 +229,13 @@ def _ventana_y_e2e(salida):
     estado = {"fase": "ventana", "fin": False}
     pruebas = {}
 
+    def copiar_revision(nombre):
+        import shutil
+        for f in ("ultima_captura.png", "ultima_revision.png"):
+            origen = os.path.join(d, "revision", f)
+            if os.path.exists(origen):
+                shutil.copy(origen, os.path.join(salida, f"{nombre}_{f}"))
+
     def grab_ventana(nombre, w=None):
         w = w or root
         w.update()
@@ -282,6 +289,7 @@ def _ventana_y_e2e(salida):
                 if buenos or time.time() - inicio > 25:
                     pruebas["opcion"] = {"ok": bool(buenos), "clics": clics, "esperado": c,
                                          "actividad": list(v.ui.actividad)}
+                    copiar_revision("opcion")
                     try:
                         grab_ventana("e2e_opcion", top)
                     except Exception:
@@ -329,6 +337,7 @@ def _ventana_y_e2e(salida):
                     time.sleep(0.3)
                     pruebas["escribir_tk"] = {"ok": ESPERADO in ent.get(), "exacto": ent.get() == ESPERADO,
                                               "texto": ent.get(), "diag": diag, "actividad": list(v.ui.actividad)[:2]}
+                    copiar_revision("escribir_tk")
                     try:
                         grab_ventana("e2e_escribir_tk", top)
                     except Exception:
@@ -371,6 +380,7 @@ def _ventana_y_e2e(salida):
                 if ESPERADO in texto or time.time() - inicio > 25:
                     pruebas["escribir_nativo"] = {"ok": ESPERADO in texto, "exacto": texto == ESPERADO, "texto": texto,
                                                   "diag": diag, "actividad": list(v.ui.actividad)[:2]}
+                    copiar_revision("escribir_nativo")
                     try:
                         grab_ventana("e2e_escribir_nativo", top)
                     except Exception:

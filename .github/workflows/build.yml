@@ -64,25 +64,6 @@ jobs:
           python build/resumen.py autoprueba/resultado.json *>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP\resumen.txt"
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
-      - name: Subir autoprueba a la rama ci-autoprueba (para revisarla)
-        if: always()
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $dst = "$env:RUNNER_TEMP\ci"
-          New-Item -ItemType Directory -Force $dst | Out-Null
-          if (Test-Path autoprueba) { Copy-Item autoprueba\* $dst -Recurse }
-          if (Test-Path "$env:RUNNER_TEMP\resumen.txt") { Copy-Item "$env:RUNNER_TEMP\resumen.txt" $dst }
-          "${{ github.sha }}" | Out-File "$dst\commit.txt"
-          Set-Location $dst
-          git init -q
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git checkout -q -b ci-autoprueba
-          git add -A
-          git commit -q -m "autoprueba ${{ github.sha }}"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-autoprueba
-
       - name: Instalador (Inno Setup)
         shell: pwsh
         run: |
@@ -102,6 +83,58 @@ jobs:
             if (-not (Test-Path "$dir\$f")) { Write-Host "::error::Falta $f en la instalacion"; exit 1 }
           }
           Write-Host "Instalacion OK"
+
+      - name: Capturas del instalador
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          if (-not (Test-Path salida\CLW-GANG-Setup.exe)) { exit 0 }
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          New-Item -ItemType Directory -Force autoprueba | Out-Null
+          function Captura($nombre) {
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            $bmp.Save("$PWD\autoprueba\$nombre.png")
+            $g.Dispose(); $bmp.Dispose()
+          }
+          $p = Start-Process salida\CLW-GANG-Setup.exe -ArgumentList "/DIR=`"$env:RUNNER_TEMP\clw_captura`"" -PassThru
+          $ws = New-Object -ComObject WScript.Shell
+          Start-Sleep 5
+          Captura "instalador_1"
+          for ($i = 2; $i -le 6; $i++) {
+            $ws.AppActivate($p.Id) | Out-Null
+            Start-Sleep -Milliseconds 600
+            $ws.SendKeys("{ENTER}")
+            Start-Sleep 4
+            Captura "instalador_$i"
+            if ($p.HasExited) { break }
+          }
+          Start-Sleep 3
+          Captura "despues_de_instalar"
+          Get-Process "CLW GANG" -ErrorAction SilentlyContinue | Stop-Process -Force
+          if (-not $p.HasExited) { Stop-Process $p -Force }
+
+      - name: Subir autoprueba a la rama ci-autoprueba (para revisarla)
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $dst = "$env:RUNNER_TEMP\ci"
+          New-Item -ItemType Directory -Force $dst | Out-Null
+          if (Test-Path autoprueba) { Copy-Item autoprueba\* $dst -Recurse }
+          if (Test-Path "$env:RUNNER_TEMP\resumen.txt") { Copy-Item "$env:RUNNER_TEMP\resumen.txt" $dst }
+          "${{ github.sha }}" | Out-File "$dst\commit.txt"
+          Set-Location $dst
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -q -b ci-autoprueba
+          git add -A
+          git commit -q -m "autoprueba ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-autoprueba
 
       - name: Guardar resultados
         if: always()
