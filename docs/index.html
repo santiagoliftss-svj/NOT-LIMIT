@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLW GANG</title>
+<meta name="description" content="Contesta preguntas de la pantalla con un Ctrl + clic. Descarga para Windows.">
+<meta property="og:title" content="CLW GANG">
+<meta property="og:description" content="Contesta preguntas de la pantalla con un Ctrl + clic.">
+<meta property="og:image" content="https://santiagoliftss-svj.github.io/clw-gang/assets/compartir.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/icono-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --negro: #000;
+    --blanco: #fff;
+    --texto: #f4f4f4;
+    --suave: #969696;
+    --tenue: #606060;
+    --linea: rgba(255, 255, 255, .15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--negro); }
+  body {
+    min-height: 100vh;
+    background: var(--negro);
+    color: var(--texto);
+    font-family: "Archivo", system-ui, sans-serif;
+    font-variation-settings: "wdth" 100;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  #cielo { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .brillo {
+    position: fixed; left: 50%; top: -18vh; width: 120vw; height: 70vh; transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(255,255,255,.10), rgba(255,255,255,0));
+    z-index: 0; pointer-events: none;
+  }
+  main {
+    position: relative; z-index: 1;
+    max-width: 640px; margin: 0 auto; padding: 72px 16px 56px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  h1 { width: min(560px, 100%); }
+  h1 img { display: block; width: 100%; height: auto; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .lema {
+    margin-top: 10px; color: var(--suave); font-size: 17px; line-height: 1.5; max-width: 40ch;
+  }
+  .lema, .meta, .pasos, footer { text-shadow: 0 0 2px #000, 0 0 6px #000, 0 0 10px #000; }
+  .descargar {
+    margin-top: 36px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    min-width: 280px; height: 66px; padding: 0 36px; border-radius: 999px;
+    background: var(--blanco); color: #000; text-decoration: none;
+    font-weight: 800; font-size: 17px; letter-spacing: .16em;
+    font-variation-settings: "wdth" 125;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .descargar:hover { background: #e6e6e6; }
+  .descargar:active { transform: scale(.98); }
+  .descargar:focus-visible { outline: 2px solid var(--blanco); outline-offset: 4px; }
+  .descargar svg { width: 18px; height: 18px; }
+  .meta { margin-top: 14px; color: var(--tenue); font-size: 13px; }
+  .pasos {
+    margin-top: 64px; width: 100%; list-style: none; text-align: left;
+    border-top: 1px solid var(--linea);
+  }
+  .pasos li {
+    display: grid; grid-template-columns: 44px 1fr; gap: 4px 12px;
+    padding: 22px 4px; border-bottom: 1px solid var(--linea);
+  }
+  .pasos .n {
+    grid-row: span 2; font-weight: 800; font-size: 15px; color: var(--tenue);
+    font-variation-settings: "wdth" 125; padding-top: 2px;
+  }
+  .pasos h2 { font-size: 17px; font-weight: 650; color: var(--texto); }
+  .pasos p { color: var(--suave); font-size: 15px; line-height: 1.55; max-width: 60ch; }
+  .pasos a { color: var(--texto); text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
+  .pasos a:hover { text-decoration-color: var(--blanco); }
+  kbd {
+    display: inline-block; padding: 1px 7px; border: 1px solid rgba(255,255,255,.3); border-radius: 6px;
+    font: inherit; font-size: 13px; color: var(--texto); background: rgba(255,255,255,.04);
+  }
+  footer {
+    position: relative; z-index: 1; text-align: center; color: var(--tenue); font-size: 13px;
+    padding: 8px 16px 40px;
+  }
+  footer a { color: var(--suave); text-underline-offset: 3px; }
+  @media (max-width: 480px) {
+    main { padding-top: 48px; }
+    .descargar { min-width: 0; width: 100%; }
+    .lema { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="cielo" aria-hidden="true"></canvas>
+<div class="brillo" aria-hidden="true"></div>
+
+<main>
+  <h1><img src="assets/wordmark.png" alt="" width="1400" height="402"><span class="sr">CLW GANG</span></h1>
+  <p class="lema">Contesta preguntas de la pantalla con un Ctrl&nbsp;+&nbsp;clic.</p>
+
+  <a class="descargar" id="descargar" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/CLW-GANG-Setup.exe">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+    DESCARGAR
+  </a>
+  <p class="meta" id="meta">Para Windows 10 y 11</p>
+
+  <ol class="pasos">
+    <li>
+      <span class="n">1</span>
+      <h2>Instálala</h2>
+      <p>Abre el archivo que bajaste. Si Windows dice <em>“Windows protegió tu PC”</em>, toca <strong>Más información</strong> y luego <strong>Ejecutar de todas formas</strong>. Sigue el instalador y listo.</p>
+    </li>
+    <li>
+      <span class="n">2</span>
+      <h2>Pega tu API key</h2>
+      <p>Elige el modelo y pega tu clave. La de Gemini es gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Las de <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude</a> y <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">ChatGPT</a> necesitan saldo.</p>
+    </li>
+    <li>
+      <span class="n">3</span>
+      <h2>Toca INYECTAR</h2>
+      <p>Pon el puntero sobre la pregunta y haz <kbd>Ctrl</kbd> + <kbd>clic</kbd>. En opción múltiple marca la respuesta. En preguntas abiertas la escribe sola.</p>
+    </li>
+  </ol>
+</main>
+
+<footer>
+  <a href="https://github.com/santiagoliftss-svj/clw-gang">Código en GitHub</a>
+</footer>
+
+<script>
+  // cielo de estrellas (fijo, sin animacion)
+  (function () {
+    var c = document.getElementById("cielo");
+    var ctx = c.getContext("2d");
+    function dibujar() {
+      var r = window.devicePixelRatio || 1;
+      var w = window.innerWidth, h = window.innerHeight;
+      c.width = w * r; c.height = h * r;
+      ctx.setTransform(r, 0, 0, r, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      var semilla = 7;
+      function azar() { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; }
+      var n = Math.round(w * h / 2600);
+      for (var i = 0; i < n; i++) {
+        var x = azar() * w, y = azar() * h;
+        if (azar() < (y / h) * 0.6) continue;
+        var rad = [0.5, 0.6, 0.7, 0.9, 1.1][Math.floor(azar() * 5)];
+        ctx.fillStyle = "rgba(255,255,255," + (0.18 + azar() * 0.62) * (1 - y / h * 0.45) + ")";
+        ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    dibujar();
+    var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(dibujar, 150); });
+  })();
+
+  // version y tamano reales del ultimo instalador
+  fetch("https://api.github.com/repos/santiagoliftss-svj/clw-gang/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      var a = (d.assets || []).filter(function (x) { return /Setup\.exe$/i.test(x.name); })[0];
+      var mb = a ? " (" + Math.round(a.size / 1048576) + " MB)" : "";
+      document.getElementById("meta").textContent = "Versión " + String(d.tag_name || "").replace(/^v/i, "") + mb + " para Windows 10 y 11";
+    })
+    .catch(function () {});
+</script>
+</body>
+</html>

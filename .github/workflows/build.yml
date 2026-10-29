@@ -1,0 +1,110 @@
+name: Armar CLW GANG
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "README.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: armar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt "pyinstaller>=6.10,<7"
+
+      - name: Version
+        id: ver
+        run: python build/preparar.py
+
+      - name: Tesseract (OCR)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./build/tesseract.ps1
+
+      - name: Pruebas
+        env:
+          CLW_TESSERACT: ${{ github.workspace }}\build\tesseract\tesseract.exe
+        run: python tests/correr.py
+
+      - name: Armar el .exe
+        run: pyinstaller build/clw_gang.spec --noconfirm --distpath dist --workpath build/temp
+
+      - name: Meter Tesseract en la app
+        shell: pwsh
+        run: |
+          Copy-Item build\tesseract "dist\CLW GANG\tesseract" -Recurse
+          Copy-Item app\assets\fuentes\OFL-Archivo.txt "dist\CLW GANG\"
+          Copy-Item LICENCIAS.txt "dist\CLW GANG\"
+          $tam = (Get-ChildItem "dist\CLW GANG" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host ("App: {0:N1} MB" -f $tam)
+
+      - name: Autoprueba del .exe (en Windows de verdad)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "dist\CLW GANG\CLW GANG.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -Wait -PassThru
+          Write-Host "Codigo de salida: $($p.ExitCode)"
+          python build/resumen.py autoprueba/resultado.json
+          if ($LASTEXITCODE -ne 0 -or $p.ExitCode -ne 0) { exit 1 }
+
+      - name: Instalador (Inno Setup)
+        shell: pwsh
+        run: |
+          choco upgrade innosetup -y --no-progress | Out-Host
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = (Get-Command iscc).Source }
+          & $iscc "/DAppVersion=${{ steps.ver.outputs.version }}" installer\clw_gang.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Get-Item salida\CLW-GANG-Setup.exe | Format-List Name, Length
+
+      - name: Probar el instalador
+        shell: pwsh
+        run: |
+          $dir = "$env:RUNNER_TEMP\clw_instalado"
+          Start-Process salida\CLW-GANG-Setup.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$dir`"" -Wait
+          foreach ($f in @("CLW GANG.exe", "tesseract\tesseract.exe", "tesseract\tessdata\spa.traineddata")) {
+            if (-not (Test-Path "$dir\$f")) { Write-Host "::error::Falta $f en la instalacion"; exit 1 }
+          }
+          Write-Host "Instalacion OK"
+
+      - name: Guardar resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clw-gang-${{ steps.ver.outputs.version }}
+          path: |
+            autoprueba
+            salida/CLW-GANG-Setup.exe
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Publicar version
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v${{ steps.ver.outputs.version }}"
+          gh release view $tag 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "La version $tag ya existe: no se publica de nuevo."
+            exit 0
+          }
+          gh release create $tag salida\CLW-GANG-Setup.exe --title "CLW GANG ${{ steps.ver.outputs.version }}" --notes-file NOTAS.md --latest

@@ -1,0 +1,9 @@
+CLW GANG usa estas piezas de terceros:
+
+- Tesseract OCR (Apache License 2.0) - https://github.com/tesseract-ocr/tesseract
+  Datos de idioma tessdata (Apache License 2.0) - https://github.com/tesseract-ocr/tessdata
+- Python (PSF License) - https://www.python.org
+- Pillow (HPND / MIT-CMU License) - https://python-pillow.org
+- Tcl/Tk (licencia BSD) - https://www.tcl.tk
+- Fuente Archivo (SIL Open Font License 1.1) - https://github.com/Omnibus-Type/Archivo
+- Fuente New Rocker para el logo (SIL Open Font License 1.1)
