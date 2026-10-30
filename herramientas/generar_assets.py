@@ -94,6 +94,7 @@ def main():
     mk = mk.resize((1400, int(mk.height * k)), Image.LANCZOS)
     mk.save(os.path.join(ASSETS, "marca.png"), optimize=True)
     mk.save(os.path.join(WEB, "marca.png"), optimize=True)
+    mk.save(os.path.join(WEB, "marca.webp"), "WEBP", quality=90, method=6)
 
     grande = icono(1024)
     grande.resize((256, 256), Image.LANCZOS).save(os.path.join(ASSETS, "icono.png"))
@@ -106,6 +107,8 @@ def main():
     for nombre, apagado in (("bandeja", False), ("bandeja_apagado", True)):
         ims = {t: icono(t, apagado) for t in (64, 48, 40, 32, 24, 20, 16)}
         ims[64].save(os.path.join(ASSETS, nombre + ".png"))
+        if not apagado:
+            ims[64].save(os.path.join(WEB, "bandeja.png"), optimize=True)
         _ico(os.path.join(ASSETS, nombre + ".ico"), ims)
 
     for pct, (w, h), (cw, ch) in [(100, (164, 314), (58, 58)), (125, (205, 393), (73, 73)),

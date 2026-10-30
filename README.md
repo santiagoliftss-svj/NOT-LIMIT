@@ -32,4 +32,4 @@ Para sacar una versión nueva: cambia `VERSION` en `app/clw/version.py` y sube e
 - `build/` PyInstaller y Tesseract.
 - `installer/` instalador (Inno Setup).
 - `docs/` página de descarga (GitHub Pages).
-- `herramientas/` genera el logo, los iconos, las imágenes del instalador y la vista de la app para la página.
+- `herramientas/` genera el logo, los iconos y las imágenes del instalador y de la página.

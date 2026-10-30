@@ -2,285 +2,1667 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NO LIMIT</title>
-<meta name="description" content="Contesta preguntas de la pantalla con un Ctrl + clic. Descarga para Windows.">
+<meta name="description" content="La pregunta se contesta sola. Pon el puntero sobre la pregunta y haz Ctrl + clic. Gratis para Windows.">
 <meta property="og:title" content="NO LIMIT">
-<meta property="og:description" content="Contesta preguntas de la pantalla con un Ctrl + clic.">
+<meta property="og:description" content="La pregunta se contesta sola. Ctrl + clic y listo. Gratis para Windows.">
 <meta property="og:image" content="https://santiagoliftss-svj.github.io/clw-gang/assets/compartir.png">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/icono-180.png">
+<link rel="preload" as="image" href="assets/marca.webp" type="image/webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
 <style>
   :root {
     --negro: #000;
-    --blanco: #fff;
-    --texto: #fff;
-    --suave: #c4c4c4;
-    --tenue: #808080;
-    --linea: rgba(255, 255, 255, .14);
+    --tinta: #f5f5f7;
+    --gris: #a1a1a6;
+    --tenue: #6e6e73;
+    --linea: rgba(255, 255, 255, .1);
     --vidrio: rgba(255, 255, 255, .045);
-    --curva: cubic-bezier(.2, .8, .2, 1);
+    --borde: rgba(255, 255, 255, .12);
+    --curva: cubic-bezier(.22, 1, .36, 1);
+    --resorte: cubic-bezier(.22, 1, .36, 1);
+    --rebote: cubic-bezier(.34, 1.4, .64, 1);
+    --resorte: linear(0, 0.0616, 0.1968, 0.3545, 0.5062, 0.6381, 0.7453, 0.828, 0.8892, 0.9326, 0.9621, 0.9813, 0.9932, 1, 1.0034, 1.0048, 1.005, 1.0045, 1.0038, 1.003, 1.0023, 1.0016, 1.0011, 1.0008, 1.0005, 1.0003, 1.0002, 1.0001, 1, 1, 1, 1, 1);
+    --rebote: linear(0, 0.0869, 0.2738, 0.4826, 0.6699, 0.817, 0.9206, 0.9859, 1.0214, 1.0361, 1.038, 1.033, 1.0253, 1.0175, 1.0107, 1.0056, 1.0021, 1, 0.9989, 0.9985, 0.9986, 0.9988, 0.9991, 0.9994, 0.9997, 0.9998, 0.9999, 1, 1, 1.0001, 1.0001, 1, 1);
+    --plata: linear-gradient(180deg, #ffffff 15%, #d9d9de 55%, #8f8f96 100%);
   }
-  @property --giro { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { background: var(--negro); }
+  html { background: var(--negro); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
   body {
     min-height: 100vh;
     background: var(--negro);
-    color: var(--texto);
-    font-family: "Archivo", system-ui, sans-serif;
+    color: var(--tinta);
+    font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
     font-variation-settings: "wdth" 100;
+    font-size: 17px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
-  .ancho { font-variation-settings: "wdth" 125; }
-  .luz {
-    position: absolute; left: 0; right: 0; top: 0; height: 90vh;
-    background: radial-gradient(60% 55% at 50% 0%, rgba(255,255,255,.055), rgba(255,255,255,0) 72%);
-    pointer-events: none;
-  }
-  .atajo { white-space: nowrap; }
-  main { position: relative; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-
-  /* ---------------- portada */
-  .portada {
-    min-height: min(92vh, 860px);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    padding: 72px 0 56px;
-  }
-  .marca { position: relative; width: min(600px, 100%); }
-  .marca img { display: block; width: 100%; height: auto; }
-  .reflejo {
-    position: absolute; inset: 0; pointer-events: none;
-    -webkit-mask: url(assets/marca.png) center / 100% 100% no-repeat;
-    mask: url(assets/marca.png) center / 100% 100% no-repeat;
-    background: linear-gradient(105deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.75) 50%, rgba(255,255,255,0) 60%)
-                -150% 0 / 250% 100% no-repeat;
-    animation: reflejo 4.5s cubic-bezier(.2,.8,.2,1) infinite;
-  }
-  @keyframes reflejo { 0% { background-position: 150% 0; } 32%, 100% { background-position: -150% 0; } }
+  img { display: block; max-width: 100%; height: auto; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 10px; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .lema { margin-top: 22px; color: var(--suave); font-size: 18px; line-height: 1.5; }
-  .lema kbd { font-size: 15px; }
+  .envoltura { width: min(1180px, 100%); margin: 0 auto; padding: 0 22px; }
+  section[id] { scroll-margin-top: 84px; }
 
-  .descargar {
-    position: relative; isolation: isolate; margin-top: 44px;
-    display: inline-flex; align-items: center; justify-content: center; gap: 14px;
-    min-width: 300px; height: 64px; padding: 0 40px; border-radius: 999px;
-    color: var(--blanco); text-decoration: none;
-    font-weight: 780; font-size: 15px; letter-spacing: .26em;
-    font-variation-settings: "wdth" 125;
-    background: linear-gradient(90deg, #fff 50%, rgba(255,255,255,.05) 50%) 100% 0 / 200% 100% no-repeat;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.28);
-    transition: background-position .55s var(--curva), color .3s ease .1s, box-shadow .3s ease, transform .15s ease;
+  /* ------------------------------------------------ texto */
+  .ojo {
+    display: inline-block; font-size: 12.5px; font-weight: 650; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--gris); font-variation-settings: "wdth" 112;
   }
-  .descargar::before {
-    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; z-index: -1;
-    background: conic-gradient(from var(--giro), rgba(255,255,255,0) 0deg, rgba(255,255,255,.95) 50deg, rgba(255,255,255,0) 100deg);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude;
-    animation: girar 3.4s linear infinite;
-  }
-  .descargar:hover, .descargar:focus-visible {
-    background-position: 0 0; color: #000;
-    box-shadow: inset 0 0 0 1px #fff, 0 0 42px rgba(255,255,255,.22);
-  }
-  .descargar:active { transform: scale(.98); }
-  .descargar:focus-visible { outline: none; }
-  .descargar svg { width: 17px; height: 17px; }
-  @keyframes girar { to { --giro: 360deg; } }
-  .meta { margin-top: 16px; color: var(--tenue); font-size: 13px; letter-spacing: .02em; }
-
-  /* ---------------- la app y los pasos */
-  .como {
-    display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 64px; align-items: center;
-    padding: 40px 0 96px;
-  }
-  .vista { margin: 0 auto; width: min(380px, 100%); }
-  .ventana {
-    border-radius: 14px; overflow: hidden; background: #000;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 30px 90px rgba(255,255,255,.07);
-  }
-  .barra {
-    height: 34px; display: flex; align-items: center; justify-content: space-between;
-    padding-left: 14px; font: 12px "Segoe UI", system-ui, sans-serif; color: #e8e8e8;
-    border-bottom: 1px solid rgba(255,255,255,.06);
-  }
-  .barra .botones { display: flex; height: 100%; }
-  .barra .botones span { width: 44px; display: grid; place-items: center; color: #bdbdbd; }
-  .barra .botones span.apagado { color: #555; }
-  .barra .botones svg { width: 10px; height: 10px; }
-  .ventana img { display: block; width: 100%; height: auto; }
-  .vista figcaption { margin-top: 14px; text-align: center; color: var(--tenue); font-size: 13px; }
-
   .titulo {
-    font-weight: 860; font-size: clamp(26px, 4vw, 34px); letter-spacing: .02em; line-height: 1.05;
-    font-variation-settings: "wdth" 125;
+    font-weight: 820; font-variation-settings: "wdth" 104; letter-spacing: -0.042em; line-height: .98;
+    font-size: clamp(42px, 6.4vw, 88px);
   }
-  .pasos { list-style: none; margin-top: 28px; display: grid; gap: 12px; }
-  .pasos li {
-    display: grid; grid-template-columns: 52px 1fr; gap: 6px 14px;
-    padding: 20px 22px; border-radius: 20px;
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
-    box-shadow: inset 0 0 0 1px var(--linea);
+  .plata {
+    background: var(--plata); -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .pasos .n {
-    grid-row: span 2; font-weight: 860; font-size: 15px; letter-spacing: .08em; color: var(--tenue);
-    font-variation-settings: "wdth" 125; padding-top: 3px;
+  .destello {
+    background: linear-gradient(100deg, #8f8f96 0%, #d9d9de 30%, #ffffff 42%, #d9d9de 54%, #8f8f96 75%, #d9d9de 100%);
+    background-size: 260% 100%; background-position: 100% 0;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: destello 7s var(--curva) infinite;
   }
-  .pasos h3 { font-weight: 800; font-size: 15px; letter-spacing: .14em; font-variation-settings: "wdth" 125; }
-  .pasos p { color: var(--suave); font-size: 15px; line-height: 1.55; }
-  .pasos a { color: var(--texto); text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.4); }
-  .pasos a:hover { text-decoration-color: var(--blanco); }
+  @keyframes destello { 0% { background-position: 100% 0; } 38%, 100% { background-position: 0% 0; } }
+  .sub { margin-top: 22px; color: var(--gris); font-size: clamp(17px, 1.55vw, 21px); line-height: 1.5; max-width: 38ch; }
+  .sub b, .sub strong { color: var(--tinta); font-weight: 600; }
+  .cabeza { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .cabeza .titulo { margin-top: 14px; }
   kbd {
-    display: inline-block; padding: 1px 8px; border-radius: 7px;
-    font: inherit; font-size: 13px; font-weight: 600; color: var(--texto);
-    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
+    display: inline-block; min-width: 1.9em; padding: .05em .5em; border-radius: .45em; text-align: center;
+    font: inherit; font-size: .82em; font-weight: 650; line-height: 1.45; color: var(--tinta);
+    background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), inset 0 -2px 0 rgba(255,255,255,.08);
+    vertical-align: .06em;
   }
 
-  /* ---------------- no estorba */
-  .calma { padding: 8px 0 96px; text-align: center; }
-  .calma .titulo { margin-bottom: 28px; }
-  .tarjetas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; }
-  .tarjetas div {
-    padding: 22px; border-radius: 20px;
-    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
-    box-shadow: inset 0 0 0 1px var(--linea);
+  /* aparecer al hacer scroll: el material se "materializa" (blur + escala), no solo un fade */
+  [data-revela] {
+    opacity: 0; transform: translateY(26px) scale(.985); filter: blur(10px);
+    transition: opacity 1s var(--curva), transform 1.1s var(--curva), filter 1s var(--curva);
+    transition-delay: var(--retraso, 0s);
   }
-  .tarjetas h3 { font-size: 16px; font-weight: 700; }
-  .tarjetas p { margin-top: 8px; color: var(--suave); font-size: 14.5px; line-height: 1.55; }
+  [data-revela].visto { opacity: 1; transform: none; filter: none; }
 
-  footer {
-    border-top: 1px solid var(--linea);
-    max-width: 1080px; margin: 0 auto; padding: 28px 16px 44px;
-    display: flex; justify-content: space-between; align-items: center; gap: 16px;
-    color: var(--tenue); font-size: 13px;
+  /* ------------------------------------------------ barra de arriba */
+  .barra {
+    position: fixed; top: 14px; left: 50%; z-index: 50; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 16px;
+    width: min(860px, calc(100% - 24px)); height: 56px; border-radius: 999px;
+    background: rgba(18, 18, 20, .55);
+    -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.09), inset 0 1px 0 rgba(255,255,255,.08), 0 20px 50px rgba(0,0,0,.5);
+    transition: height .5s var(--resorte), top .5s var(--resorte), width .5s var(--resorte), background .4s ease;
   }
-  footer b { color: var(--suave); font-weight: 800; letter-spacing: .14em; font-variation-settings: "wdth" 125; }
-  footer a { color: var(--suave); text-underline-offset: 3px; }
-  footer a:hover { color: var(--blanco); }
+  .barra.compacta { top: 10px; height: 50px; width: min(800px, calc(100% - 24px)); background: rgba(14, 14, 16, .72); }
+  .barra-marca { display: flex; align-items: center; height: 100%; padding-right: 10px; }
+  .barra-marca img { height: 30px; width: auto; }
+  .barra-links { position: relative; display: flex; align-items: center; gap: 2px; margin: 0 auto; }
+  .barra-links a {
+    position: relative; z-index: 1; padding: 8px 14px; border-radius: 999px; text-decoration: none;
+    font-size: 14px; font-weight: 520; color: var(--gris); transition: color .25s ease; white-space: nowrap;
+  }
+  .barra-links a:hover, .barra-links a.activo { color: var(--tinta); }
+  .indicador {
+    position: absolute; top: 0; left: 0; height: 100%; border-radius: 999px; z-index: 0; opacity: 0;
+    background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    transition: transform .55s var(--rebote), width .55s var(--rebote), opacity .3s ease;
+  }
+  .barra-descargar {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px;
+    background: #fff; color: #000; text-decoration: none; font-weight: 650; font-size: 14px;
+    transition: transform .2s var(--curva), background .2s ease; white-space: nowrap;
+  }
+  .barra.compacta .barra-descargar { height: 38px; }
+  .barra-descargar:hover { background: #e8e8ed; }
+  .barra-descargar:active { transform: scale(.96); }
+  .barra-descargar svg { width: 15px; height: 15px; }
 
-  @media (max-width: 860px) {
-    .como { grid-template-columns: 1fr; gap: 48px; padding-top: 8px; }
-    .como .texto { order: -1; }
-    .tarjetas { grid-template-columns: 1fr; }
+  /* ------------------------------------------------ portada */
+  .portada {
+    position: relative; min-height: 100svh; padding: 112px 22px 72px; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
   }
-  @media (max-width: 480px) {
-    .portada { padding-top: 56px; min-height: 0; }
-    .lema { font-size: 16px; }
-    .descargar { min-width: 0; width: 100%; }
-    .pasos li { grid-template-columns: 40px 1fr; padding: 18px; }
-    footer { flex-direction: column; align-items: flex-start; }
+  .foco {
+    position: absolute; inset: -10% 0 auto; height: 90%; pointer-events: none;
+    background:
+      radial-gradient(38% 52% at 50% 0%, rgba(255,255,255,.13), rgba(255,255,255,0) 72%),
+      radial-gradient(70% 40% at 50% 0%, rgba(255,255,255,.05), rgba(255,255,255,0) 70%);
   }
+  .luz-cursor {
+    position: absolute; left: 0; top: 0; width: 900px; height: 900px; margin: -450px 0 0 -450px; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255,255,255,.07), rgba(255,255,255,0));
+    transform: translate3d(var(--cx, 50vw), var(--cy, 40vh), 0); opacity: 0; transition: opacity .8s ease;
+  }
+  .portada:hover .luz-cursor { opacity: 1; }
+  .chip-nuevo {
+    position: relative; display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px 8px 12px;
+    border-radius: 999px; text-decoration: none; font-size: 13.5px; font-weight: 560; color: var(--tinta);
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    transition: background .25s ease, transform .2s var(--curva);
+  }
+  .chip-nuevo:hover { background: rgba(255,255,255,.09); }
+  .chip-nuevo:active { transform: scale(.97); }
+  .chip-nuevo .flecha { color: var(--gris); transition: transform .3s var(--resorte); }
+  .chip-nuevo:hover .flecha { transform: translateX(3px); }
+  .vivo { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+  .vivo::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid rgba(255,255,255,.7);
+    animation: latido 2.2s var(--curva) infinite;
+  }
+  @keyframes latido { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+
+  .logo-escena { position: relative; width: min(680px, 88vw); margin-top: 30px; perspective: 1100px; }
+  .logo-parallax { position: relative; will-change: transform, opacity; }
+  .logo-3d { position: relative; transform-style: preserve-3d; will-change: transform; }
+  .logo-3d img { width: 100%; height: auto; filter: drop-shadow(0 24px 48px rgba(0,0,0,.6)); }
+  .mascara-logo {
+    position: absolute; inset: 0; pointer-events: none;
+    -webkit-mask: url(assets/marca.webp) center / 100% 100% no-repeat; mask: url(assets/marca.webp) center / 100% 100% no-repeat;
+  }
+  .logo-luz {
+    background: radial-gradient(circle at var(--lx, 30%) var(--ly, 20%), rgba(255,255,255,.75), rgba(255,255,255,0) 26%);
+    mix-blend-mode: screen; opacity: .55;
+  }
+  .logo-barrido {
+    background: linear-gradient(105deg, rgba(255,255,255,0) 42%, rgba(255,255,255,.85) 50%, rgba(255,255,255,0) 58%) 150% 0 / 260% 100% no-repeat;
+    mix-blend-mode: screen; animation: barrido 5.5s var(--curva) 1.2s infinite;
+  }
+  @keyframes barrido { 0% { background-position: 150% 0; } 30%, 100% { background-position: -150% 0; } }
+  .reflejo {
+    position: relative; aspect-ratio: 1400 / 210; overflow: hidden; pointer-events: none; opacity: .2;
+    -webkit-mask: linear-gradient(to bottom, rgba(0,0,0,.95), rgba(0,0,0,0)); mask: linear-gradient(to bottom, rgba(0,0,0,.95), rgba(0,0,0,0));
+  }
+  .reflejo img { width: 100%; transform: scaleY(-1); filter: blur(1.5px); }
+  .piso {
+    height: 1px; margin: -1px 4% 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.2), rgba(255,255,255,0));
+  }
+  .lema { margin-top: 6px; font-size: clamp(34px, 5.2vw, 70px); font-weight: 820; font-variation-settings: "wdth" 104; letter-spacing: -0.04em; line-height: 1.02; }
+  .portada .sub { margin: 18px auto 0; text-align: center; max-width: 46ch; }
+  .acciones { margin-top: 36px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; }
+  .meta { margin-top: 18px; color: var(--tenue); font-size: 13.5px; }
+
+  /* entrada de la portada */
+  .portada .entra { opacity: 0; transform: translateY(18px); filter: blur(8px); }
+  .portada .logo-escena.entra { transform: scale(.9); filter: blur(24px); }
+  .listo .portada .entra { opacity: 1; transform: none; filter: none; transition: opacity 1.2s var(--curva), transform 1.4s var(--curva), filter 1.2s var(--curva); transition-delay: var(--retraso, 0s); }
+
+  /* ------------------------------------------------ boton liquido (el material del logo) */
+  .liquido {
+    position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center;
+    height: 60px; padding: 0 32px; border-radius: 999px; text-decoration: none; color: #000;
+    font-weight: 680; font-size: 17px; letter-spacing: -0.01em; transition: transform .25s var(--curva);
+  }
+  .liquido:active { transform: scale(.97); }
+  .liquido-forma { position: absolute; inset: 0 0 -60px 0; z-index: -1; filter: url(#gotas); pointer-events: none; }
+  .liquido-forma::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 60px; border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #ededf0 60%, #c9c9cf 100%);
+  }
+  .gota { position: absolute; top: 44px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: #cdcdd3; opacity: 0; transform: translateY(0) scale(.4); }
+  .gota.g1 { left: 24%; }
+  .gota.g2 { left: 61%; width: 14px; height: 14px; margin-left: -7px; }
+  .gota.g3 { left: 82%; width: 12px; height: 12px; margin-left: -6px; }
+  .liquido:hover .gota.g1, .liquido:focus-visible .gota.g1 { animation: gotear 1.6s cubic-bezier(.55, 0, .7, .4) infinite; }
+  .liquido:hover .gota.g2, .liquido:focus-visible .gota.g2 { animation: gotear 1.9s cubic-bezier(.55, 0, .7, .4) .35s infinite; }
+  .liquido:hover .gota.g3, .liquido:focus-visible .gota.g3 { animation: gotear 2.2s cubic-bezier(.55, 0, .7, .4) .7s infinite; }
+  .liquido.solo-una .gota.g2 { animation: gotear 2.4s cubic-bezier(.55, 0, .7, .4) 1; }
+  @keyframes gotear {
+    0% { transform: translateY(0) scale(.4); opacity: 1; }
+    45% { transform: translateY(10px) scale(1); opacity: 1; }
+    62% { transform: translateY(18px) scale(.95); opacity: 1; }
+    100% { transform: translateY(66px) scale(.55); opacity: 0; }
+  }
+  .liquido-brillo {
+    position: absolute; inset: 0; border-radius: 999px; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,0) 48%);
+    box-shadow: inset 0 -3px 8px rgba(0,0,0,.14), 0 12px 40px rgba(255,255,255,.14);
+    opacity: .9;
+  }
+  .liquido svg { width: 18px; height: 18px; margin-right: 10px; }
+  .vidrio-btn {
+    display: inline-flex; align-items: center; gap: 10px; height: 60px; padding: 0 28px; border-radius: 999px;
+    text-decoration: none; font-weight: 600; font-size: 17px; color: var(--tinta);
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+    transition: background .25s ease, transform .2s var(--curva);
+  }
+  .vidrio-btn:hover { background: rgba(255,255,255,.11); }
+  .vidrio-btn:active { transform: scale(.97); }
+
+  /* ------------------------------------------------ secciones */
+  .seccion { position: relative; padding: clamp(110px, 14vw, 190px) 0; }
+
+  /* ------------------------------------------------ demo */
+  .demo-zona { margin-top: 64px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: stretch; }
+  .navegador {
+    position: relative; border-radius: 22px; overflow: hidden; user-select: none; -webkit-user-select: none;
+    background: #111113; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 40px 120px rgba(255,255,255,.05);
+  }
+  .nav-barra { height: 46px; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .nav-puntos { display: flex; gap: 7px; }
+  .nav-puntos i { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .nav-url {
+    flex: 1; max-width: 420px; margin: 0 auto; height: 28px; border-radius: 8px; background: rgba(255,255,255,.06);
+    display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: var(--gris);
+  }
+  .nav-url svg { width: 11px; height: 11px; opacity: .7; }
+  .quiz { position: relative; padding: 34px clamp(18px, 4vw, 44px) 40px; background: #f5f5f7; color: #1d1d1f; min-height: 440px; cursor: default; }
+  .quiz.ctrl { cursor: crosshair; }
+  .quiz.trabajando { cursor: none; }
+  .quiz-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: #6e6e73; }
+  .quiz-materia { font-weight: 650; color: #1d1d1f; letter-spacing: .02em; }
+  .quiz-tarjeta { margin-top: 18px; padding: 26px clamp(18px, 3vw, 28px) 24px; border-radius: 18px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 30px rgba(0,0,0,.06); }
+  .quiz-cuerpo { transition: opacity .35s ease, transform .5s var(--resorte), filter .35s ease; }
+  .quiz-cuerpo.sale { opacity: 0; transform: translateX(-28px); filter: blur(6px); }
+  .quiz-cuerpo.entra { opacity: 0; transform: translateX(28px); filter: blur(6px); transition: none; }
+  .quiz-pregunta { font-size: clamp(19px, 2.1vw, 23px); font-weight: 650; letter-spacing: -0.015em; line-height: 1.3; }
+  .quiz-pregunta .req { color: #d70015; margin-left: 4px; }
+  .opciones { margin-top: 20px; display: grid; gap: 10px; list-style: none; }
+  .opcion {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; font-size: 16px;
+    box-shadow: inset 0 0 0 1px #e3e3e8; transition: box-shadow .3s ease, background .3s ease;
+  }
+  .opcion .radio { position: relative; flex: none; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.6px #a1a1a6; transition: box-shadow .25s ease; }
+  .opcion .radio::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: #1d1d1f; transform: scale(0); transition: transform .45s var(--rebote); }
+  .opcion.marcada { background: #f5f5f7; box-shadow: inset 0 0 0 2px #1d1d1f; }
+  .opcion.marcada .radio { box-shadow: inset 0 0 0 1.6px #1d1d1f; }
+  .opcion.marcada .radio::after { transform: scale(1); }
+  .campo {
+    margin-top: 20px; height: 52px; border-radius: 12px; box-shadow: inset 0 0 0 1px #d2d2d7; padding: 0 16px;
+    display: flex; align-items: center; font-size: 17px; color: #1d1d1f; transition: box-shadow .25s ease;
+  }
+  .campo.foco { box-shadow: inset 0 0 0 2px #1d1d1f; }
+  .campo .ph { color: #a1a1a6; }
+  .campo .cursor-t { display: inline-block; width: 1.5px; height: 20px; margin-left: 1px; background: #1d1d1f; animation: parpadeo 1s steps(1) infinite; }
+  @keyframes parpadeo { 50% { opacity: 0; } }
+  .quiz-pie { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: #6e6e73; min-height: 34px; }
+  .siguiente {
+    display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px;
+    background: #1d1d1f; color: #fff; font-size: 13.5px; font-weight: 600; opacity: 0; transform: translateY(6px);
+    pointer-events: none; transition: opacity .35s ease, transform .5s var(--rebote);
+  }
+  .siguiente.ver { opacity: 1; transform: none; pointer-events: auto; }
+  .siguiente:active { transform: scale(.96); }
+
+  /* lo que hace NO LIMIT encima de la pagina */
+  .captura {
+    position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; opacity: 0; border-radius: 14px;
+    box-shadow: 0 0 0 1.5px rgba(29,29,31,.8), 0 0 0 9999px rgba(0,0,0,.22);
+    transition: opacity .3s ease;
+  }
+  .captura.ver { opacity: 1; }
+  .captura .esq { position: absolute; width: 20px; height: 20px; border: 3px solid #1d1d1f; }
+  .captura .esq.a { left: -3px; top: -3px; border-right: 0; border-bottom: 0; border-top-left-radius: 12px; }
+  .captura .esq.b { right: -3px; top: -3px; border-left: 0; border-bottom: 0; border-top-right-radius: 12px; }
+  .captura .esq.c { left: -3px; bottom: -3px; border-right: 0; border-top: 0; border-bottom-left-radius: 12px; }
+  .captura .esq.d { right: -3px; bottom: -3px; border-left: 0; border-top: 0; border-bottom-right-radius: 12px; }
+  .captura .linea-escaneo {
+    position: absolute; left: 0; right: 0; top: 0; height: 64px; opacity: 0;
+    background: linear-gradient(180deg, rgba(29,29,31,0), rgba(29,29,31,.07));
+    border-bottom: 2px solid rgba(29,29,31,.55);
+  }
+  .puntero {
+    position: absolute; left: 0; top: 0; width: 22px; height: 30px; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate3d(var(--px, 0), var(--py, 0), 0); transition: opacity .2s ease;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.35));
+  }
+  .puntero.ver { opacity: 1; }
+  .puntero svg { width: 100%; height: 100%; transform-origin: 3px 3px; transition: transform .12s ease; }
+  .puntero.clic svg { transform: scale(.82); }
+  .puntero .onda { position: absolute; left: -15px; top: -15px; width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(29,29,31,.6); opacity: 0; }
+  .puntero.clic .onda { animation: onda .5s var(--curva); }
+  @keyframes onda { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+  .burbuja {
+    position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px 8px 11px; border-radius: 999px; white-space: nowrap; font-size: 13.5px; font-weight: 600; color: #fff;
+    background: rgba(20,20,22,.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 12px 30px rgba(0,0,0,.3);
+    opacity: 0; transform: translate3d(var(--bx, 0), var(--by, 0), 0) scale(.9); transform-origin: 0 0;
+    transition: opacity .25s ease, transform .45s var(--rebote);
+  }
+  .burbuja.ver { opacity: 1; transform: translate3d(var(--bx, 0), var(--by, 0), 0) scale(1); }
+  .burbuja .icono { width: 16px; height: 16px; display: grid; place-items: center; }
+  .burbuja .giro { width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); border-top-color: #fff; animation: girar .8s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .burbuja .ok { width: 16px; height: 16px; border-radius: 50%; background: #fff; color: #000; display: grid; place-items: center; }
+  .burbuja .ok svg { width: 10px; height: 10px; }
+
+  /* mini app a un lado */
+  .mini-app {
+    position: relative; border-radius: 22px; padding: 22px 18px 18px; display: flex; flex-direction: column; gap: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+  }
+  .mini-app .mini-logo { width: 150px; margin: 2px auto 0; }
+  .mini-modelo { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
+  .mini-modelo small { display: block; font-size: 11px; color: var(--gris); font-weight: 600; letter-spacing: .04em; }
+  .mini-modelo b { font-size: 15px; font-weight: 640; }
+  .pastilla { font-size: 11px; font-weight: 650; padding: 4px 10px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); color: var(--gris); letter-spacing: .03em; }
+  .mini-estado { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 560; }
+  .punto-activo { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+  .punto-activo::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; background: rgba(255,255,255,.25); animation: respira 2s ease-in-out infinite; }
+  .mini-app.ocupada .punto-activo::after { animation-duration: .9s; }
+  @keyframes respira { 0%, 100% { transform: scale(.5); opacity: .9; } 50% { transform: scale(1.25); opacity: 0; } }
+  .registro { flex: 1; min-height: 168px; list-style: none; padding: 14px; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); background: rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 12px; }
+  .registro li { display: flex; gap: 12px; font-size: 13.5px; align-items: baseline; animation: fila .6s var(--resorte); }
+  .registro li time { font-size: 11px; color: var(--tenue); font-weight: 650; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+  .registro li:nth-child(2) { opacity: .75; } .registro li:nth-child(3) { opacity: .55; } .registro li:nth-child(4) { opacity: .4; }
+  .registro li.info span { color: var(--gris); }
+  .registro .vacio { color: var(--tenue); font-size: 13px; text-align: center; margin: auto; animation: none; }
+  @keyframes fila { from { opacity: 0; transform: translateY(-8px); filter: blur(4px); } }
+  .demo-ayuda { margin-top: 18px; text-align: center; font-size: 13.5px; color: var(--tenue); }
+  .demo-ayuda button { color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
+
+  /* ------------------------------------------------ historia pegajosa */
+  .historia { position: relative; height: 430vh; }
+  .historia-fija {
+    position: sticky; top: 0; height: 100svh; overflow: hidden;
+    display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 40px;
+    width: min(1180px, 100%); margin: 0 auto; padding: 84px 22px 24px;
+  }
+  .historia-textos { position: relative; align-self: center; }
+  .pasos-h { position: relative; margin-top: 28px; min-height: 300px; }
+  .paso-h {
+    position: absolute; inset: 0 0 auto 0; opacity: 0; transform: translateY(26px); filter: blur(8px); pointer-events: none;
+    transition: opacity .6s var(--curva), transform .8s var(--curva), filter .6s var(--curva);
+  }
+  .paso-h.activo { opacity: 1; transform: none; filter: none; pointer-events: auto; }
+  .paso-h.antes { transform: translateY(-26px); }
+  .paso-n { font-size: 14px; font-weight: 700; color: var(--tenue); letter-spacing: .1em; font-variant-numeric: tabular-nums; }
+  .paso-h h3 { margin-top: 12px; font-size: clamp(36px, 4.6vw, 64px); font-weight: 820; font-variation-settings: "wdth" 104; letter-spacing: -0.04em; line-height: 1; }
+  .paso-h p { margin-top: 18px; font-size: clamp(16px, 1.45vw, 19px); color: var(--gris); max-width: 32ch; line-height: 1.5; }
+  .historia-progreso { display: flex; gap: 8px; margin-top: 8px; }
+  .historia-progreso span { position: relative; width: 44px; height: 3px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .historia-progreso span i { position: absolute; inset: 0; background: #fff; transform-origin: left; transform: scaleX(0); }
+  .historia-escena { position: relative; height: 100%; min-height: 0; min-width: 0; }
+  .lienzo { position: absolute; left: 50%; top: 50%; width: 520px; height: 700px; transform: translate(-50%, -50%) scale(var(--k, 1)); transform-origin: center; }
+
+  /* replica de la ventana de la app */
+  .ventana {
+    position: absolute; left: 70px; top: 6px; width: 380px; height: 634px; border-radius: 14px; overflow: hidden;
+    background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 40px 100px rgba(0,0,0,.8), 0 0 80px rgba(255,255,255,.05);
+    transform-origin: center; will-change: transform, opacity;
+  }
+  .v-titulo { height: 34px; display: flex; align-items: center; justify-content: space-between; padding-left: 14px; font: 12px "Segoe UI", system-ui, sans-serif; color: #e8e8e8; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .v-titulo .ctl { display: flex; height: 100%; }
+  .v-titulo .ctl span { width: 44px; display: grid; place-items: center; color: #bdbdbd; }
+  .v-titulo .ctl span.off { color: #555; }
+  .v-titulo .ctl svg { width: 10px; height: 10px; }
+  .v-cuerpo { position: relative; height: 600px; }
+  .v-logo { position: absolute; left: 56px; top: 16px; width: 268px; }
+  .v-modelo {
+    position: absolute; left: 28px; top: 146px; width: 324px; height: 60px; border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.012));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+  }
+  .v-modelo .halo-sel { position: absolute; inset: -6px; border-radius: 22px; box-shadow: 0 0 0 2px rgba(255,255,255,.7), 0 0 30px rgba(255,255,255,.25); opacity: 0; }
+  .v-modelo small { position: absolute; left: 18px; top: 12px; font-size: 10.2px; font-weight: 600; letter-spacing: .05em; color: #c4c4c4; }
+  .v-modelo .nombre-caja { position: absolute; left: 18px; top: 27px; height: 22px; width: 180px; overflow: hidden; }
+  .v-modelo .nombre { position: absolute; left: 0; top: 0; font-size: 15px; font-weight: 640; white-space: nowrap; transition: transform .5s var(--resorte), opacity .35s ease; }
+  .v-modelo .nombre.fuera { transform: translateY(-22px); opacity: 0; }
+  .v-modelo .nombre.debajo { transform: translateY(22px); opacity: 0; transition: none; }
+  .v-modelo .nota { position: absolute; right: 36px; top: 18px; height: 24px; padding: 0 11px; border-radius: 12px; font-size: 10.2px; font-weight: 600; line-height: 24px; color: #c4c4c4; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  .v-modelo .chev { position: absolute; right: 12px; top: 23px; width: 14px; height: 14px; color: #c4c4c4; }
+  .v-boton { position: absolute; left: 90px; top: 252px; width: 200px; height: 54px; border-radius: 27px; }
+  .v-boton .vidrio-b { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); box-shadow: inset 0 0 0 1.3px rgba(255,255,255,.6); }
+  .v-boton .lleno { position: absolute; inset: 0; border-radius: inherit; background: #fff; clip-path: inset(0 calc(100% - var(--f, 0) * 100%) 0 0 round 27px); }
+  .v-boton .brillo-b { position: absolute; inset: -14px; border-radius: 40px; background: radial-gradient(closest-side, rgba(255,255,255,.35), rgba(255,255,255,0)); opacity: 0; }
+  .v-boton .aro { position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 1.6px #fff; opacity: 0; }
+  .v-boton .etiqueta {
+    position: absolute; inset: 0; display: grid; place-items: center; color: #fff; mix-blend-mode: difference;
+    font-size: 13.5px; font-weight: 760; letter-spacing: .22em; padding-left: .22em; font-variation-settings: "wdth" 125;
+  }
+  .v-estado { position: absolute; left: 0; right: 0; top: 322px; display: flex; justify-content: center; align-items: center; gap: 9px; font-size: 13px; color: #c4c4c4; }
+  .v-estado i { width: 7px; height: 7px; border-radius: 50%; box-shadow: inset 0 0 0 1.4px rgba(255,255,255,.7); transition: background .3s ease, box-shadow .3s ease; }
+  .v-estado.on { color: #fff; }
+  .v-estado.on i { background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.18); }
+  .v-ayuda { position: absolute; left: 0; right: 0; top: 344px; text-align: center; font-size: 11.5px; color: #808080; }
+  .v-actividad { position: absolute; left: 28px; top: 384px; width: 324px; height: 152px; border-radius: 18px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); background: rgba(255,255,255,.015); }
+  .v-actividad p { position: absolute; left: 18px; right: 18px; font-size: 13px; display: flex; gap: 16px; transition: opacity .4s ease, transform .5s var(--resorte); }
+  .v-actividad p time { font-size: 10.2px; font-weight: 650; color: #808080; letter-spacing: .05em; padding-top: 2px; }
+  .v-actividad .vacio-v { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; color: #808080; }
+  .v-pie { position: absolute; left: 30px; right: 30px; top: 552px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #c4c4c4; }
+  .v-pie span { display: flex; align-items: center; gap: 7px; }
+  .v-pie svg { width: 14px; height: 14px; }
+  .v-pie em { font-style: normal; color: #808080; font-size: 10.2px; letter-spacing: .05em; font-weight: 600; }
+
+  /* barra de tareas de Windows (de mentira) */
+  .tareas {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 46px; border-radius: 12px; opacity: 0;
+    display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 0 12px;
+    background: rgba(32,32,34,.85); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); font: 12px "Segoe UI", system-ui, sans-serif; color: #e8e8e8;
+  }
+  .tareas .ico { width: 34px; height: 34px; border-radius: 7px; display: grid; place-items: center; color: #d0d0d0; }
+  .tareas .ico svg { width: 15px; height: 15px; }
+  .tareas .nl { position: relative; transform: scale(0); }
+  .tareas .nl img { width: 20px; height: 20px; border-radius: 5px; }
+  .tareas .nl .pulso { position: absolute; inset: 2px; border-radius: 9px; box-shadow: 0 0 0 2px #fff; opacity: 0; }
+  .tareas .hora { text-align: right; line-height: 1.25; padding-left: 8px; }
+  .tareas .hora small { display: block; font-size: 11px; color: #bdbdbd; }
+  .tip {
+    position: absolute; right: 70px; bottom: 56px; padding: 7px 11px; border-radius: 8px; font: 12px "Segoe UI", system-ui, sans-serif;
+    background: rgba(44,44,46,.96); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 10px 30px rgba(0,0,0,.4); color: #f2f2f2; opacity: 0; transform: translateY(6px);
+  }
+  /* quiz dentro de la historia */
+  .quiz-h {
+    position: absolute; left: 30px; top: 130px; width: 460px; padding: 24px 24px 22px; border-radius: 18px; background: #fff; color: #1d1d1f; opacity: 0;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+  .quiz-h .materia { font-size: 12px; font-weight: 650; color: #6e6e73; letter-spacing: .03em; }
+  .quiz-h h4 { margin-top: 8px; font-size: 20px; font-weight: 650; letter-spacing: -0.015em; }
+  .quiz-h ul { list-style: none; margin-top: 16px; display: grid; gap: 8px; }
+  .quiz-h li { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 11px; font-size: 15px; box-shadow: inset 0 0 0 1px #e3e3e8; }
+  .quiz-h li .radio { position: relative; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #a1a1a6; }
+  .quiz-h li .radio::after { content: ""; position: absolute; inset: 4.5px; border-radius: 50%; background: #1d1d1f; transform: scale(var(--m, 0)); }
+  .quiz-h li.marcada { box-shadow: inset 0 0 0 2px #1d1d1f; background: #f5f5f7; }
+  .h-captura { position: absolute; border-radius: 16px; opacity: 0; box-shadow: 0 0 0 1px rgba(255,255,255,.95), 0 0 30px rgba(255,255,255,.25); pointer-events: none; }
+  .h-captura .linea-escaneo { position: absolute; left: 0; right: 0; height: 56px; background: linear-gradient(180deg, rgba(120,120,128,0), rgba(120,120,128,.35)); border-bottom: 2px solid rgba(29,29,31,.55); opacity: 0; }
+  .h-puntero { position: absolute; left: 0; top: 0; width: 22px; height: 30px; opacity: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+  .h-puntero svg { width: 100%; height: 100%; transform-origin: 3px 3px; }
+  .h-ctrl {
+    position: absolute; left: 0; top: 0; padding: 7px 12px; border-radius: 10px; font-size: 14px; font-weight: 700; color: #1d1d1f;
+    background: linear-gradient(180deg, #ffffff, #e5e5ea); box-shadow: 0 3px 0 #b8b8bf, 0 10px 24px rgba(0,0,0,.35); opacity: 0;
+  }
+  .h-burbuja {
+    position: absolute; left: 0; top: 0; padding: 7px 13px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap;
+    background: rgba(20,20,22,.9); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); opacity: 0;
+  }
+
+  /* ------------------------------------------------ funciones (bento) */
+  .bento {
+    margin-top: 64px; display: grid; gap: 16px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas: "a a b c" "a a d d" "e f g h";
+  }
+  .tarjeta {
+    position: relative; overflow: hidden; border-radius: 26px; padding: 26px; min-height: 250px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.015));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.09);
+  }
+  .tarjeta::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s ease;
+    background: radial-gradient(420px circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,.08), rgba(255,255,255,0) 60%);
+  }
+  .tarjeta::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s ease; padding: 1px;
+    background: radial-gradient(260px circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,.55), rgba(255,255,255,0) 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .tarjeta:hover::before, .tarjeta:hover::after { opacity: 1; }
+  .tarjeta h3 { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  .tarjeta p { margin-top: 8px; font-size: 15px; color: var(--gris); line-height: 1.5; }
+  .t-a { grid-area: a; min-height: 520px; } .t-b { grid-area: b; } .t-c { grid-area: c; } .t-d { grid-area: d; }
+  .t-e { grid-area: e; } .t-f { grid-area: f; } .t-g { grid-area: g; } .t-h { grid-area: h; }
+  .t-a h3 { font-size: clamp(28px, 3vw, 38px); font-weight: 800; letter-spacing: -0.035em; }
+
+  .mq { position: relative; padding: 20px; border-radius: 18px; background: #f5f5f7; color: #1d1d1f; max-width: 420px; width: 100%; align-self: center; }
+  .tarjeta .mq p { margin: 0; color: #1d1d1f; font-weight: 650; font-size: 16px; }
+  .mq ul { list-style: none; margin-top: 12px; display: grid; gap: 7px; }
+  .mq li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; box-shadow: inset 0 0 0 1px #e3e3e8; font-size: 14.5px; }
+  .mq li i { position: relative; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.4px #a1a1a6; }
+  .mq li i::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: #1d1d1f; transform: scale(0); }
+  .mq .mq-cursor { position: absolute; width: 20px; height: 27px; left: 0; top: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .anima .mq .mq-cursor { animation: mq-cursor 4.6s var(--curva) infinite; }
+  .anima .mq li.ok { animation: mq-ok 4.6s infinite; }
+  .anima .mq li.ok i::after { animation: mq-radio 4.6s infinite; }
+  @keyframes mq-cursor {
+    0% { transform: translate(340px, 230px); opacity: 0; } 10% { opacity: 1; }
+    38% { transform: translate(150px, 101px); } 42% { transform: translate(150px, 101px) scale(.85); } 46% { transform: translate(150px, 101px) scale(1); }
+    85% { transform: translate(150px, 101px); opacity: 1; } 100% { transform: translate(150px, 101px); opacity: 0; }
+  }
+  @keyframes mq-ok { 0%, 43% { box-shadow: inset 0 0 0 1px #e3e3e8; background: transparent; } 46%, 92% { box-shadow: inset 0 0 0 2px #1d1d1f; background: #ececf0; } 100% { box-shadow: inset 0 0 0 1px #e3e3e8; } }
+  @keyframes mq-radio { 0%, 43% { transform: scale(0); } 48%, 92% { transform: scale(1); } 100% { transform: scale(0); } }
+
+  .caja-texto { height: 48px; border-radius: 12px; padding: 0 14px; display: flex; align-items: center; background: #f5f5f7; color: #1d1d1f; font-size: 15px; overflow: hidden; white-space: nowrap; }
+  .caja-texto .cursor-t { display: inline-block; width: 1.5px; height: 18px; margin-left: 1px; background: #1d1d1f; animation: parpadeo 1s steps(1) infinite; }
+  .cajitas { display: grid; gap: 8px; }
+  .cajitas div { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--gris); }
+  .cajitas span { flex: 1; height: 38px; border-radius: 10px; background: #f5f5f7; color: #1d1d1f; display: flex; align-items: center; padding: 0 12px; font-size: 15px; font-weight: 600; transition: box-shadow .3s ease; }
+  .cajitas span.llena { box-shadow: inset 0 0 0 2px #1d1d1f; }
+  .mini-tareas { display: flex; align-items: center; justify-content: flex-end; gap: 6px; height: 46px; padding: 0 12px; border-radius: 12px; background: rgba(40,40,42,.8); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); font: 12px "Segoe UI", system-ui, sans-serif; color: #e8e8e8; }
+  .mini-tareas img { width: 20px; height: 20px; border-radius: 5px; }
+  .mini-tareas .nl-b { position: relative; padding: 6px; border-radius: 7px; background: rgba(255,255,255,.09); }
+  .mini-tareas .nl-b::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 1.5px rgba(255,255,255,.6); animation: latido 2.4s var(--curva) infinite; }
+  .t-d .fila-d { display: flex; gap: 22px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+  .cpu { flex: 1; min-width: 200px; }
+  .cpu-num { font-size: 52px; font-weight: 820; letter-spacing: -0.04em; line-height: 1; }
+  .cpu-num small { font-size: 15px; font-weight: 600; color: var(--gris); letter-spacing: 0; margin-left: 6px; }
+  .cpu svg { margin-top: 10px; width: 100%; height: 44px; }
+  .icono-grande { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .icono-grande svg { width: 26px; height: 26px; }
+  .clave-falsa { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); font-size: 14.5px; letter-spacing: .04em; color: var(--tinta); }
+  .clave-falsa svg { width: 16px; height: 16px; color: var(--gris); }
+  .interruptor { position: relative; width: 62px; height: 36px; border-radius: 18px; background: rgba(255,255,255,.14); transition: background .3s ease; flex: none; }
+  .interruptor::after { content: ""; position: absolute; left: 4px; top: 4px; width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.3); transition: transform .5s var(--rebote), width .2s ease; }
+  .interruptor[aria-checked="true"] { background: #fff; }
+  .interruptor[aria-checked="true"]::after { transform: translateX(26px); background: #000; }
+  .interruptor:active::after { width: 34px; }
+  .interruptor[aria-checked="true"]:active::after { transform: translateX(20px); }
+  .fila-g { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .fila-g span { font-size: 14px; color: var(--gris); transition: opacity .3s ease; }
+  .tecla-esc {
+    width: 92px; height: 72px; border-radius: 16px; display: grid; place-items: end start; padding: 12px 14px; font-weight: 650; font-size: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 6px 0 rgba(255,255,255,.08), 0 14px 30px rgba(0,0,0,.4);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .tecla-esc:hover { transform: translateY(2px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 4px 0 rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.4); }
+  .tecla-esc:active, .tecla-esc.apretada { transform: translateY(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3), 0 0 0 rgba(255,255,255,.08), 0 6px 14px rgba(0,0,0,.4); }
+
+  /* ------------------------------------------------ modelos */
+  .segmento { position: relative; display: inline-flex; margin-top: 34px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  .segmento button { position: relative; z-index: 1; height: 38px; padding: 0 20px; border-radius: 999px; font-size: 14.5px; font-weight: 600; color: var(--gris); transition: color .25s ease; }
+  .segmento button[aria-pressed="true"] { color: #000; }
+  .segmento .pildora { position: absolute; top: 4px; left: 4px; height: 38px; border-radius: 999px; background: #fff; transition: transform .55s var(--rebote), width .55s var(--rebote); }
+  .modelos-vista { position: relative; margin-top: 52px; overflow-x: clip; padding: 6px 0; }
+  .carrusel { display: grid; gap: 14px; -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); transition: opacity .45s ease, filter .45s ease, transform .6s var(--curva); }
+  .riel { display: flex; gap: 14px; width: max-content; animation: riel 46s linear infinite; }
+  .riel.reves { animation-direction: reverse; animation-duration: 54s; }
+  .carrusel:hover .riel { animation-play-state: paused; }
+  @keyframes riel { to { transform: translateX(-50%); } }
+  .modelo-chip {
+    display: flex; align-items: center; gap: 14px; height: 78px; padding: 0 26px 0 14px; border-radius: 22px; white-space: nowrap;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+    transition: background .3s ease, transform .4s var(--resorte);
+  }
+  .modelo-chip:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+  .sello { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; font-size: 14px; letter-spacing: -.02em; color: #000; background: linear-gradient(180deg, #fff, #c9c9cf); box-shadow: inset 0 -2px 4px rgba(0,0,0,.18); font-variation-settings: "wdth" 112; }
+  .modelo-chip b { display: block; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
+  .modelo-chip small { display: block; font-size: 13px; color: var(--gris); }
+  .rejilla { position: absolute; inset: 0 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; opacity: 0; pointer-events: none; transform: scale(.97); filter: blur(8px); transition: opacity .45s ease, filter .45s ease, transform .6s var(--curva); }
+  .rejilla .modelo-chip { white-space: normal; height: auto; padding: 18px 18px 18px 14px; }
+  .rejilla .modelo-chip em { display: inline-block; margin-top: 6px; font-style: normal; font-size: 12px; font-weight: 600; color: var(--tinta); padding: 3px 9px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+  .modelos-vista.en-rejilla .carrusel { opacity: 0; filter: blur(8px); transform: scale(1.03); pointer-events: none; }
+  .modelos-vista.en-rejilla .rejilla { position: relative; opacity: 1; pointer-events: auto; transform: none; filter: none; }
+  .modelos-vista.en-rejilla .carrusel { position: absolute; inset: 0 0 auto; }
+
+  /* ------------------------------------------------ numeros */
+  .numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 64px; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); }
+  .numero { padding: 40px 24px; text-align: center; }
+  .numero + .numero { border-left: 1px solid var(--linea); }
+  .numero b { display: block; font-size: clamp(54px, 7vw, 104px); font-weight: 820; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; font-variation-settings: "wdth" 100; }
+  .numero > span { display: block; margin-top: 12px; font-size: 15px; color: var(--gris); }
+
+  /* ------------------------------------------------ precio */
+  .precio {
+    position: relative; margin: 64px auto 0; max-width: 760px; border-radius: 34px; padding: clamp(28px, 5vw, 56px); overflow: hidden; text-align: center;
+    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.015)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 40px 120px rgba(255,255,255,.04);
+  }
+  .precio .cero { font-size: clamp(110px, 18vw, 190px); font-weight: 860; letter-spacing: -0.06em; line-height: .9; }
+  .precio .cero small { font-size: .26em; letter-spacing: -0.02em; font-weight: 700; vertical-align: .9em; margin-right: .1em; }
+  .precio .nunca { margin-top: 10px; color: var(--gris); font-size: 18px; }
+  .lista-chulos { list-style: none; margin: 32px auto 0; display: grid; gap: 12px; max-width: 440px; text-align: left; }
+  .lista-chulos li { display: flex; gap: 12px; font-size: 16px; }
+  .lista-chulos svg { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+  .precio .acciones { margin-top: 38px; }
+  .precio .nota-clave { margin-top: 22px; font-size: 13.5px; color: var(--tenue); }
+
+  /* ------------------------------------------------ instalar */
+  .linea-tiempo { position: relative; margin-top: 72px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+  .linea-tiempo::before { content: ""; position: absolute; left: 24px; right: calc((100% - 72px) / 4 - 24px); top: 23px; height: 2px; background: rgba(255,255,255,.1); }
+  .linea-tiempo .avance { position: absolute; left: 24px; right: calc((100% - 72px) / 4 - 24px); top: 23px; height: 2px; background: #fff; transform-origin: left; transform: scaleX(var(--p, 0)); box-shadow: 0 0 12px rgba(255,255,255,.6); }
+  .hito { position: relative; }
+  .hito .bola { position: relative; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-weight: 750; font-size: 15px; color: var(--gris); background: #0b0b0c; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.18); transition: background .4s ease, color .4s ease, box-shadow .4s ease, transform .5s var(--rebote); }
+  .hito.hecho .bola { background: #fff; color: #000; box-shadow: 0 0 24px rgba(255,255,255,.35); transform: scale(1.06); }
+  .hito h3 { margin-top: 20px; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+  .hito p { margin-top: 8px; font-size: 15px; color: var(--gris); line-height: 1.5; }
+  .hito a { color: var(--tinta); text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
+
+  /* ------------------------------------------------ preguntas */
+  .faq { margin: 56px auto 0; max-width: 820px; border-top: 1px solid var(--linea); }
+  .faq-item { border-bottom: 1px solid var(--linea); }
+  .faq-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 4px; text-align: left; font-size: clamp(17px, 1.6vw, 20px); font-weight: 600; letter-spacing: -0.01em; }
+  .faq-q:hover { color: #fff; }
+  .mas { position: relative; flex: none; width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); transition: transform .5s var(--rebote), background .3s ease; }
+  .mas::before, .mas::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 1.6px; margin: -.8px 0 0 -6px; border-radius: 2px; background: currentColor; transition: transform .5s var(--rebote); }
+  .mas::after { transform: rotate(90deg); }
+  .faq-item.abierto .mas { transform: rotate(45deg); background: rgba(255,255,255,.08); }
+  .faq-r { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .55s var(--curva); }
+  .faq-item.abierto .faq-r { grid-template-rows: 1fr; }
+  .faq-r > div { overflow: hidden; }
+  .faq-r p { padding: 0 54px 26px 4px; color: var(--gris); font-size: 16.5px; line-height: 1.6; opacity: 0; transform: translateY(-6px); transition: opacity .4s ease, transform .55s var(--curva); }
+  .faq-item.abierto .faq-r p { opacity: 1; transform: none; transition-delay: .08s; }
+  .faq-r b { color: var(--tinta); font-weight: 600; }
+
+  /* ------------------------------------------------ final */
+  .final { position: relative; padding: clamp(120px, 16vw, 220px) 0 clamp(90px, 12vw, 150px); text-align: center; overflow: hidden; }
+  .final .foco { inset: auto 0 -20% 0; height: 90%; background: radial-gradient(40% 50% at 50% 100%, rgba(255,255,255,.09), rgba(255,255,255,0) 70%); }
+  .final-logo { width: min(520px, 80vw); margin: 0 auto; will-change: transform; }
+  .final h2 { margin-top: 34px; }
+  .final .acciones { margin-top: 40px; }
+  footer { border-top: 1px solid var(--linea); }
+  .pie { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-top: 28px; padding-bottom: 40px; font-size: 13.5px; color: var(--tenue); }
+  .pie img { height: 28px; width: auto; }
+  .pie nav { display: flex; gap: 22px; flex-wrap: wrap; }
+  .pie a { text-decoration: none; color: var(--gris); transition: color .2s ease; }
+  .pie a:hover { color: var(--tinta); }
+
+  /* ------------------------------------------------ pantallas chicas */
+  @media (max-width: 1020px) {
+    .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "a a" "b c" "d d" "e f" "g h"; }
+    .t-a { min-height: 470px; }
+  }
+  @media (max-width: 900px) {
+    .barra-links { display: none; }
+    .barra { width: calc(100% - 24px); justify-content: space-between; }
+    .barra.compacta { width: calc(100% - 24px); }
+    .demo-zona { grid-template-columns: 1fr; }
+    .mini-app { display: grid; grid-template-columns: 1fr 1fr; align-items: center; }
+    .mini-app .mini-logo { grid-column: 1 / -1; }
+    .registro { grid-column: 1 / -1; min-height: 120px; }
+    .historia { height: 480vh; }
+    .historia-fija { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 6px; padding: 76px 16px 12px; }
+    .historia-textos .ojo { display: none; }
+    .pasos-h { margin-top: 0; min-height: 168px; }
+    .paso-h h3 { font-size: clamp(30px, 8.5vw, 44px); margin-top: 6px; }
+    .paso-h p { margin-top: 10px; font-size: 15.5px; }
+    .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .numero:nth-child(3) { border-left: 0; }
+    .numero:nth-child(n+3) { border-top: 1px solid var(--linea); }
+    .linea-tiempo { grid-template-columns: 1fr; gap: 34px; padding-left: 70px; }
+    .linea-tiempo::before, .linea-tiempo .avance { left: 23px; right: auto; top: 24px; bottom: 24px; width: 2px; height: auto; }
+    .linea-tiempo .avance { transform-origin: top; transform: scaleY(var(--p, 0)); }
+    .hito .bola { position: absolute; left: -70px; top: 0; }
+    .hito h3 { margin-top: 10px; }
+  }
+  @media (max-width: 600px) {
+    .envoltura { padding: 0 16px; }
+    .bento { grid-template-columns: 1fr; grid-template-areas: "a" "b" "c" "d" "e" "f" "g" "h"; }
+    .t-a { min-height: 0; }
+    .tarjeta { min-height: 0; }
+    .acciones { width: 100%; }
+    .acciones .liquido, .acciones .vidrio-btn { width: 100%; }
+    .mini-app { grid-template-columns: 1fr; }
+    .quiz { min-height: 0; padding-bottom: 28px; }
+    .faq-r p { padding-right: 4px; }
+    .numero { padding: 30px 12px; }
+  }
+
+  /* ------------------------------------------------ accesibilidad */
   @media (prefers-reduced-motion: reduce) {
-    .reflejo { animation: none; opacity: 0; }
-    .descargar::before { animation: none; }
-    .descargar { transition: none; }
+    html { scroll-behavior: auto; }
+    [data-revela] { transform: none; filter: none; transition: opacity .4s ease; }
+    .portada .entra, .portada .logo-escena.entra { transform: none; filter: none; }
+    .logo-barrido, .destello { animation: none; }
+    .destello { background-position: 0 0; }
+    .riel { animation: none; }
+    .carrusel { overflow-x: auto; -webkit-mask: none; mask: none; }
+    .gota { display: none; }
+    .vivo::after, .punto-activo::after, .mini-tareas .nl-b::after { animation: none; }
+    .paso-h { transform: none; filter: none; transition: opacity .3s ease; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .barra { background: #161618; -webkit-backdrop-filter: none; backdrop-filter: none; }
   }
 </style>
 </head>
 <body>
-<div class="luz" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="gotas" x="-20%" y="-20%" width="140%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="borroso"/>
+      <feColorMatrix in="borroso" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="liquido"/>
+      <feComposite in="SourceGraphic" in2="liquido" operator="atop"/>
+    </filter>
+    <symbol id="i-puntero" viewBox="0 0 22 30"><path d="M2 2 L2 24 L7.6 18.6 L11.4 27.4 L15 25.8 L11.3 17.2 L19 17.2 Z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bajar" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chulo" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.2" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/><path d="M6 10.4l2.6 2.6L14.2 7.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<nav class="barra" id="barra" aria-label="Principal">
+  <a class="barra-marca" href="#inicio" aria-label="NO LIMIT, inicio"><img src="assets/marca.webp" alt="" width="1400" height="592"></a>
+  <div class="barra-links" id="barraLinks">
+    <span class="indicador" id="indicador" aria-hidden="true"></span>
+    <a href="#demo">Pruébalo</a>
+    <a href="#como">Cómo funciona</a>
+    <a href="#funciones">Funciones</a>
+    <a href="#modelos">Modelos</a>
+    <a href="#preguntas">Preguntas</a>
+  </div>
+  <a class="barra-descargar descarga" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/NO-LIMIT-Setup.exe">
+    <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar
+  </a>
+</nav>
 
 <main>
-  <section class="portada">
-    <h1 class="marca">
-      <img src="assets/marca.png" alt="" width="1400" height="592">
-      <span class="reflejo" aria-hidden="true"></span>
-      <span class="sr">NO LIMIT</span>
-    </h1>
-    <p class="lema">Contesta preguntas de la pantalla con un <span class="atajo"><kbd>Ctrl</kbd> + <kbd>clic</kbd></span></p>
+  <!-- ============================================================ portada -->
+  <section class="portada" id="inicio">
+    <div class="foco" aria-hidden="true"></div>
+    <div class="luz-cursor" id="luzCursor" aria-hidden="true"></div>
 
-    <a class="descargar" id="descargar" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/NO-LIMIT-Setup.exe">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
-      DESCARGAR
+    <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
+      <span class="vivo" aria-hidden="true"></span>
+      <span>Nuevo: <span class="js-version">v1.2</span> para Windows</span>
+      <span class="flecha" aria-hidden="true">→</span>
     </a>
-    <p class="meta" id="meta">Para Windows 10 y 11</p>
+
+    <div class="logo-escena entra" style="--retraso:.1s">
+     <div class="logo-parallax" id="logoEscena">
+      <div class="logo-3d" id="logo3d">
+        <picture>
+          <source srcset="assets/marca.webp" type="image/webp">
+          <img src="assets/marca.png" alt="NO LIMIT" width="1400" height="592" fetchpriority="high">
+        </picture>
+        <span class="mascara-logo logo-luz" aria-hidden="true"></span>
+        <span class="mascara-logo logo-barrido" aria-hidden="true"></span>
+      </div>
+      <div class="piso" aria-hidden="true"></div>
+      <div class="reflejo" aria-hidden="true"><img src="assets/marca.webp" alt="" width="1400" height="592"></div>
+     </div>
+    </div>
+
+    <h1 class="lema destello entra" style="--retraso:.35s">La pregunta se contesta sola.</h1>
+    <p class="sub entra" style="--retraso:.45s">Pon el puntero sobre la pregunta y haz <kbd>Ctrl</kbd> + <kbd>clic</kbd>. NO LIMIT lee la pantalla, piensa y marca la respuesta por ti.</p>
+
+    <div class="acciones entra" style="--retraso:.55s">
+      <a class="liquido descarga" id="ctaPortada" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/NO-LIMIT-Setup.exe">
+        <span class="liquido-forma" aria-hidden="true"><i class="gota g1"></i><i class="gota g2"></i><i class="gota g3"></i></span>
+        <span class="liquido-brillo" aria-hidden="true"></span>
+        <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
+      </a>
+      <a class="vidrio-btn" href="#demo">Pruébalo aquí</a>
+    </div>
+    <p class="meta entra js-meta" style="--retraso:.65s">Gratis · Windows 10 y 11</p>
   </section>
 
-  <section class="como">
-    <figure class="vista">
-      <div class="ventana">
-        <div class="barra">
-          <span>NO LIMIT</span>
-          <span class="botones" aria-hidden="true">
-            <span><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" stroke-width="1"/></svg></span>
-            <span class="apagado"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg></span>
-            <span><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1"/></svg></span>
-          </span>
-        </div>
-        <img src="assets/app.png" alt="NO LIMIT activo: modelo Claude Haiku 5.5, botón Detener y lo último que contestó" width="760" height="1200" loading="lazy">
-      </div>
-      <figcaption>Así se ve. Al tocar Inyectar se va junto al reloj.</figcaption>
-    </figure>
+  <!-- ============================================================ demo -->
+  <section class="seccion" id="demo">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Pruébalo aquí</span>
+        <h2 class="titulo plata">Ctrl + clic.<br>Y ya.</h2>
+        <p class="sub">Pon el mouse sobre la pregunta, deja apretado <kbd id="kbdCtrl">Ctrl</kbd> y da clic. En el cel, solo tócala.</p>
+      </header>
 
-    <div class="texto">
-      <h2 class="titulo">CÓMO SE USA</h2>
-      <ol class="pasos">
-        <li>
-          <span class="n">01</span>
-          <h3>INSTÁLALA</h3>
-          <p>Abre el archivo que bajaste. Si Windows dice <em>“Windows protegió tu PC”</em>, toca <strong>Más información</strong> y luego <strong>Ejecutar de todas formas</strong>.</p>
-        </li>
-        <li>
-          <span class="n">02</span>
-          <h3>PEGA TU CLAVE</h3>
-          <p>Elige el modelo y pega tu clave. La de Gemini es gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Las de <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude</a> y <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">ChatGPT</a> necesitan saldo.</p>
-        </li>
-        <li>
-          <span class="n">03</span>
-          <h3>TOCA INYECTAR</h3>
-          <p>La ventana se va junto al reloj y sigue activa ahí. Toca su icono para abrirla; clic derecho para detenerla o cerrarla.</p>
-        </li>
-        <li>
-          <span class="n">04</span>
-          <h3>CTRL + CLIC</h3>
-          <p>Pon el puntero sobre la pregunta y haz <span class="atajo"><kbd>Ctrl</kbd> + <kbd>clic</kbd></span>. En opción múltiple marca la respuesta. En preguntas abiertas la escribe sola.</p>
-        </li>
-      </ol>
+      <div class="demo-zona" data-revela style="--retraso:.1s">
+        <div class="navegador" id="navegador">
+          <div class="nav-barra" aria-hidden="true">
+            <div class="nav-puntos"><i></i><i></i><i></i></div>
+            <div class="nav-url"><svg viewBox="0 0 12 12"><rect x="2" y="5" width="8" height="6" rx="1.5" fill="currentColor"/><path d="M4 5V3.6a2 2 0 0 1 4 0V5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>quiz.escuela.mx</div>
+          </div>
+          <div class="quiz" id="quiz">
+            <div class="quiz-cabeza"><span class="quiz-materia" id="qMateria">Geografía</span><span id="qNumero">Pregunta 1 de 6</span></div>
+            <div class="quiz-tarjeta">
+              <div class="quiz-cuerpo" id="qCuerpo">
+                <p class="quiz-pregunta" id="qTexto">¿Cuál es la capital de Australia?<span class="req">*</span></p>
+                <div id="qRespuestas"></div>
+              </div>
+            </div>
+            <div class="quiz-pie">
+              <span id="qAyuda">NO LIMIT está activo</span>
+              <button class="siguiente" id="qSiguiente" type="button">Siguiente <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+          <div class="captura" id="captura" aria-hidden="true"><i class="esq a"></i><i class="esq b"></i><i class="esq c"></i><i class="esq d"></i><span class="linea-escaneo" id="escaneo"></span></div>
+          <div class="puntero" id="puntero" aria-hidden="true"><span class="onda"></span><svg><use href="#i-puntero"/></svg></div>
+          <div class="burbuja" id="burbuja" role="status"><span class="icono" id="bIcono"></span><span id="bTexto"></span></div>
+        </div>
+
+        <aside class="mini-app" id="miniApp" aria-label="Lo que va contestando">
+          <img class="mini-logo" src="assets/marca.webp" alt="" width="1400" height="592">
+          <div class="mini-modelo"><span><small>Claude</small><b>Haiku 5.5</b></span><span class="pastilla">Rápido</span></div>
+          <div class="mini-estado"><span class="punto-activo" aria-hidden="true"></span><span id="miniEstado">Activo</span></div>
+          <ol class="registro" id="registro"><li class="vacio">Aquí vas a ver lo que va contestando</li></ol>
+        </aside>
+      </div>
+      <p class="demo-ayuda" data-revela>¿Sin teclado a la mano? <button type="button" id="simular">Simular Ctrl + clic</button> · <kbd>Esc</kbd> cancela</p>
     </div>
   </section>
 
-  <section class="calma">
-    <h2 class="titulo">NO ESTORBA</h2>
-    <div class="tarjetas">
-      <div>
-        <h3>Jugando, no hace nada</h3>
-        <p>Si tienes un juego en pantalla completa, el Ctrl&nbsp;+&nbsp;clic no hace nada. Tampoco si dejas Ctrl apretado para agacharte.</p>
+  <!-- ============================================================ historia -->
+  <section class="historia" id="como" aria-label="Cómo funciona">
+    <div class="historia-fija">
+      <div class="historia-textos">
+        <span class="ojo">Cómo funciona</span>
+        <div class="pasos-h">
+          <article class="paso-h activo"><span class="paso-n">01</span><h3 class="plata">Elige tu IA.</h3><p>Claude, Gemini o ChatGPT. Pegas tu clave una vez y se guarda cifrada en tu compu.</p></article>
+          <article class="paso-h"><span class="paso-n">02</span><h3 class="plata">Toca INYECTAR.</h3><p>El botón se llena de blanco, suelta un destello y NO LIMIT queda activo.</p></article>
+          <article class="paso-h"><span class="paso-n">03</span><h3 class="plata">Se va junto al reloj.</h3><p>La ventana desaparece y sigue trabajando escondida. No dibuja nada y no estorba en tus juegos.</p></article>
+          <article class="paso-h"><span class="paso-n">04</span><h3 class="plata">Ctrl + clic. Listo.</h3><p>Pon el puntero sobre la pregunta y haz Ctrl + clic. La respuesta se marca sola.</p></article>
+        </div>
+        <div class="historia-progreso" aria-hidden="true"><span><i></i></span><span><i></i></span><span><i></i></span><span><i></i></span></div>
       </div>
-      <div>
-        <h3>Escondida casi no gasta</h3>
-        <p>Junto al reloj no dibuja nada. Solo trabaja el ratito en que lee la pregunta.</p>
+
+      <div class="historia-escena" id="escena" aria-hidden="true">
+        <div class="lienzo" id="lienzo">
+          <div class="ventana" id="hVentana">
+            <div class="v-titulo"><span>NO LIMIT</span><span class="ctl"><span><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg></span><span class="off"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg></span><span><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor"/></svg></span></span></div>
+            <div class="v-cuerpo">
+              <img class="v-logo" src="assets/marca.webp" alt="" width="1400" height="592">
+              <div class="v-modelo" id="hModelo">
+                <span class="halo-sel" id="hHalo"></span>
+                <small id="hProv">Claude</small>
+                <span class="nombre-caja"><span class="nombre" id="hNombre">Haiku 5.5</span></span>
+                <span class="nota" id="hNota">Rápido</span>
+                <svg class="chev" viewBox="0 0 14 14"><path d="M3 5.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="v-boton" id="hBoton">
+                <span class="brillo-b" id="hBrillo"></span>
+                <span class="vidrio-b"></span>
+                <span class="lleno" id="hLleno"></span>
+                <span class="aro" id="hAro"></span>
+                <span class="etiqueta" id="hEtiqueta">INYECTAR</span>
+              </div>
+              <div class="v-estado" id="hEstado"><i></i><span id="hEstadoTxt">Apagado</span></div>
+              <div class="v-ayuda" id="hAyuda">Toca Inyectar y se va junto al reloj</div>
+              <div class="v-actividad"><span class="vacio-v">Aquí vas a ver lo que va contestando</span></div>
+              <div class="v-pie"><span><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M7 1.5v1.6M7 10.9v1.6M1.5 7h1.6M10.9 7h1.6M3.1 3.1l1.1 1.1M9.8 9.8l1.1 1.1M3.1 10.9l1.1-1.1M9.8 4.2l1.1-1.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Ajustes</span><em class="js-version-corta">v1.2.0</em></div>
+            </div>
+          </div>
+
+          <div class="quiz-h" id="hQuiz">
+            <p class="materia">Geografía · Pregunta 3</p>
+            <h4>¿Cuál es la capital de Australia?</h4>
+            <ul><li><i class="radio"></i>Sídney</li><li id="hBien"><i class="radio"></i>Canberra</li><li><i class="radio"></i>Melbourne</li><li><i class="radio"></i>Perth</li></ul>
+          </div>
+          <div class="h-captura" id="hCaptura"><span class="linea-escaneo" id="hEscaneo"></span></div>
+          <div class="h-ctrl" id="hCtrl">Ctrl</div>
+          <div class="h-puntero" id="hPuntero"><svg><use href="#i-puntero"/></svg></div>
+          <div class="h-burbuja" id="hBurbuja">Pensando…</div>
+
+          <div class="tareas" id="hTareas">
+            <span class="ico"><svg viewBox="0 0 16 16"><path d="M4 10l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="ico nl" id="hIcono"><img src="assets/bandeja.png" alt=""><span class="pulso" id="hPulso"></span></span>
+            <span class="ico"><svg viewBox="0 0 16 16"><path d="M2 6.5a9 9 0 0 1 12 0M4.2 9a6 6 0 0 1 7.6 0M6.4 11.4a3 3 0 0 1 3.2 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+            <span class="ico"><svg viewBox="0 0 16 16"><path d="M3 6h2.5L9 3v10L5.5 10H3z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+            <span class="hora">9:41 p. m.<small>29/10/2026</small></span>
+          </div>
+          <div class="tip" id="hTip">NO LIMIT · Activo</div>
+        </div>
       </div>
-      <div>
-        <h3>No se mete en nada</h3>
-        <p>No inyecta nada en otros programas ni en la memoria. Solo mira la pantalla cuando haces Ctrl&nbsp;+&nbsp;clic.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ funciones -->
+  <section class="seccion" id="funciones">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Funciones</span>
+        <h2 class="titulo plata">Todo lo que hace.<br>Sin que lo veas.</h2>
+      </header>
+
+      <div class="bento" id="bento">
+        <article class="tarjeta t-a" data-revela>
+          <div>
+            <h3>Opción múltiple</h3>
+            <p>Decide la respuesta, la busca en la pantalla y le da clic. Revisa dos veces que el clic caiga justo en esa opción.</p>
+          </div>
+          <div class="mq" aria-hidden="true">
+            <p>¿Cuál es la capital de Australia?</p>
+            <ul><li><i></i>Sídney</li><li class="ok"><i></i>Canberra</li><li><i></i>Melbourne</li><li><i></i>Perth</li></ul>
+            <svg class="mq-cursor"><use href="#i-puntero"/></svg>
+          </div>
+        </article>
+
+        <article class="tarjeta t-b" data-revela style="--retraso:.06s">
+          <div><h3>Preguntas abiertas</h3><p>La escribe sola, corta o larga según la pregunta.</p></div>
+          <div class="caja-texto" aria-hidden="true"><span id="tipeo"></span><span class="cursor-t"></span></div>
+        </article>
+
+        <article class="tarjeta t-c" data-revela style="--retraso:.12s">
+          <div><h3>Varias cajitas</h3><p>Si la pregunta tiene varias, llena cada una.</p></div>
+          <div class="cajitas" id="cajitas" aria-hidden="true">
+            <div>a) <span></span></div><div>b) <span></span></div><div>c) <span></span></div>
+          </div>
+        </article>
+
+        <article class="tarjeta t-d" data-revela>
+          <div><h3>Junto al reloj</h3><p>Al tocar INYECTAR se esconde y sigue activa. Escondida no dibuja nada.</p></div>
+          <div class="fila-d">
+            <div class="cpu">
+              <div class="cpu-num"><span id="cpuNum">0</span>%<small>de CPU</small></div>
+              <svg viewBox="0 0 300 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40 L30 40 L36 38 L42 40 L120 40 L126 39 L132 40 L210 40 L216 37 L222 40 L300 40" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.6"/><path d="M0 40 L30 40 L36 38 L42 40 L120 40 L126 39 L132 40 L210 40 L216 37 L222 40 L300 40 V44 H0 Z" fill="rgba(255,255,255,.06)"/></svg>
+            </div>
+            <div class="mini-tareas" aria-hidden="true">
+              <span style="opacity:.6">^</span>
+              <span class="nl-b"><img src="assets/bandeja.png" alt=""></span>
+              <span style="padding-left:6px">9:41 p. m.</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="tarjeta t-e" data-revela>
+          <div class="icono-grande" aria-hidden="true"><svg viewBox="0 0 26 26"><path d="M8 8h10a6 6 0 0 1 5.6 8.2l-.9 2.3a2.4 2.4 0 0 1-4 .6L16.6 17H9.4l-2.1 2.1a2.4 2.4 0 0 1-4-.6l-.9-2.3A6 6 0 0 1 8 8z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 11v4M6.5 13h4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="17.5" cy="12" r="1.1" fill="#fff"/><circle cx="19.5" cy="14.5" r="1.1" fill="#fff"/></svg></div>
+          <div><h3>No estorba en juegos</h3><p>Con un juego en pantalla completa, o con Ctrl apretado para agacharte, no hace nada.</p></div>
+        </article>
+
+        <article class="tarjeta t-f" data-revela style="--retraso:.06s">
+          <div class="clave-falsa" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="2" fill="currentColor"/><path d="M5.2 7V5.4a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>AIza••••••••••Xk2</div>
+          <div><h3>Tu clave, cifrada</h3><p>Se guarda cifrada con tu usuario de Windows, solo en tu compu.</p></div>
+        </article>
+
+        <article class="tarjeta t-g" data-revela style="--retraso:.12s">
+          <div class="fila-g">
+            <span id="precisoTxt">Piensa antes de contestar</span>
+            <button class="interruptor" id="interruptor" role="switch" aria-checked="true" aria-label="Modo preciso"></button>
+          </div>
+          <div><h3>Modo preciso</h3><p>Viene prendido. Se equivoca menos y tarda un poquito más.</p></div>
+        </article>
+
+        <article class="tarjeta t-h" data-revela style="--retraso:.18s">
+          <button class="tecla-esc" id="teclaEsc" type="button" aria-label="Tecla Esc">esc</button>
+          <div><h3>Esc cancela</h3><p>Si te arrepientes, Esc y se detiene al instante.</p></div>
+        </article>
       </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ modelos -->
+  <section class="seccion" id="modelos">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Modelos</span>
+        <h2 class="titulo plata">Tu IA. Tu clave.</h2>
+        <p class="sub">Claude, Gemini o ChatGPT. Cambias de modelo con un clic, sin reinstalar nada.</p>
+        <div class="segmento" id="segmento" role="group" aria-label="Vista de modelos">
+          <span class="pildora" id="pildora" aria-hidden="true"></span>
+          <button type="button" aria-pressed="true" data-vista="carrusel">Carrusel</button>
+          <button type="button" aria-pressed="false" data-vista="rejilla">Todos</button>
+        </div>
+      </header>
+    </div>
+    <div class="modelos-vista" id="modelosVista" data-revela>
+      <div class="carrusel" id="carrusel"><div class="riel" id="riel1"></div><div class="riel reves" id="riel2"></div></div>
+      <div class="envoltura"><div class="rejilla" id="rejilla"></div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ numeros + precio -->
+  <section class="seccion" id="precio">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Precio</span>
+        <h2 class="titulo plata">Gratis.<br>Sin trucos.</h2>
+        <p class="sub">Sin suscripción, sin cuenta y sin tarjeta. Solo usas tu clave de IA.</p>
+      </header>
+
+      <div class="numeros" data-revela>
+        <div class="numero"><b class="plata"><span class="cuenta" data-desde="100" data-hasta="0">0</span>%</b><span>de CPU escondida</span></div>
+        <div class="numero"><b class="plata"><span class="cuenta" data-desde="0" data-hasta="7">7</span></b><span>modelos de IA</span></div>
+        <div class="numero"><b class="plata"><span class="cuenta" data-desde="0" data-hasta="1">1</span></b><span>atajo: Ctrl + clic</span></div>
+        <div class="numero"><b class="plata">$<span class="cuenta" data-desde="25" data-hasta="0">0</span></b><span>cuesta la app</span></div>
+      </div>
+
+      <div class="precio" data-revela>
+        <div class="cero plata"><small>$</small>0</div>
+        <p class="nunca">Hoy, mañana y siempre.</p>
+        <ul class="lista-chulos">
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>La app es gratis y se actualiza sola cuando sale una versión nueva.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Gemini Flash funciona con una clave gratis de Google.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Con Claude o ChatGPT pagas solo lo que usas, directo a ellos.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tus preguntas no pasan por ningún servidor nuestro.</span></li>
+        </ul>
+        <div class="acciones">
+          <a class="liquido descarga" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/NO-LIMIT-Setup.exe">
+            <span class="liquido-forma" aria-hidden="true"><i class="gota g1"></i><i class="gota g2"></i><i class="gota g3"></i></span>
+            <span class="liquido-brillo" aria-hidden="true"></span>
+            <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar gratis
+          </a>
+        </div>
+        <p class="nota-clave js-meta">Gratis · Windows 10 y 11</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ instalar -->
+  <section class="seccion" id="instalar">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Instalar</span>
+        <h2 class="titulo plata">Listo en un minuto.</h2>
+      </header>
+      <div class="linea-tiempo" id="lineaTiempo">
+        <span class="avance" aria-hidden="true"></span>
+        <div class="hito" data-revela><span class="bola">1</span><h3>Descárgala</h3><p>Baja el instalador <span class="js-tam">para Windows 10 y 11</span>.</p></div>
+        <div class="hito" data-revela style="--retraso:.08s"><span class="bola">2</span><h3>Instálala</h3><p>Si sale <em>“Windows protegió tu PC”</em>, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.</p></div>
+        <div class="hito" data-revela style="--retraso:.16s"><span class="bola">3</span><h3>Pega tu clave</h3><p>Gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. O con saldo en <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude</a> o <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">ChatGPT</a>.</p></div>
+        <div class="hito" data-revela style="--retraso:.24s"><span class="bola">4</span><h3>INYECTAR</h3><p>Se va junto al reloj. Ahora Ctrl + clic sobre cualquier pregunta.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ preguntas -->
+  <section class="seccion" id="preguntas">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Preguntas</span>
+        <h2 class="titulo plata">Lo que todos preguntan.</h2>
+      </header>
+      <div class="faq" id="faq" data-revela>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿De verdad es gratis?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí. La app no cuesta nada. Solo necesitas una clave de IA: <b>la de Gemini es gratis</b>; las de Claude y ChatGPT cobran por uso, directo a ellos.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿“Inyectar” mete algo en mi compu o en la página?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. Es solo el nombre del botón. Cuando haces Ctrl + clic toma una captura cerca del puntero y da el clic o escribe como si fueras tú. <b>No se mete en otros programas ni en la memoria.</b></p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué Windows dice “Windows protegió tu PC”?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque la app es nueva y no tiene un certificado de paga. Toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>. El código está abierto en GitHub.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿A dónde se va cuando toco INYECTAR?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Junto al reloj de Windows (si no la ves, está en la flechita <b>^</b>). Clic para abrirla; clic derecho para <b>Detener</b> o <b>Salir</b>. Si la abres otra vez desde el escritorio, la ventana regresa.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Me va a trabar los juegos?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. Escondida no dibuja nada y casi no usa CPU. Con un juego en pantalla completa, o si dejas Ctrl apretado para agacharte, el Ctrl + clic no hace nada.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Mi clave está segura?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Se guarda cifrada con tu usuario de Windows y solo en tu compu. Las preguntas van directo de tu compu a la IA que elegiste, sin pasar por un servidor nuestro.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Se puede equivocar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Como cualquier IA, sí. Por eso el <b>modo preciso</b> viene prendido y la app revisa que el clic caiga en la opción que eligió. Si el quiz tiene la respuesta mal escrita, elige la más cercana a la real.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué modelo me conviene?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Para empezar, <b>Gemini Flash</b>, porque la clave es gratis. Lo más rápido es <b>Claude Haiku</b> y lo más listo, <b>Claude Opus</b>.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Funciona en Mac o en el cel?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Por ahora solo en Windows 10 y 11.</p></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ final -->
+  <section class="final" id="final">
+    <div class="foco" aria-hidden="true"></div>
+    <div class="envoltura">
+      <img class="final-logo" id="finalLogo" src="assets/marca.webp" alt="NO LIMIT" width="1400" height="592" loading="lazy" data-revela>
+      <h2 class="titulo destello" data-revela>Sin límite.</h2>
+      <div class="acciones" data-revela style="--retraso:.1s">
+        <a class="liquido descarga" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/NO-LIMIT-Setup.exe">
+          <span class="liquido-forma" aria-hidden="true"><i class="gota g1"></i><i class="gota g2"></i><i class="gota g3"></i></span>
+          <span class="liquido-brillo" aria-hidden="true"></span>
+          <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
+        </a>
+      </div>
+      <p class="meta js-meta" data-revela>Gratis · Windows 10 y 11</p>
     </div>
   </section>
 </main>
 
 <footer>
-  <b>NO LIMIT</b>
-  <a href="https://github.com/santiagoliftss-svj/clw-gang">Código en GitHub</a>
+  <div class="envoltura pie">
+    <img src="assets/marca.webp" alt="NO LIMIT" width="1400" height="592" loading="lazy">
+    <nav aria-label="Pie">
+      <a href="#demo">Pruébalo</a>
+      <a href="#preguntas">Preguntas</a>
+      <a href="https://github.com/santiagoliftss-svj/clw-gang">Código en GitHub</a>
+      <a href="https://github.com/santiagoliftss-svj/clw-gang/blob/main/LICENCIAS.txt">Licencias</a>
+    </nav>
+    <span>© 2026 NO LIMIT · <span class="js-version-corta">v1.2.0</span></span>
+  </div>
 </footer>
 
 <script>
-  // version y tamano reales del ultimo instalador
+(function () {
+  "use strict";
+  var reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var finoPuntero = window.matchMedia("(pointer: fine)").matches;
+  function $(s, r) { return (r || document).querySelector(s); }
+  function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+  function limitar(v, a, b) { return Math.min(b, Math.max(a, v)); }
+  function tramo(p, a, b) { return limitar((p - a) / (b - a), 0, 1); }
+  function mezcla(a, b, t) { return a + (b - a) * t; }
+  function suave(t) { return 1 - Math.pow(1 - t, 3); }
+  function vaiven(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function entrada(t) { return t * t * t; }
+  function rebote(t) { var c = 1.7, d = c + 1; return 1 + d * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); }
+
+  /* resorte critico (estilo Apple): va del valor actual al objetivo y acepta cambios a medio camino */
+  function Resorte(valor, respuesta, amortiguacion) {
+    this.v = valor; this.vel = 0; this.meta = valor;
+    var w = 2 * Math.PI / (respuesta || .4);
+    this.k = w * w; this.c = 2 * (amortiguacion || 1) * w;
+  }
+  Resorte.prototype.paso = function (dt) {
+    var f = this.k * (this.meta - this.v) - this.c * this.vel;
+    this.vel += f * dt; this.v += this.vel * dt;
+    return Math.abs(this.meta - this.v) > .0005 || Math.abs(this.vel) > .0005;
+  };
+
+  /* ---------------------------------------------------------------- un solo ciclo de dibujo */
+  var tareas = [];
+  var pedido = false, ultimo = 0;
+  function pedirCuadro() { if (!pedido) { pedido = true; requestAnimationFrame(cuadro); } }
+  function cuadro(t) {
+    pedido = false;
+    var dt = Math.min(.05, ultimo ? (t - ultimo) / 1000 : .016); ultimo = t;
+    var sigue = false;
+    for (var i = 0; i < tareas.length; i++) { if (tareas[i](dt)) sigue = true; }
+    if (sigue) pedirCuadro(); else ultimo = 0;
+  }
+  window.addEventListener("scroll", pedirCuadro, { passive: true });
+  window.addEventListener("resize", function () { medir(); pedirCuadro(); });
+
+  /* ---------------------------------------------------------------- version real del instalador */
   fetch("https://api.github.com/repos/santiagoliftss-svj/clw-gang/releases/latest")
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
       if (!d) return;
+      var v = String(d.tag_name || "").replace(/^v/i, "");
       var a = (d.assets || []).filter(function (x) { return /Setup\.exe$/i.test(x.name); })[0];
-      var mb = a ? " (" + Math.round(a.size / 1048576) + " MB)" : "";
-      document.getElementById("meta").textContent = "Versión " + String(d.tag_name || "").replace(/^v/i, "") + mb + " para Windows 10 y 11";
+      var mb = a ? Math.round(a.size / 1048576) : 0;
+      $$(".js-version").forEach(function (e) { e.textContent = "v" + v.split(".").slice(0, 2).join("."); });
+      $$(".js-version-corta").forEach(function (e) { e.textContent = "v" + v; });
+      $$(".js-meta").forEach(function (e) { e.textContent = "Gratis · Versión " + v + (mb ? " · " + mb + " MB" : "") + " · Windows 10 y 11"; });
+      $$(".js-tam").forEach(function (e) { e.textContent = mb ? "(" + mb + " MB) para Windows 10 y 11" : "para Windows 10 y 11"; });
+      if (a) $$("a.descarga").forEach(function (e) { e.href = a.browser_download_url; });
     })
     .catch(function () {});
+
+  /* ---------------------------------------------------------------- entrada y aparecer al hacer scroll */
+  requestAnimationFrame(function () { requestAnimationFrame(function () { document.documentElement.classList.add("listo"); }); });
+  var verRevela = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("visto"); verRevela.unobserve(e.target); } });
+  }, { threshold: .14, rootMargin: "0px 0px -6% 0px" });
+  $$("[data-revela]").forEach(function (e) { verRevela.observe(e); });
+
+  /* ---------------------------------------------------------------- barra de arriba */
+  var barra = $("#barra"), links = $$("#barraLinks a"), indicador = $("#indicador");
+  function moverIndicador(a) {
+    if (!a) { indicador.style.opacity = 0; return; }
+    indicador.style.opacity = 1;
+    indicador.style.width = a.offsetWidth + "px";
+    indicador.style.transform = "translateX(" + a.offsetLeft + "px)";
+  }
+  var verSecciones = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var activo = null;
+      links.forEach(function (a) { var si = a.getAttribute("href") === "#" + e.target.id; a.classList.toggle("activo", si); if (si) activo = a; });
+      moverIndicador(activo);
+    });
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  ["inicio", "demo", "como", "funciones", "modelos", "precio", "instalar", "preguntas", "final"].forEach(function (id) { var s = document.getElementById(id); if (s) verSecciones.observe(s); });
+  tareas.push(function () { barra.classList.toggle("compacta", window.scrollY > 30); return false; });
+
+  /* ---------------------------------------------------------------- portada: logo con inclinacion, luz y parallax */
+  var escenaLogo = $("#logoEscena"), logo3d = $("#logo3d"), luzCursor = $("#luzCursor"), portada = $("#inicio");
+  var rx = new Resorte(0, .55), ry = new Resorte(0, .55), lx = new Resorte(30, .7), ly = new Resorte(20, .7);
+  var cx = new Resorte(innerWidth / 2, .8), cy = new Resorte(innerHeight * .4, .8);
+  if (finoPuntero && !reducido) {
+    portada.addEventListener("pointermove", function (e) {
+      var r = logo3d.getBoundingClientRect();
+      var nx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+      var ny = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+      ry.meta = limitar(nx, -1.4, 1.4) * 9; rx.meta = -limitar(ny, -1.4, 1.4) * 7;
+      lx.meta = limitar((e.clientX - r.left) / r.width * 100, -20, 120); ly.meta = limitar((e.clientY - r.top) / r.height * 100, -20, 120);
+      var rp = portada.getBoundingClientRect();
+      cx.meta = e.clientX - rp.left; cy.meta = e.clientY - rp.top;
+      pedirCuadro();
+    });
+    portada.addEventListener("pointerleave", function () { rx.meta = 0; ry.meta = 0; lx.meta = 30; ly.meta = 20; pedirCuadro(); });
+  }
+  tareas.push(function (dt) {
+    var sigue = rx.paso(dt) | ry.paso(dt) | lx.paso(dt) | ly.paso(dt) | cx.paso(dt) | cy.paso(dt);
+    var s = window.scrollY, alto = innerHeight;
+    if (s < alto * 1.2) {
+      var p = reducido ? 0 : limitar(s / alto, 0, 1);
+      escenaLogo.style.transform = "translate3d(0," + (p * alto * .18).toFixed(1) + "px,0) scale(" + (1 - p * .08).toFixed(4) + ")";
+      escenaLogo.style.opacity = (1 - p * .75).toFixed(3);
+      logo3d.style.transform = "rotateX(" + rx.v.toFixed(2) + "deg) rotateY(" + ry.v.toFixed(2) + "deg)";
+      logo3d.style.setProperty("--lx", lx.v.toFixed(1) + "%");
+      logo3d.style.setProperty("--ly", ly.v.toFixed(1) + "%");
+      luzCursor.style.setProperty("--cx", cx.v.toFixed(0) + "px");
+      luzCursor.style.setProperty("--cy", cy.v.toFixed(0) + "px");
+    }
+    return !!sigue;
+  });
+
+  /* una gota cae sola de vez en cuando del boton principal */
+  var cta = $("#ctaPortada");
+  if (!reducido) setInterval(function () {
+    if (cta.matches(":hover") || window.scrollY > innerHeight) return;
+    cta.classList.remove("solo-una"); void cta.offsetWidth; cta.classList.add("solo-una");
+  }, 7000);
+
+  /* ---------------------------------------------------------------- DEMO: Ctrl + clic de verdad */
+  var PREGUNTAS = [
+    { materia: "Geografía", texto: "¿Cuál es la capital de Australia?", opciones: ["Sídney", "Canberra", "Melbourne", "Perth"], bien: 1 },
+    { materia: "Química", texto: "¿Cuál es el símbolo químico del oro?", opciones: ["Ag", "Fe", "Au", "Pb"], bien: 2 },
+    { materia: "Matemáticas", texto: "¿Cuánto es 12 × 12?", opciones: ["124", "132", "154", "144"], bien: 3 },
+    { materia: "Inglés", texto: "¿Cómo se dice “gracias” en inglés?", abierta: "Thank you" },
+    { materia: "Literatura", texto: "¿Quién escribió Cien años de soledad?", opciones: ["Gabriel García Márquez", "Octavio Paz", "Julio Cortázar", "Carlos Fuentes"], bien: 0 },
+    { materia: "Geografía", texto: "¿Qué tan alto es el Everest?", opciones: ["8,488 m", "8,611 m", "8,848 m", "7,999 m"], bien: 2 }
+  ];
+  var navegador = $("#navegador"), quiz = $("#quiz"), cuerpo = $("#qCuerpo"), respuestas = $("#qRespuestas");
+  var captura = $("#captura"), escaneo = $("#escaneo"), puntero = $("#puntero"), burbuja = $("#burbuja");
+  var bIcono = $("#bIcono"), bTexto = $("#bTexto"), registro = $("#registro"), miniApp = $("#miniApp");
+  var btnSiguiente = $("#qSiguiente"), qAyuda = $("#qAyuda"), kbdCtrl = $("#kbdCtrl");
+  var indice = 0, ocupado = false, contestada = false, ficha = null, tipoPuntero = "mouse", ultimoDisparo = 0;
+
+  function Cancelado() {}
+  function nuevaFicha() { var f = { cancelada: false, avisos: [] }; f.cancelar = function () { f.cancelada = true; f.avisos.forEach(function (a) { a(); }); }; return f; }
+  function esperar(ms, f) {
+    return new Promise(function (ok, mal) {
+      if (f.cancelada) return mal(new Cancelado());
+      var id = setTimeout(ok, ms);
+      f.avisos.push(function () { clearTimeout(id); mal(new Cancelado()); });
+    });
+  }
+  function animar(ms, alCuadro, f) {
+    return new Promise(function (ok, mal) {
+      var t0 = performance.now(), vivo = true;
+      f.avisos.push(function () { vivo = false; mal(new Cancelado()); });
+      (function paso(t) {
+        if (!vivo) return;
+        var p = limitar((t - t0) / ms, 0, 1);
+        alCuadro(p);
+        if (p < 1) requestAnimationFrame(paso); else ok();
+      })(t0);
+    });
+  }
+  function relativo(x, y) { var r = navegador.getBoundingClientRect(); return { x: x - r.left, y: y - r.top }; }
+  function centroDe(el) { var r = el.getBoundingClientRect(), n = navegador.getBoundingClientRect(); return { x: r.left - n.left + Math.min(r.width * .32, 90), y: r.top - n.top + r.height / 2 }; }
+  function horaAhora() { var d = new Date(); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+
+  function pintarPregunta() {
+    var p = PREGUNTAS[indice];
+    $("#qMateria").textContent = p.materia;
+    $("#qNumero").textContent = "Pregunta " + (indice + 1) + " de " + PREGUNTAS.length;
+    $("#qTexto").innerHTML = "";
+    $("#qTexto").appendChild(document.createTextNode(p.texto));
+    var req = document.createElement("span"); req.className = "req"; req.textContent = "*"; $("#qTexto").appendChild(req);
+    respuestas.innerHTML = "";
+    if (p.abierta) {
+      var c = document.createElement("div"); c.className = "campo"; c.id = "qCampo";
+      c.innerHTML = '<span class="ph">Escribe tu respuesta</span>';
+      respuestas.appendChild(c);
+    } else {
+      var ul = document.createElement("ul"); ul.className = "opciones";
+      p.opciones.forEach(function (o) {
+        var li = document.createElement("li"); li.className = "opcion";
+        li.innerHTML = '<span class="radio"></span><span></span>';
+        li.lastChild.textContent = o; ul.appendChild(li);
+      });
+      respuestas.appendChild(ul);
+    }
+    qAyuda.textContent = "NO LIMIT está activo";
+  }
+
+  function mostrarBurbuja(texto, tipo, x, y) {
+    bTexto.textContent = texto;
+    bIcono.innerHTML = tipo === "ok" ? '<span class="ok"><svg viewBox="0 0 10 10"><path d="M2 5.2l2 2L8 3" fill="none" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+      : tipo === "trabajo" ? '<span class="giro"></span>' : "";
+    var n = navegador.getBoundingClientRect();
+    burbuja.style.setProperty("--bx", Math.min(x + 18, n.width - burbuja.offsetWidth - 12) + "px");
+    burbuja.style.setProperty("--by", Math.min(y + 24, n.height - 48) + "px");
+    burbuja.classList.add("ver");
+  }
+  function ocultarBurbuja() { burbuja.classList.remove("ver"); }
+  function ponerPuntero(x, y) { puntero.style.setProperty("--px", x + "px"); puntero.style.setProperty("--py", y + "px"); }
+
+  function agregarRegistro(texto, tipo) {
+    var vacio = registro.querySelector(".vacio"); if (vacio) vacio.remove();
+    var li = document.createElement("li"); if (tipo) li.className = tipo;
+    li.innerHTML = "<time></time><span></span>";
+    li.firstChild.textContent = horaAhora(); li.lastChild.textContent = texto;
+    registro.insertBefore(li, registro.firstChild);
+    while (registro.children.length > 4) registro.lastChild.remove();
+  }
+
+  function pista(x, y) {
+    mostrarBurbuja("Deja apretado Ctrl y da clic", "", x, y);
+    if (kbdCtrl) { kbdCtrl.animate([{ transform: "scale(1)" }, { transform: "scale(1.18)", background: "rgba(255,255,255,.35)" }, { transform: "scale(1)" }], { duration: 650, easing: "cubic-bezier(.22,1,.36,1)" }); }
+    clearTimeout(pista.t); pista.t = setTimeout(ocultarBurbuja, 1800);
+  }
+
+  async function correr(x, y) {
+    if (ocupado) return;
+    ocupado = true; ficha = nuevaFicha(); var f = ficha;
+    clearTimeout(pista.t);
+    quiz.classList.add("trabajando"); miniApp.classList.add("ocupada"); $("#miniEstado").textContent = "Leyendo…";
+    var n = navegador.getBoundingClientRect();
+    try {
+      ponerPuntero(x, y); puntero.classList.add("ver");
+      /* 1. captura alrededor del puntero */
+      var meta = { l: 10, t: 54, r: n.width - 10, b: n.height - 10 };
+      captura.classList.add("ver");
+      await animar(reducido ? 1 : 420, function (p) {
+        var e = suave(p);
+        captura.style.left = mezcla(x, meta.l, e) + "px"; captura.style.top = mezcla(y, meta.t, e) + "px";
+        captura.style.width = mezcla(0, meta.r - meta.l, e) + "px"; captura.style.height = mezcla(0, meta.b - meta.t, e) + "px";
+      }, f);
+      /* 2. leer */
+      mostrarBurbuja("Leyendo la pantalla…", "trabajo", x, y);
+      escaneo.style.opacity = 1;
+      var alto = meta.b - meta.t;
+      await animar(reducido ? 300 : 900, function (p) { escaneo.style.transform = "translateY(" + (vaiven(p) * (alto - 64)) + "px)"; }, f);
+      escaneo.style.opacity = 0;
+      /* 3. pensar */
+      $("#miniEstado").textContent = "Pensando…";
+      mostrarBurbuja("Pensando…", "trabajo", x, y);
+      await esperar(reducido ? 250 : 700, f);
+      ocultarBurbuja();
+      captura.classList.remove("ver");
+      /* 4. mover el puntero solo hasta la respuesta */
+      var p = PREGUNTAS[indice];
+      var destino = p.abierta ? $("#qCampo") : respuestas.querySelectorAll(".opcion")[p.bien];
+      var c = centroDe(destino);
+      var dx = c.x - x, dy = c.y - y, curva = Math.min(80, Math.hypot(dx, dy) * .25);
+      await animar(reducido ? 1 : 650, function (t) {
+        var e = vaiven(t);
+        var px = x + dx * e - dy / Math.max(1, Math.hypot(dx, dy)) * curva * Math.sin(Math.PI * e);
+        var py = y + dy * e + dx / Math.max(1, Math.hypot(dx, dy)) * curva * Math.sin(Math.PI * e) * .4;
+        ponerPuntero(px, py);
+      }, f);
+      puntero.classList.add("clic");
+      await esperar(140, f);
+      puntero.classList.remove("clic");
+      var hecho;
+      if (p.abierta) {
+        $("#miniEstado").textContent = "Escribiendo…";
+        destino.classList.add("foco");
+        destino.innerHTML = '<span class="txt"></span><span class="cursor-t"></span>';
+        var txt = destino.firstChild;
+        for (var i = 1; i <= p.abierta.length; i++) { txt.textContent = p.abierta.slice(0, i); await esperar(reducido ? 0 : 70, f); }
+        hecho = "Escribió: " + p.abierta;
+      } else {
+        destino.classList.add("marcada");
+        hecho = "Marcó: " + p.opciones[p.bien];
+      }
+      mostrarBurbuja(hecho, "ok", c.x, c.y);
+      agregarRegistro(hecho);
+      qAyuda.textContent = "Contestada por NO LIMIT";
+      contestada = true;
+      btnSiguiente.classList.add("ver");
+      clearTimeout(correr.t); correr.t = setTimeout(ocultarBurbuja, 2400);
+    } catch (e) {
+      if (!(e instanceof Cancelado)) throw e;
+      captura.classList.remove("ver"); escaneo.style.opacity = 0;
+      mostrarBurbuja("Cancelado", "", x, y);
+      agregarRegistro("Cancelado", "info");
+      clearTimeout(correr.t); correr.t = setTimeout(ocultarBurbuja, 1400);
+    } finally {
+      ocupado = false; quiz.classList.remove("trabajando"); miniApp.classList.remove("ocupada"); $("#miniEstado").textContent = "Activo";
+      setTimeout(function () { if (!ocupado) puntero.classList.remove("ver"); }, 900);
+    }
+  }
+
+  function siguiente() {
+    if (ocupado) return;
+    contestada = false; btnSiguiente.classList.remove("ver"); ocultarBurbuja();
+    indice = (indice + 1) % PREGUNTAS.length;
+    if (reducido) { pintarPregunta(); return; }
+    cuerpo.classList.add("sale");
+    setTimeout(function () {
+      pintarPregunta();
+      cuerpo.classList.remove("sale"); cuerpo.classList.add("entra");
+      requestAnimationFrame(function () { requestAnimationFrame(function () { cuerpo.classList.remove("entra"); }); });
+    }, 300);
+  }
+
+  function disparar(e) {
+    var ahora = performance.now();
+    if (ahora - ultimoDisparo < 400) return;
+    var r = relativo(e.clientX, e.clientY);
+    if (ocupado) return;
+    if (contestada) { siguiente(); return; }
+    var tactil = tipoPuntero === "touch" || tipoPuntero === "pen";
+    if (e.ctrlKey || e.metaKey || tactil) { ultimoDisparo = ahora; correr(r.x, r.y); }
+    else pista(r.x, r.y);
+  }
+  quiz.addEventListener("pointerdown", function (e) { tipoPuntero = e.pointerType || "mouse"; });
+  quiz.addEventListener("click", disparar);
+  quiz.addEventListener("contextmenu", function (e) { if (e.ctrlKey) { e.preventDefault(); disparar(e); } });
+  btnSiguiente.addEventListener("click", function (e) { e.stopPropagation(); siguiente(); });
+  $("#simular").addEventListener("click", function () {
+    if (contestada) { siguiente(); return; }
+    var t = $("#qTexto").getBoundingClientRect();
+    var r = relativo(t.left + Math.min(t.width * .4, 160), t.top + t.height / 2);
+    navegador.scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "center" });
+    setTimeout(function () { correr(r.x, r.y); }, 350);
+  });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && ocupado && ficha) ficha.cancelar();
+    if (e.key === "Control") quiz.classList.add("ctrl");
+    if (e.key === "Escape") { var t = $("#teclaEsc"); t.classList.add("apretada"); setTimeout(function () { t.classList.remove("apretada"); }, 160); }
+  });
+  window.addEventListener("keyup", function (e) { if (e.key === "Control") quiz.classList.remove("ctrl"); });
+  window.addEventListener("blur", function () { quiz.classList.remove("ctrl"); });
+  pintarPregunta();
+
+  /* ---------------------------------------------------------------- HISTORIA: la escena sigue al scroll */
+  var historia = $("#como"), lienzo = $("#lienzo"), escena = $("#escena");
+  var pasos = $$(".paso-h"), barras = $$(".historia-progreso i");
+  var h = {
+    ventana: $("#hVentana"), halo: $("#hHalo"), prov: $("#hProv"), nombre: $("#hNombre"), nota: $("#hNota"),
+    lleno: $("#hLleno"), aro: $("#hAro"), brillo: $("#hBrillo"), etiqueta: $("#hEtiqueta"), estado: $("#hEstado"), estadoTxt: $("#hEstadoTxt"), ayuda: $("#hAyuda"),
+    tareas: $("#hTareas"), icono: $("#hIcono"), pulso: $("#hPulso"), tip: $("#hTip"),
+    quiz: $("#hQuiz"), bien: $("#hBien"), captura: $("#hCaptura"), escaneo: $("#hEscaneo"), ctrl: $("#hCtrl"), puntero: $("#hPuntero"), burbuja: $("#hBurbuja")
+  };
+  var MODELOS_H = [["Claude", "Haiku 5.5", "Rápido"], ["Gemini", "Flash", "Clave gratis"], ["ChatGPT", "GPT-6 Luna", "Rápido"], ["Claude", "Haiku 5.5", "Rápido"]];
+  var modeloH = 0, pasoH = -1, ultimoP = -1;
+  function cambiarModelo(i) {
+    if (i === modeloH) return;
+    modeloH = i;
+    var m = MODELOS_H[i], viejo = h.nombre;
+    var nuevo = viejo.cloneNode(); nuevo.className = "nombre debajo"; nuevo.textContent = m[1];
+    viejo.parentNode.appendChild(nuevo);
+    viejo.classList.add("fuera"); viejo.removeAttribute("id");
+    requestAnimationFrame(function () { requestAnimationFrame(function () { nuevo.classList.remove("debajo"); }); });
+    setTimeout(function () { viejo.remove(); }, 600);
+    h.nombre = nuevo; h.prov.textContent = m[0]; h.nota.textContent = m[2];
+  }
+  var pos = {};
+  function medir() {
+    var w = escena.clientWidth, alto = escena.clientHeight;
+    var k = Math.min(w / 520, alto / 700, 1);
+    lienzo.style.setProperty("--k", Math.max(.3, k).toFixed(4));
+    /* todo en coordenadas del lienzo (520 x 700), sin escala */
+    pos.icono = { x: h.tareas.offsetLeft + h.icono.offsetLeft + h.icono.offsetWidth / 2, y: h.tareas.offsetTop + h.icono.offsetTop + h.icono.offsetHeight / 2 };
+    pos.ventana = { x: h.ventana.offsetLeft + h.ventana.offsetWidth / 2, y: h.ventana.offsetTop + h.ventana.offsetHeight / 2 };
+    var q = h.quiz, t = q.querySelector("h4");
+    pos.quiz = { l: q.offsetLeft - 10, t: q.offsetTop - 10, w: q.offsetWidth + 20, h: q.offsetHeight + 20 };
+    pos.pregunta = { x: q.offsetLeft + t.offsetLeft + Math.min(t.offsetWidth * .45, 190), y: q.offsetTop + t.offsetTop + t.offsetHeight / 2 };
+    pos.opcion = { x: q.offsetLeft + h.bien.offsetLeft + 70, y: q.offsetTop + h.bien.offsetTop + h.bien.offsetHeight / 2 };
+    ultimoP = -1;
+  }
+  medir();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { medir(); pedirCuadro(); });
+  function op(el, v) { el.style.opacity = v.toFixed(3); }
+
+  tareas.push(function () {
+    var r = historia.getBoundingClientRect();
+    if (r.bottom < -50 || r.top > innerHeight + 50) return false;
+    var total = historia.offsetHeight - innerHeight;
+    var p = limitar(-r.top / total, 0, 1);
+    if (Math.abs(p - ultimoP) < .0004) return false;
+    ultimoP = p;
+    var paso = p < .25 ? 0 : p < .5 ? 1 : p < .75 ? 2 : 3;
+    if (paso !== pasoH) {
+      pasos.forEach(function (el, i) { el.classList.toggle("activo", i === paso); el.classList.toggle("antes", i < paso); });
+      pasoH = paso;
+    }
+    barras.forEach(function (b, i) { b.style.transform = "scaleX(" + tramo(p, i * .25, (i + 1) * .25).toFixed(3) + ")"; });
+    var Q = reducido ? function (x) { return x > .5 ? 1 : 0; } : function (x) { return x; };
+
+    /* A: elegir modelo */
+    var a = tramo(p, 0, .25);
+    cambiarModelo(a < .3 ? 0 : a < .55 ? 1 : a < .8 ? 2 : 3);
+    op(h.halo, Math.sin(Math.PI * tramo(a, .05, .95)) * .9);
+
+    /* B: inyectar (el boton se llena con el scroll) */
+    var b = tramo(p, .25, .5);
+    var llenado = vaiven(tramo(b, .1, .55));
+    h.lleno.style.setProperty("--f", Q(llenado).toFixed(4));
+    var aro = tramo(b, .55, .85);
+    h.aro.style.opacity = (aro > 0 && aro < 1 ? 1 - aro : 0).toFixed(3);
+    h.aro.style.transform = "scale(" + (1 + .35 * suave(aro)).toFixed(3) + ")";
+    var activo = llenado >= .999;
+    h.etiqueta.textContent = !activo ? "INYECTAR" : b < .85 ? "ACTIVO" : "DETENER";
+    op(h.brillo, activo ? .9 : 0);
+    h.estado.classList.toggle("on", activo);
+    h.estadoTxt.textContent = activo ? "Activo" : "Apagado";
+    h.ayuda.textContent = activo ? "Ctrl + clic sobre cualquier pregunta" : "Toca Inyectar y se va junto al reloj";
+
+    /* C: se va junto al reloj */
+    var c = tramo(p, .5, .75);
+    op(h.tareas, tramo(p, .42, .52));
+    var vuelo = Q(entrada(tramo(c, .05, .8)));
+    var dx = (pos.icono.x - pos.ventana.x) * vuelo, dy = (pos.icono.y - pos.ventana.y) * vuelo;
+    h.ventana.style.transform = "translate3d(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px,0) scale(" + (1 - .95 * vuelo).toFixed(4) + ")";
+    op(h.ventana, 1 - tramo(c, .4, .8));
+    var pop = tramo(c, .55, .85);
+    h.icono.style.transform = "scale(" + (reducido ? (pop > 0 ? 1 : 0) : (pop <= 0 ? 0 : rebote(pop))).toFixed(3) + ")";
+    var d = tramo(p, .75, .96);
+    op(h.tip, tramo(c, .78, .95) * (1 - tramo(d, .1, .2)));
+    h.tip.style.transform = "translateY(" + (6 * (1 - tramo(c, .78, .95))).toFixed(1) + "px)";
+
+    /* D: Ctrl + clic sobre la pregunta */
+    op(h.quiz, tramo(d, 0, .12));
+    h.quiz.style.transform = "translateY(" + (20 * (1 - suave(tramo(d, 0, .12)))).toFixed(1) + "px)";
+    var inicio = { x: 400, y: 600 }, pregunta = pos.pregunta, opcion = pos.opcion;
+    var m1 = vaiven(Q(tramo(d, .1, .28))), m2 = vaiven(Q(tramo(d, .72, .86)));
+    var px = mezcla(mezcla(inicio.x, pregunta.x, m1), opcion.x, m2), py = mezcla(mezcla(inicio.y, pregunta.y, m1), opcion.y, m2);
+    h.puntero.style.transform = "translate3d(" + px.toFixed(1) + "px," + py.toFixed(1) + "px,0)";
+    op(h.puntero, reducido ? 0 : tramo(d, .08, .14));
+    var clic2 = d > .86 && d < .9;
+    h.puntero.firstChild.style.transform = clic2 || (d > .36 && d < .4) ? "scale(.82)" : "";
+    var ctrlVer = tramo(d, .28, .33) * (1 - tramo(d, .46, .52));
+    op(h.ctrl, reducido ? 0 : ctrlVer);
+    h.ctrl.style.transform = "translate3d(" + (pregunta.x + 24) + "px," + (pregunta.y + (d > .34 && d < .42 ? 30 : 26)) + "px,0)";
+    h.ctrl.style.boxShadow = d > .34 && d < .42 ? "0 1px 0 #b8b8bf, 0 6px 16px rgba(0,0,0,.35)" : "";
+    var cap = suave(tramo(d, .4, .5)), capFuera = tramo(d, .7, .78);
+    var cl = mezcla(pregunta.x, pos.quiz.l, cap), ct = mezcla(pregunta.y, pos.quiz.t, cap), cw = mezcla(0, pos.quiz.w, cap), ch = mezcla(0, pos.quiz.h, cap);
+    h.captura.style.left = cl + "px"; h.captura.style.top = ct + "px"; h.captura.style.width = cw + "px"; h.captura.style.height = ch + "px";
+    op(h.captura, reducido ? 0 : (cap > 0 ? 1 : 0) * (1 - capFuera));
+    var esc = tramo(d, .5, .66);
+    op(h.escaneo, esc > 0 && esc < 1 ? 1 : 0);
+    h.escaneo.style.top = (vaiven(esc) * (pos.quiz.h - 56)) + "px";
+    var pensando = d > .6 && d < .74, listo = d > .89;
+    h.burbuja.textContent = listo ? "Marcó: Canberra" : esc < 1 ? "Leyendo…" : "Pensando…";
+    op(h.burbuja, (d > .52 && d < .74) || listo ? 1 : 0);
+    var bx = listo ? opcion.x + 26 : pregunta.x + 26, by = listo ? opcion.y + 30 : pregunta.y + 34;
+    h.burbuja.style.transform = "translate3d(" + bx + "px," + by + "px,0)";
+    h.bien.classList.toggle("marcada", listo);
+    h.bien.firstChild.style.setProperty("--m", listo ? 1 : 0);
+    op(h.pulso, listo ? 1 - tramo(d, .9, 1) : 0);
+    h.pulso.style.transform = "scale(" + (1 + tramo(d, .9, 1) * .5).toFixed(3) + ")";
+    return false;
+  });
+
+  /* ---------------------------------------------------------------- bento */
+  $$(".tarjeta").forEach(function (t) {
+    t.addEventListener("pointermove", function (e) {
+      var r = t.getBoundingClientRect();
+      t.style.setProperty("--x", (e.clientX - r.left) + "px");
+      t.style.setProperty("--y", (e.clientY - r.top) + "px");
+    });
+  });
+  var bento = $("#bento"), bentoVisible = false;
+  new IntersectionObserver(function (es) { bentoVisible = es[0].isIntersecting; bento.classList.toggle("anima", bentoVisible && !reducido); }, { threshold: .05 }).observe(bento);
+  if (reducido) { $(".mq li.ok").style.boxShadow = "inset 0 0 0 2px #1d1d1f"; }
+
+  /* tipeo de respuestas abiertas */
+  var FRASES = ["Simón Bolívar", "La mitocondria", "Thank you", "En 1810", "La fotosíntesis convierte la luz en energía"];
+  var tipeo = $("#tipeo"), fi = 0, ci = 0, borrando = false;
+  (function tipear() {
+    var espera = 70;
+    if (bentoVisible && !reducido) {
+      var frase = FRASES[fi];
+      if (!borrando) { ci++; if (ci >= frase.length) { borrando = true; espera = 1500; } }
+      else { ci -= 2; espera = 28; if (ci <= 0) { ci = 0; borrando = false; fi = (fi + 1) % FRASES.length; espera = 400; } }
+      tipeo.textContent = frase.slice(0, Math.max(0, ci));
+    } else if (reducido) { tipeo.textContent = FRASES[0]; espera = 2000; }
+    setTimeout(tipear, espera);
+  })();
+
+  /* varias cajitas */
+  var cajas = $$("#cajitas span"), VALORES = ["13/12", "5/13", "√3/2"], ki = 0;
+  setInterval(function () {
+    if (!bentoVisible && !reducido) return;
+    if (reducido) { cajas.forEach(function (c, i) { c.textContent = VALORES[i]; c.classList.add("llena"); }); return; }
+    if (ki < cajas.length) { cajas[ki].textContent = VALORES[ki]; cajas[ki].classList.add("llena"); if (ki > 0) cajas[ki - 1].classList.remove("llena"); ki++; }
+    else if (ki === cajas.length) { cajas[ki - 1].classList.remove("llena"); ki++; }
+    else { cajas.forEach(function (c) { c.textContent = ""; }); ki = 0; }
+  }, 900);
+
+  /* modo preciso */
+  var interruptor = $("#interruptor"), precisoTxt = $("#precisoTxt");
+  interruptor.addEventListener("click", function () {
+    var on = interruptor.getAttribute("aria-checked") !== "true";
+    interruptor.setAttribute("aria-checked", on ? "true" : "false");
+    precisoTxt.textContent = on ? "Piensa antes de contestar" : "Contesta más rápido";
+  });
+
+  /* ---------------------------------------------------------------- modelos */
+  var MODELOS = [
+    ["Claude", "Haiku 5.5", "Rápido", "Necesita saldo"], ["Claude", "Sonnet 5.5", "Equilibrado", "Necesita saldo"], ["Claude", "Opus 5.5", "El más listo", "Necesita saldo"],
+    ["Gemini", "Flash", "Clave gratis", "Gratis"], ["Gemini", "Pro", "Preciso", "Clave gratis con límite"],
+    ["ChatGPT", "GPT-6 Luna", "Rápido", "Necesita saldo"], ["ChatGPT", "GPT-6.1 Terra", "Visión", "Necesita saldo"]
+  ];
+  var SELLO = { Claude: "Cl", Gemini: "Ge", ChatGPT: "GPT" };
+  function chip(m, enRejilla) {
+    var d = document.createElement("div"); d.className = "modelo-chip";
+    d.innerHTML = '<span class="sello"></span><span><small></small><b></b>' + (enRejilla ? "<em></em>" : "") + "</span>";
+    d.querySelector(".sello").textContent = SELLO[m[0]];
+    d.querySelector("small").textContent = m[0] + " · " + m[2];
+    d.querySelector("b").textContent = m[0] === "Claude" ? "Claude " + m[1] : m[0] === "Gemini" ? "Gemini " + m[1] : m[1];
+    if (enRejilla) d.querySelector("em").textContent = m[3];
+    return d;
+  }
+  [["#riel1", MODELOS], ["#riel2", MODELOS.slice(3).concat(MODELOS.slice(0, 3))]].forEach(function (par) {
+    var riel = $(par[0]);
+    for (var vuelta = 0; vuelta < 4; vuelta++) par[1].forEach(function (m) { var c = chip(m); if (vuelta) c.setAttribute("aria-hidden", "true"); riel.appendChild(c); });
+  });
+  var rejilla = $("#rejilla"); MODELOS.forEach(function (m) { rejilla.appendChild(chip(m, true)); });
+  var segmento = $("#segmento"), pildora = $("#pildora"), vista = $("#modelosVista");
+  function ponerPildora(btn) { pildora.style.width = btn.offsetWidth + "px"; pildora.style.transform = "translateX(" + (btn.offsetLeft - 4) + "px)"; }
+  $$("#segmento button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      $$("#segmento button").forEach(function (o) { o.setAttribute("aria-pressed", o === btn ? "true" : "false"); });
+      ponerPildora(btn);
+      vista.classList.toggle("en-rejilla", btn.dataset.vista === "rejilla");
+    });
+  });
+  ponerPildora($("#segmento button"));
+  window.addEventListener("load", function () { ponerPildora($('#segmento button[aria-pressed="true"]')); moverIndicador($("#barraLinks a.activo")); });
+
+  /* ---------------------------------------------------------------- numeros que cuentan */
+  var verCuentas = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      verCuentas.unobserve(e.target);
+      $$(".cuenta", e.target).forEach(function (el, i) {
+        var desde = +el.dataset.desde, hasta = +el.dataset.hasta;
+        if (reducido) { el.textContent = hasta; return; }
+        var t0 = performance.now() + i * 120, dur = 1500;
+        (function paso(t) {
+          var q = limitar((t - t0) / dur, 0, 1);
+          el.textContent = Math.round(mezcla(desde, hasta, suave(q)));
+          if (q < 1) requestAnimationFrame(paso);
+        })(performance.now());
+      });
+    });
+  }, { threshold: .4 });
+  $$(".numeros").forEach(function (n) { verCuentas.observe(n); });
+
+  /* ---------------------------------------------------------------- linea de tiempo de instalar */
+  var lineaT = $("#lineaTiempo"), hitos = $$(".hito", lineaT);
+  tareas.push(function () {
+    var r = lineaT.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return false;
+    var p = limitar((innerHeight * .78 - r.top) / (r.height * .9), 0, 1);
+    lineaT.style.setProperty("--p", p.toFixed(3));
+    hitos.forEach(function (hh, i) { hh.classList.toggle("hecho", p >= i / (hitos.length - 1) - .02); });
+    return false;
+  });
+
+  /* ---------------------------------------------------------------- logo final que crece */
+  var finalLogo = $("#finalLogo");
+  tareas.push(function () {
+    if (reducido) return false;
+    var r = finalLogo.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return false;
+    var p = limitar(1 - (r.top + r.height / 2) / innerHeight, 0, 1);
+    finalLogo.style.transform = "scale(" + mezcla(.86, 1.04, suave(p)).toFixed(4) + ")";
+    return false;
+  });
+
+  /* ---------------------------------------------------------------- preguntas */
+  $$(".faq-item").forEach(function (it) {
+    var b = $(".faq-q", it);
+    b.addEventListener("click", function () {
+      var abrir = !it.classList.contains("abierto");
+      $$(".faq-item.abierto").forEach(function (o) { if (o !== it) { o.classList.remove("abierto"); $(".faq-q", o).setAttribute("aria-expanded", "false"); } });
+      it.classList.toggle("abierto", abrir);
+      b.setAttribute("aria-expanded", abrir ? "true" : "false");
+    });
+  });
+
+  pedirCuadro();
+})();
 </script>
 </body>
 </html>
