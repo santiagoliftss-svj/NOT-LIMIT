@@ -28,6 +28,10 @@ def main():
                 fallas += 1
                 print(f"  FALLA {nombre}:{f.__name__}")
                 traceback.print_exc()
+                if os.environ.get("GITHUB_ACTIONS"):
+                    # en GitHub queda como anotacion (se puede leer sin bajar el registro completo)
+                    detalle = traceback.format_exc()[-900:].replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+                    print(f"::error title=prueba {nombre}:{f.__name__}::{detalle}")
     print(f"\n{total - fallas}/{total} pruebas bien")
     return 1 if fallas else 0
 

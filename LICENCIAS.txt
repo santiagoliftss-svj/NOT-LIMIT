@@ -8,4 +8,4 @@ NO LIMIT usa estas piezas de terceros:
 - Fuente Archivo (SIL Open Font License 1.1) - https://github.com/Omnibus-Type/Archivo
 - pystray, icono junto al reloj (GNU LGPL v3) - https://github.com/moses-palmer/pystray
   Se usa sin cambios. El codigo de NO LIMIT y como se arma estan en
-  https://github.com/santiagoliftss-svj/clw-gang, asi que se puede volver a armar con otra version.
+  https://github.com/santiagoliftss-svj/NOT-LIMIT, asi que se puede volver a armar con otra version.

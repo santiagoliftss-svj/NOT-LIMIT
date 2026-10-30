@@ -4,7 +4,7 @@
 
 Contesta preguntas de la pantalla con un **Ctrl + clic**.
 
-**Descarga:** https://santiagoliftss-svj.github.io/clw-gang/
+**Descarga:** https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
 - Opción múltiple: marca la respuesta.
 - Preguntas abiertas: escribe la respuesta sola (corta o larga según la pregunta), y llena varias cajitas si la pregunta tiene varias.

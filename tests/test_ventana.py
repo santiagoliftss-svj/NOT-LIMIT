@@ -237,7 +237,8 @@ def prueba_inyectar_se_va_volando_junto_al_reloj():
     _correr(v, reloj, 1.0)
     assert not v.visible and v.root.estado == "withdrawn" and v.root.alfa == 1.0
     # se fue volando hacia la esquina del reloj y regreso a su lugar ya escondida
-    assert max(x for x, _ in v.root.recorrido) > 1300 and max(y for _, y in v.root.recorrido) > 700
+    reloj_xy = v._junto_al_reloj()             # (en Windows sale de la barra de tareas de verdad)
+    assert reloj_xy in v.root.recorrido and reloj_xy != (700, 200), (reloj_xy, v.root.recorrido[-3:])
     assert v.root.pos == (700, 200)
     assert v.bandeja.estados[-1] == (True, None)
     assert len(v.bandeja.avisos) == 1 and "reloj" in v.bandeja.avisos[0]
