@@ -50,34 +50,51 @@ def descargar(v, url, tam=0, al_avance=None, cancelar=None):
         return destino
     parcial = destino + ".parcial"
     req = urllib.request.Request(url, headers={"user-agent": "no-limit"})
-    with urllib.request.urlopen(req, timeout=30) as r, open(parcial, "wb") as f:
-        total = tam or int(r.headers.get("content-length") or 0)
-        hecho, ultimo = 0, -1
-        while True:
-            if cancelar and cancelar():
-                raise InterruptedError("descarga cancelada")
-            bloque = r.read(256 * 1024)
-            if not bloque:
-                break
-            f.write(bloque)
-            hecho += len(bloque)
-            if total and al_avance:
-                pct = min(99, int(hecho * 100 / total))
-                if pct != ultimo:
-                    ultimo = pct
-                    al_avance(pct)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r, open(parcial, "wb") as f:
+            total = tam or int(r.headers.get("content-length") or 0)
+            hecho, ultimo = 0, -1
+            while True:
+                if cancelar and cancelar():
+                    raise InterruptedError("descarga cancelada")
+                bloque = r.read(256 * 1024)
+                if not bloque:
+                    break
+                f.write(bloque)
+                hecho += len(bloque)
+                if total and al_avance:
+                    pct = min(99, int(hecho * 100 / total))
+                    if pct != ultimo:
+                        ultimo = pct
+                        al_avance(pct)
+    except BaseException:
+        _borrar(parcial)                    # nada a medias
+        raise
     if tam and os.path.getsize(parcial) != tam:
-        os.remove(parcial)
+        _borrar(parcial)
         log.warning("actualizacion incompleta (%s de %s bytes)", hecho, tam)
         return None
     os.replace(parcial, destino)
     for viejo in glob.glob(os.path.join(carpeta(), "NO-LIMIT-Setup-*")):
         if os.path.abspath(viejo) != os.path.abspath(destino):
-            try:
-                os.remove(viejo)
-            except OSError:
-                pass
+            _borrar(viejo)
     return destino
+
+
+def _borrar(ruta):
+    try:
+        os.remove(ruta)
+    except OSError:
+        pass
+
+
+def entorno_limpio(base=None):
+    """El ambiente para el instalador sin lo que PyInstaller le pone a esta copia de NO LIMIT: asi la que abre el
+    instalador al terminar arranca como si le hubieran dado doble clic."""
+    env = {k: v for k, v in (os.environ if base is None else base).items()
+           if not k.upper().startswith(("_PYI", "_MEI")) and k.upper() not in ("TCL_LIBRARY", "TK_LIBRARY")}
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    return env
 
 
 def instalar(ruta, relanzar=True):
@@ -85,7 +102,8 @@ def instalar(ruta, relanzar=True):
     args = [ruta, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/RELANZAR=" + ("1" if relanzar else "0")]
     flags = (0x00000008 | 0x00000200) if rutas.WINDOWS else 0   # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
     try:
-        subprocess.Popen(args, creationflags=flags, close_fds=True)
+        subprocess.Popen(args, creationflags=flags, close_fds=True, env=entorno_limpio(),
+                         cwd=os.path.dirname(os.path.abspath(ruta)))
         log.info("instalando actualizacion: %s (relanzar=%s)", ruta, relanzar)
         return True
     except OSError as ex:
