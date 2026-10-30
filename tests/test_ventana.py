@@ -199,6 +199,8 @@ def _ventana(con_bandeja=True, con_clave=True):
     v._alerta = None
     v._instalador = None
     v._actualizando = False
+    v._calentando = True
+    v._calentar_desde = reloj.t + 1.0
     v._evento = None
     v._hwnd = None
     v.bandeja = BandejaFalsa() if con_bandeja else None
@@ -414,3 +416,14 @@ def prueba_al_salir_instala_callada():
         assert llamadas == [(v._instalador, False)], llamadas
     finally:
         V.actualizar.buscar, V.actualizar.descargar, V.actualizar.instalar = viejo
+
+
+def prueba_arma_las_otras_pantallas_en_ratos_libres():
+    v, bot, reloj = _ventana()
+    _correr(v, reloj, 0.5)
+    assert v.ui._por_calentar is None, "al abrir no se pone a armar nada"
+    _correr(v, reloj, 1.5)
+    assert v.ui._por_calentar == [] and not v._calentando
+    # y no cambio nada de lo que se ve
+    assert v.ui.pantalla == "principal" and v.visible
+

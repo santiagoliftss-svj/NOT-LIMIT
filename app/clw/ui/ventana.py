@@ -112,6 +112,8 @@ class Ventana:
         self._alerta = None                # texto del ultimo problema mientras estaba escondida
         self._instalador = None            # actualizacion ya bajada
         self._actualizando = False
+        self._calentando = True            # armar Ajustes y la clave en ratos libres (el primer clic no espera)
+        self._calentar_desde = time.time() + 1.0
         self._evento = _crear_evento()
         self.bandeja = self._crear_bandeja() if con_bandeja else None
 
@@ -455,6 +457,8 @@ class Ventana:
             self._pintar()
             if espera is None:
                 espera = self.ui.ritmo(ahora) or 150
+            if self._calentando and ahora >= self._calentar_desde and espera != 16:
+                self._calentando = self.ui.precalentar()
         elif espera is None:
             espera = 250                    # escondida: no dibuja nada, solo revisa avisos
         self.root.after(espera, self._tick)

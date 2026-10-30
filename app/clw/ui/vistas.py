@@ -104,6 +104,7 @@ class Interfaz:
         self._esp = None
         self._panel = None                 # (llave, imagen, y, caja) de la hoja de modelos
         self._prev_completo = False
+        self._por_calentar = None          # pantallas que se arman antes de verlas (ver precalentar)
 
     # ================================================================ estado
     def modelo_actual(self):
@@ -177,6 +178,25 @@ class Interfaz:
             self._esconder_en = None
             return self.encendido()
         return False
+
+    def precalentar(self):
+        """Arma una vez, sin mostrarlas, las pantallas que todavia no se han visto (Ajustes, la clave), para que
+        el primer clic no espere a hacer sus piezas. La ventana lo llama de a un paso cuando esta quieta.
+        Devuelve True mientras queden pasos."""
+        if self._por_calentar is None:
+            prov = self.modelo_actual().proveedor
+            pasos = [lambda: self._ajustes(self._lienzo_suelto())]
+            for p in dict.fromkeys((prov, "gemini")):
+                for texto in ("", "x" * 16):
+                    k = dict(self.clave, prov=p, texto=texto, msg="", tipo="", verificando=False)
+                    pasos.append(lambda k=k: self._pantalla_clave(self._lienzo_suelto(), self.reloj(), k))
+            self._por_calentar = pasos
+        if self._por_calentar:
+            self._por_calentar.pop(0)()
+        return bool(self._por_calentar)
+
+    def _lienzo_suelto(self):
+        return Lienzo(self.e, base=E.foco(self.ancho_px, self.alto_px))
 
     # ================================================================ navegacion
     def _ir(self, pantalla, direccion=1):
@@ -924,8 +944,8 @@ class Interfaz:
         self._chip_version(l)
 
     # ---------------------------------------------------------------- clave
-    def _guardar_activo(self):
-        k = self.clave
+    def _guardar_activo(self, k=None):
+        k = k or self.clave
         return bool(k["texto"]) and not k["verificando"]
 
     def _gotas_guardar(self, l, t):
@@ -937,8 +957,8 @@ class Interfaz:
         l.pegar_px(E.liquido(W, H, H // 2, 2 if pres else 1), X, Y)
         l.texto_centrado_v(192 + 82, 514 + 27, "GUARDAR", "boton_chico", NEGRO, ancla="ma")
 
-    def _pantalla_clave(self, l, t):
-        k = self.clave
+    def _pantalla_clave(self, l, t, k=None):
+        k = k or self.clave
         p = PROVEEDORES[k["prov"]]
         self._volver(l, "volver_clave")
         titulo = f"Tu clave de {p.nombre}"
@@ -986,4 +1006,4 @@ class Interfaz:
             l.zona("usar_gemini", 20, 472, ancho + 8, 26)
 
         self._boton_vidrio(l, "cancelar_clave", 24, 514, 156, 54, "CANCELAR")
-        self._boton_blanco(l, "guardar_clave", 192, 514, 164, 54, "GUARDAR", apagado=not self._guardar_activo())
+        self._boton_blanco(l, "guardar_clave", 192, 514, 164, 54, "GUARDAR", apagado=not self._guardar_activo(k))
