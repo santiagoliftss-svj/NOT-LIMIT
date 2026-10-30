@@ -1,1 +1,2 @@
 pillow>=11.0
+pystray>=0.19.5

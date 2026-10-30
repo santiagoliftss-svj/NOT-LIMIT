@@ -9,8 +9,9 @@ a = Analysis(
     [os.path.join(APP, "clw_gang.py")],
     pathex=[APP],
     datas=[(os.path.join(APP, "assets"), "assets")],
-    hiddenimports=["PIL.ImageTk", "PIL._tkinter_finder"],
-    excludes=["numpy", "matplotlib", "pytest", "IPython"],
+    hiddenimports=["PIL.ImageTk", "PIL._tkinter_finder", "pystray._win32", "pystray._util.win32"],
+    excludes=["numpy", "matplotlib", "pytest", "IPython", "pystray._gtk", "pystray._appindicator",
+              "pystray._xorg", "pystray._darwin", "gi", "Xlib", "AppKit", "Foundation"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

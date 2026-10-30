@@ -6,4 +6,7 @@ CLW GANG usa estas piezas de terceros:
 - Pillow (HPND / MIT-CMU License) - https://python-pillow.org
 - Tcl/Tk (licencia BSD) - https://www.tcl.tk
 - Fuente Archivo (SIL Open Font License 1.1) - https://github.com/Omnibus-Type/Archivo
-- Fuente New Rocker para el logo (SIL Open Font License 1.1)
+  (tambien es la del logo)
+- pystray, icono junto al reloj (GNU LGPL v3) - https://github.com/moses-palmer/pystray
+  Se usa sin cambios. El codigo de CLW GANG y como se arma estan en
+  https://github.com/santiagoliftss-svj/clw-gang, asi que se puede volver a armar con otra version.

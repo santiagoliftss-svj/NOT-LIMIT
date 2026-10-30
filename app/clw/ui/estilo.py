@@ -1,10 +1,10 @@
-"""Colores, letras y piezas de dibujo de la interfaz. Todo se dibuja con PIL en pixeles reales."""
+"""Colores, letras y piezas de la interfaz (total black, vidrio y blanco). Todo se dibuja con PIL."""
 
+import json
 import math
-import random
 from functools import lru_cache
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 from .. import rutas
 
@@ -12,24 +12,22 @@ ANCHO, ALTO = 380, 600          # tamano logico de la ventana
 
 NEGRO = (0, 0, 0)
 BLANCO = (255, 255, 255)
-TEXTO = (244, 244, 244)
-SUAVE = (150, 150, 150)
-TENUE = (96, 96, 96)
-ERROR = (255, 104, 104)
-LINEA = (255, 255, 255, 38)
-LINEA_FUERTE = (255, 255, 255, 105)
+TEXTO = (255, 255, 255)
+SUAVE = (196, 196, 196)
+TENUE = (128, 128, 128)
+ERROR = (255, 107, 107)
 SS = 4                           # supermuestreo para bordes suaves
 
 # rol: (tamano, peso, ancho, tracking)
 TIPOS = {
-    "boton":       (16.5, 800, 125, 2.6),
-    "boton_chico": (11.5, 750, 125, 1.6),
-    "titulo":      (20, 720, 112, 0.2),
-    "subtitulo":   (15.5, 700, 108, 0.1),
-    "nombre":      (14.5, 560, 100, 0.0),
-    "cuerpo":      (13.2, 430, 100, 0.0),
-    "chico":       (11.6, 470, 100, 0.1),
-    "mini":        (10.4, 520, 104, 0.3),
+    "boton":       (13.5, 760, 125, 3.0),
+    "boton_chico": (10.8, 740, 125, 1.7),
+    "titulo":      (18.5, 860, 125, 0.8),
+    "subtitulo":   (14.5, 780, 118, 0.4),
+    "nombre":      (15, 620, 104, 0.0),
+    "cuerpo":      (13, 440, 100, 0.0),
+    "chico":       (11.5, 480, 100, 0.0),
+    "mini":        (10.2, 600, 112, 0.5),
 }
 
 
@@ -66,7 +64,6 @@ def recortar(texto, rol, escala, ancho_max):
 
 
 def partir(texto, rol, escala, ancho_max):
-    """Parte el texto en lineas que quepan en ancho_max."""
     lineas, actual = [], ""
     for palabra in texto.split():
         prueba = (actual + " " + palabra).strip()
@@ -80,60 +77,138 @@ def partir(texto, rol, escala, ancho_max):
     return lineas
 
 
+def suave(p):
+    """Curva de animacion (sale rapido y llega lento, estilo Apple)."""
+    p = max(0.0, min(1.0, p))
+    return 1 - (1 - p) ** 3
+
+
+def ida_y_vuelta(p):
+    p = max(0.0, min(1.0, p))
+    return p * p * (3 - 2 * p)
+
+
 # ---------------------------------------------------------------- piezas en cache
 
-@lru_cache(maxsize=256)
-def pieza_redonda(w, h, r, relleno, borde, grosor):
-    """Rectangulo redondeado suave (RGBA). Medidas en pixeles reales."""
-    W, H = max(1, w) * SS, max(1, h) * SS
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    rr = min(r * SS, W // 2, H // 2)
-    if relleno:
-        d.rounded_rectangle((0, 0, W - 1, H - 1), rr, fill=relleno)
-    if borde and grosor:
-        g = max(1, round(grosor * SS))
-        d.rounded_rectangle((g / 2, g / 2, W - 1 - g / 2, H - 1 - g / 2), rr, outline=borde, width=g)
-    return im.resize((max(1, w), max(1, h)), Image.LANCZOS)
+def _forma(W, H, r):
+    m = Image.new("L", (W * SS, H * SS), 0)
+    ImageDraw.Draw(m).rounded_rectangle((0, 0, W * SS - 1, H * SS - 1), min(r * SS, W * SS // 2, H * SS // 2), fill=255)
+    return m.resize((W, H), Image.LANCZOS)
 
 
-@lru_cache(maxsize=32)
-def resplandor(w, h, r, radio, nivel):
-    """Brillo difuso alrededor de una pastilla (para cuando esta activo). nivel 0..10."""
+@lru_cache(maxsize=128)
+def forma(W, H, r):
+    return _forma(max(1, W), max(1, H), r)
+
+
+@lru_cache(maxsize=128)
+def anillo(W, H, r, grosor):
+    """Solo el borde de un rectangulo redondeado (mascara L)."""
+    W, H = max(1, W), max(1, H)
+    m = Image.new("L", (W * SS, H * SS), 0)
+    g = max(1, round(grosor * SS))
+    rr = min(r * SS, W * SS // 2, H * SS // 2)
+    ImageDraw.Draw(m).rounded_rectangle((g / 2, g / 2, W * SS - 1 - g / 2, H * SS - 1 - g / 2), rr, outline=255, width=g)
+    return m.resize((W, H), Image.LANCZOS)
+
+
+@lru_cache(maxsize=16)
+def _degradado_v(H, arriba, abajo):
+    col = Image.new("L", (1, max(1, H)))
+    for y in range(max(1, H)):
+        t = y / max(1, H - 1)
+        col.putpixel((0, y), int(round(arriba + (abajo - arriba) * t)))
+    return col
+
+
+def _alfa_degradado(mascara, arriba, abajo):
+    """Multiplica una mascara por un degradado vertical (0..255)."""
+    deg = _degradado_v(mascara.height, arriba, abajo).resize(mascara.size)
+    return ImageChops.multiply(mascara, deg)
+
+
+@lru_cache(maxsize=128)
+def vidrio(W, H, r, borde=(110, 30), relleno=(12, 4), grosor=1.0):
+    """Pieza de vidrio: relleno blanco casi transparente + borde que brilla mas arriba que abajo."""
+    W, H = max(1, W), max(1, H)
+    im = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+    if relleno[0] or relleno[1]:
+        im.putalpha(_alfa_degradado(forma(W, H, r), relleno[0], relleno[1]))
+    capa = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+    capa.putalpha(_alfa_degradado(anillo(W, H, r, grosor), borde[0], borde[1]))
+    im.alpha_composite(capa)
+    return im
+
+
+@lru_cache(maxsize=128)
+def solido(W, H, r, color):
+    im = Image.new("RGBA", (max(1, W), max(1, H)), tuple(color[:3]) + (0,))
+    a = forma(W, H, r)
+    if len(color) == 4:
+        a = a.point(lambda v: v * color[3] // 255)
+    im.putalpha(a)
+    return im
+
+
+@lru_cache(maxsize=24)
+def resplandor(W, H, r, radio, nivel):
+    """Brillo difuso alrededor de una pastilla. nivel 0..10."""
     pad = int(radio * 3)
-    im = Image.new("L", (w + pad * 2, h + pad * 2), 0)
-    ImageDraw.Draw(im).rounded_rectangle((pad, pad, pad + w, pad + h), r, outline=255, width=max(2, int(radio * 0.6)))
-    im = im.filter(ImageFilter.GaussianBlur(radio))
-    alfa = im.point(lambda v: int(v * (0.25 + nivel * 0.06)))
-    capa = Image.new("RGBA", im.size, (255, 255, 255, 0))
-    capa.putalpha(alfa)
+    m = Image.new("L", (W + pad * 2, H + pad * 2), 0)
+    ImageDraw.Draw(m).rounded_rectangle((pad, pad, pad + W, pad + H), r, fill=255)
+    m = m.filter(ImageFilter.GaussianBlur(radio))
+    capa = Image.new("RGBA", m.size, (255, 255, 255, 0))
+    capa.putalpha(m.point(lambda v: int(v * (0.10 + nivel * 0.035))))
     return capa, pad
+
+
+@lru_cache(maxsize=96)
+def haz_borde(W, H, r, grosor, paso, pasos=72):
+    """Luz que recorre el borde de una pastilla (paso de 0 a pasos-1)."""
+    W, H = max(1, W), max(1, H)
+    # punto sobre el perimetro (aprox. rectangulo con puntas redondas)
+    recto = max(0, W - H)
+    per = 2 * recto + math.pi * H
+    s = per * paso / pasos
+    if s < recto:
+        x, y = H / 2 + s, 0
+    elif s < recto + math.pi * H / 2:
+        a = (s - recto) / (H / 2) - math.pi / 2
+        x, y = W - H / 2 + math.cos(a) * H / 2, H / 2 + math.sin(a) * H / 2
+    elif s < 2 * recto + math.pi * H / 2:
+        x, y = W - H / 2 - (s - recto - math.pi * H / 2), H
+    else:
+        a = (s - 2 * recto - math.pi * H / 2) / (H / 2) + math.pi / 2
+        x, y = H / 2 + math.cos(a) * H / 2, H / 2 + math.sin(a) * H / 2
+    radio = H * 0.95
+    mancha = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(mancha).ellipse((x - radio, y - radio, x + radio, y + radio), fill=255)
+    mancha = mancha.filter(ImageFilter.GaussianBlur(radio * 0.45))
+    borde = anillo(W, H, r, grosor * 1.6)
+    capa = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+    capa.putalpha(ImageChops.multiply(borde, mancha))
+    return capa
 
 
 @lru_cache(maxsize=64)
 def icono(nombre, tam, color):
-    """Iconos de linea dibujados a mano (supermuestreados)."""
     T = tam * SS
     im = Image.new("RGBA", (T, T), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     g = max(SS, int(T * 0.09))
-    c = color + (255,) if len(color) == 3 else color
+    c = tuple(color[:3]) + (255,)
     if nombre == "abajo":
         d.line([(T * 0.22, T * 0.38), (T * 0.5, T * 0.64), (T * 0.78, T * 0.38)], fill=c, width=g, joint="curve")
     elif nombre == "atras":
         d.line([(T * 0.62, T * 0.2), (T * 0.34, T * 0.5), (T * 0.62, T * 0.8)], fill=c, width=g, joint="curve")
     elif nombre == "palomita":
         d.line([(T * 0.2, T * 0.52), (T * 0.42, T * 0.72), (T * 0.8, T * 0.3)], fill=c, width=g, joint="curve")
-    elif nombre == "tache":
-        d.line([(T * 0.25, T * 0.25), (T * 0.75, T * 0.75)], fill=c, width=g)
-        d.line([(T * 0.75, T * 0.25), (T * 0.25, T * 0.75)], fill=c, width=g)
     elif nombre == "engrane":
         cx = cy = T / 2
         for i in range(8):
             a = math.pi * 2 * i / 8
-            x1, y1 = cx + math.cos(a) * T * 0.30, cy + math.sin(a) * T * 0.30
-            x2, y2 = cx + math.cos(a) * T * 0.44, cy + math.sin(a) * T * 0.44
-            d.line([(x1, y1), (x2, y2)], fill=c, width=int(g * 1.5))
+            d.line([(cx + math.cos(a) * T * 0.30, cy + math.sin(a) * T * 0.30),
+                    (cx + math.cos(a) * T * 0.44, cy + math.sin(a) * T * 0.44)], fill=c, width=int(g * 1.5))
         d.ellipse((cx - T * 0.31, cy - T * 0.31, cx + T * 0.31, cy + T * 0.31), outline=c, width=g)
         d.ellipse((cx - T * 0.11, cy - T * 0.11, cx + T * 0.11, cy + T * 0.11), outline=c, width=g)
     elif nombre == "afuera":
@@ -143,49 +218,47 @@ def icono(nombre, tam, color):
 
 
 @lru_cache(maxsize=4)
-def logo(ancho_px):
-    wm = Image.open(rutas.asset("wordmark.png")).convert("RGBA")
-    alto = int(wm.height * ancho_px / wm.width)
-    return wm.resize((ancho_px, alto), Image.LANCZOS)
+def marca(ancho_px):
+    """Letras + halo (sin estrella) y la geometria del halo escalada."""
+    im = Image.open(rutas.asset("marca.png")).convert("RGBA")
+    with open(rutas.asset("marca.json"), encoding="utf-8") as f:
+        geo = json.load(f)
+    k = ancho_px / im.width
+    im = im.resize((ancho_px, max(1, int(im.height * k))), Image.LANCZOS)
+    geo = {n: (v * k if n in ("cx", "cy", "rx", "ry", "grosor", "alto_letras") else v) for n, v in geo.items()}
+    return im, geo
 
 
-@lru_cache(maxsize=4)
-def fondo_estrellas(w, h, escala):
-    """Negro total con estrellas que se van apagando hacia abajo y un brillo leve arriba."""
-    rnd = random.Random(7)
-    im = Image.new("RGBA", (w, h), NEGRO + (255,))
-    capa = Image.new("RGBA", (w * 2, h * 2), (0, 0, 0, 0))
-    d = ImageDraw.Draw(capa)
-    n = int(ANCHO * ALTO / 900)
-    for _ in range(n):
-        x, y = rnd.random(), rnd.random()
-        if rnd.random() < y * 0.85:
-            continue
-        r = rnd.choice([0.45, 0.55, 0.65, 0.8, 1.0]) * escala * 2
-        a = int(rnd.uniform(45, 210) * (1 - y * 0.55))
-        d.ellipse((x * w * 2 - r, y * h * 2 - r, x * w * 2 + r, y * h * 2 + r), fill=(255, 255, 255, a))
-    im.alpha_composite(capa.resize((w, h), Image.LANCZOS))
-    brillo = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(brillo).ellipse((w * 0.05, -h * 0.10, w * 0.95, h * 0.30), fill=26)
-    im.paste((255, 255, 255, 255), (0, 0), brillo.filter(ImageFilter.GaussianBlur(w * 0.16)))
-    for fx, fy, fr in ((0.13, 0.055, 7), (0.88, 0.27, 5)):
-        _destello(im, fx * w, fy * h, fr * escala)
+def punto_halo(geo, grados):
+    t = math.radians(grados)
+    x, y = geo["rx"] * math.cos(t), geo["ry"] * math.sin(t)
+    a = math.radians(geo["ang"])
+    return geo["cx"] + x * math.cos(a) - y * math.sin(a), geo["cy"] + x * math.sin(a) + y * math.cos(a)
+
+
+@lru_cache(maxsize=32)
+def estrella(r, alfa=255):
+    T = max(4, int(r * 3.2))
+    im = Image.new("RGBA", (T * 2, T * 2), (0, 0, 0, 0))
+    c = T
+
+    def picos(d, rr, a):
+        pts = []
+        for i in range(8):
+            ang = math.pi / 4 * i - math.pi / 2
+            radio = rr if i % 2 == 0 else rr * 0.2
+            pts.append((c + math.cos(ang) * radio, c + math.sin(ang) * radio))
+        d.polygon(pts, fill=(255, 255, 255, a))
+
+    g = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    picos(ImageDraw.Draw(g), r * 2.5, 150)
+    ImageDraw.Draw(g).ellipse((c - r * 0.7, c - r * 0.7, c + r * 0.7, c + r * 0.7), fill=(255, 255, 255, 120))
+    im.alpha_composite(g.filter(ImageFilter.GaussianBlur(r * 0.45)))
+    picos(ImageDraw.Draw(im), r * 2, 255)
+    im = im.resize((T, T), Image.LANCZOS)
+    if alfa < 255:
+        im.putalpha(im.getchannel("A").point(lambda v: v * alfa // 255))
     return im
-
-
-def _destello(im, x, y, r):
-    capa = Image.new("RGBA", im.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(capa)
-    for ang, largo in ((0, r), (90, r), (45, r * 0.4), (135, r * 0.4)):
-        a = math.radians(ang)
-        pasos = max(4, int(largo * 4))
-        for i in range(pasos + 1):
-            t = -largo + 2 * largo * i / pasos
-            k = 1 - abs(t) / largo
-            px, py = x + math.cos(a) * t, y + math.sin(a) * t
-            gr = 0.35 + 0.45 * k
-            d.ellipse((px - gr, py - gr, px + gr, py + gr), fill=(255, 255, 255, int(230 * k ** 1.7)))
-    im.alpha_composite(capa)
 
 
 # ---------------------------------------------------------------- lienzo
@@ -197,7 +270,7 @@ class Lienzo:
         self.e = escala
         self.w, self.h = round(ANCHO * escala), round(ALTO * escala)
         self.im = base.copy() if base is not None else Image.new("RGBA", (self.w, self.h), NEGRO + (255,))
-        self.zonas = []           # (id, (x, y, w, h), cursor)
+        self.zonas = []
 
     def px(self, v):
         return round(v * self.e)
@@ -205,28 +278,32 @@ class Lienzo:
     def zona(self, ident, x, y, w, h, cursor="hand2"):
         self.zonas.append((ident, (x, y, w, h), cursor))
 
-    def pegar(self, pieza, x, y):
-        self.im.alpha_composite(pieza, (self.px(x), self.px(y)))
+    def caja_px(self, x, y, w, h):
+        X, Y = self.px(x), self.px(y)
+        return X, Y, self.px(x + w) - X, self.px(y + h) - Y
 
     def pegar_px(self, pieza, X, Y):
+        X, Y = int(round(X)), int(round(Y))
         if X < 0 or Y < 0:
             recorte = pieza.crop((max(0, -X), max(0, -Y), pieza.width, pieza.height))
             self.im.alpha_composite(recorte, (max(0, X), max(0, Y)))
         else:
             self.im.alpha_composite(pieza, (X, Y))
 
-    def caja(self, x, y, w, h, r, relleno=None, borde=None, grosor=1.0):
-        X, Y = self.px(x), self.px(y)
-        W, H = self.px(x + w) - X, self.px(y + h) - Y
-        self.im.alpha_composite(pieza_redonda(W, H, round(r * self.e), relleno, borde, grosor * self.e), (X, Y))
+    def vidrio(self, x, y, w, h, r, borde=(110, 30), relleno=(12, 4), grosor=1.0):
+        X, Y, W, H = self.caja_px(x, y, w, h)
+        self.im.alpha_composite(vidrio(W, H, round(r * self.e), borde, relleno, grosor * self.e), (X, Y))
 
-    def linea_h(self, x, y, w, color=LINEA):
-        capa = Image.new("RGBA", (self.px(w), max(1, round(self.e))), color)
+    def solido(self, x, y, w, h, r, color):
+        X, Y, W, H = self.caja_px(x, y, w, h)
+        self.im.alpha_composite(solido(W, H, round(r * self.e), tuple(color)), (X, Y))
+
+    def linea_h(self, x, y, w, color=(255, 255, 255, 40)):
+        capa = Image.new("RGBA", (max(1, self.px(w)), max(1, round(self.e))), color)
         self.im.alpha_composite(capa, (self.px(x), self.px(y)))
 
-    def texto(self, x, y, txt, rol, color=TEXTO, ancla="la", alfa=255, contorno=True):
-        """Dibuja texto. ancla: 'la' izquierda, 'ma' centro, 'ra' derecha (y = arriba de las letras).
-        contorno: borde negro fino para que las estrellas no se metan entre las letras."""
+    def texto(self, x, y, txt, rol, color=TEXTO, ancla="la", alfa=255):
+        """ancla: 'la' izquierda, 'ma' centro, 'ra' derecha (y = arriba de las letras)."""
         f = fuente(rol, self.e)
         tr = tracking(rol) * self.e
         ancho = medir(txt, rol, self.e)
@@ -236,51 +313,40 @@ class Lienzo:
         elif ancla[0] == "r":
             X -= ancho
         asc, desc = f.getmetrics()
-        sw = max(1, round(1.6 * self.e)) if contorno else 0
-        m = 2 + sw
+        m = 2
         capa = Image.new("RGBA", (int(ancho) + 2 * m + 2, asc + desc + 2 * m), (0, 0, 0, 0))
         d = ImageDraw.Draw(capa)
         col = tuple(color[:3]) + (alfa,)
-        extra = {"stroke_width": sw, "stroke_fill": (0, 0, 0, 255)} if sw else {}
         if tr:
-            if sw:  # primero todos los contornos, luego las letras (para que no se tapen entre si)
-                cx = 0.0
-                for ch in txt:
-                    d.text((cx + m, m - 1), ch, font=f, fill=(0, 0, 0, 255), **extra)
-                    cx += f.getlength(ch) + tr
             cx = 0.0
             for ch in txt:
                 d.text((cx + m, m - 1), ch, font=f, fill=col)
                 cx += f.getlength(ch) + tr
         else:
-            d.text((m, m - 1), txt, font=f, fill=col, **extra)
+            d.text((m, m - 1), txt, font=f, fill=col)
         self.im.alpha_composite(capa, (int(round(X)) - m, self.px(y) - m))
         return ancho / self.e
 
-    def texto_centrado_v(self, x, y_centro, txt, rol, color=TEXTO, ancla="la", alfa=255, contorno=True):
-        """Texto centrado verticalmente en y_centro (usa la altura de las mayusculas)."""
+    def texto_centrado_v(self, x, y_centro, txt, rol, color=TEXTO, ancla="la", alfa=255):
         f = fuente(rol, self.e)
         bb = f.getbbox("H")
         alto_cap = (bb[3] - bb[1]) / self.e
         arriba = bb[1] / self.e
-        return self.texto(x, y_centro - alto_cap / 2 - arriba, txt, rol, color, ancla, alfa, contorno)
+        return self.texto(x, y_centro - alto_cap / 2 - arriba, txt, rol, color, ancla, alfa)
 
     def icono(self, nombre, x, y, tam, color=TEXTO):
-        self.im.alpha_composite(icono(nombre, self.px(tam), color), (self.px(x), self.px(y)))
+        self.im.alpha_composite(icono(nombre, self.px(tam), tuple(color[:3])), (self.px(x), self.px(y)))
 
-    def punto(self, cx, cy, r, color=BLANCO, alfa=255):
+    def punto(self, cx, cy, r, color=BLANCO, alfa=255, anillo_solo=False):
         T = max(2, self.px(r * 2)) * SS
         im = Image.new("RGBA", (T, T), (0, 0, 0, 0))
-        ImageDraw.Draw(im).ellipse((0, 0, T - 1, T - 1), fill=tuple(color[:3]) + (alfa,))
+        d = ImageDraw.Draw(im)
+        if anillo_solo:
+            d.ellipse((SS, SS, T - 1 - SS, T - 1 - SS), outline=tuple(color[:3]) + (alfa,), width=max(SS, int(T * 0.14)))
+        else:
+            d.ellipse((0, 0, T - 1, T - 1), fill=tuple(color[:3]) + (alfa,))
         im = im.resize((T // SS, T // SS), Image.LANCZOS)
         self.im.alpha_composite(im, (self.px(cx) - im.width // 2, self.px(cy) - im.height // 2))
-
-    def pegar_forma(self, origen, x, y, w, h, r):
-        """Copia de 'origen' solo la forma de pastilla (sin las esquinas)."""
-        X, Y = self.px(x), self.px(y)
-        W, H = self.px(x + w) - X, self.px(y + h) - Y
-        forma = pieza_redonda(W, H, round(r * self.e), (255, 255, 255, 255), None, 0).getchannel("A")
-        self.im.paste(origen.crop((X, Y, X + W, Y + H)), (X, Y), forma)
 
     def oscurecer(self, alfa):
         self.im.alpha_composite(Image.new("RGBA", self.im.size, (0, 0, 0, alfa)))

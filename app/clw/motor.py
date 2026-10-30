@@ -2,6 +2,7 @@
 
 import base64
 import ctypes
+import difflib
 import io
 import json
 import math
@@ -9,6 +10,7 @@ import os
 import re
 import threading
 import time
+import unicodedata
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageGrab, ImageOps, ImageStat
 
@@ -33,10 +35,14 @@ Reglas generales:
 - Si hay que calcular o razonar (matematicas, fisica, logica), resuelvelo primero en "pasos" de forma breve y luego da la respuesta. Si no hace falta, omite "pasos".
 
 Si es de OPCION MULTIPLE (circulos, casillas o botones con opciones):
-{"tipo": "opcion", "pasos": "...", "ids": [<id>], "respuesta": "<texto de la opcion>"}
-- "ids" son los ids numericos de las cajas de texto de las opciones correctas, nunca el de la pregunta.
-- Normalmente es una sola. Solo si la pregunta pide marcar varias (casillas), pon todas las correctas.
+{"tipo": "opcion", "pasos": "...", "respuesta": "<texto exacto de la opcion correcta>", "ids": [<id>]}
+- Primero decide la respuesta correcta y escribela en "respuesta" tal como aparece en la pantalla.
+- Luego busca en la lista la caja de texto de ESA opcion y pon su id en "ids". Revisa dos veces que el id que pones tenga el mismo texto que tu respuesta (es facil equivocarse por uno).
+- Las opciones son las que tienen circulo, casilla o boton al lado. Los textos que estan dentro de imagenes (mapas, fotos, diagramas, graficas) NO son opciones aunque digan lo mismo.
+- Nunca pongas el id de la pregunta.
+- Normalmente es una sola. Solo si la pregunta pide marcar varias (casillas), pon todas las correctas en "ids" y en "respuesta" separalas con " | ".
 - Si una opcion correcta no tiene caja de texto (por ejemplo es una imagen), en su lugar pon {"x": <x>, "y": <y>} con su centro.
+- Si los datos de la pregunta tienen un error y ninguna opcion es exacta, elige la mas cercana a la respuesta real.
 
 Si es ABIERTA (hay que escribir en uno o varios campos):
 {"tipo": "abierta", "pasos": "...", "respuestas": [{"campo": "C0", "texto": "..."}, {"campo": "C1", "texto": "..."}]}
@@ -555,6 +561,56 @@ def resolver_objetivo(obj, cajas, campos, s, img, zoom=1.0, escribir_ahi=False):
     return None
 
 
+def _norm(texto):
+    texto = unicodedata.normalize("NFKD", str(texto or "").lower())
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    return " ".join(re.sub(r"[^0-9a-z]+", " ", texto).split())
+
+
+def parecido(a, b):
+    """0..1: que tanto se parecen dos textos (aguanta basura del OCR alrededor).
+    Si los dos traen numeros y los numeros no son los mismos, se toman como distintos (8466 no es 8488)."""
+    a, b = _norm(a), _norm(b)
+    if not a or not b:
+        return 0.0
+    if a == b:
+        return 1.0
+    na, nb = re.findall(r"\d+", a), re.findall(r"\d+", b)
+    if na and nb and sorted(na) != sorted(nb):
+        return min(0.3, difflib.SequenceMatcher(None, a, b).ratio())
+    corto, largo = (a, b) if len(a) <= len(b) else (b, a)
+    if re.search(r"(^| )" + re.escape(corto) + r"($| )", largo):
+        return 0.6 + 0.4 * len(corto) / len(largo)
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
+
+def corregir_ids(ids, respuesta, cajas):
+    """Si la IA puso un id cuyo texto no es su respuesta (error de indice), busca la caja correcta."""
+    if not isinstance(respuesta, str) or not respuesta.strip() or not cajas:
+        return ids
+    textos = [t.strip() for t in respuesta.split("|") if t.strip()]
+    numericos = [i for i in ids if isinstance(_numero(i), (int, float)) and float(_numero(i)).is_integer()
+                 and 0 <= int(_numero(i)) < len(cajas)]
+    if len(textos) != len(ids) or len(numericos) != len(ids):
+        return ids
+    corregidos = []
+    for i, texto in zip(ids, textos):
+        i = int(_numero(i))
+        actual = parecido(texto, cajas[i]["texto"])
+        if actual >= 0.6:
+            corregidos.append(i)
+            continue
+        puntajes = [(parecido(texto, c["texto"]), j) for j, c in enumerate(cajas)]
+        mejor = max(p for p, _ in puntajes)
+        if mejor >= 0.75 and mejor - actual >= 0.25:
+            empatados = [j for p, j in puntajes if p >= mejor - 0.05]
+            j = min(empatados, key=lambda j: math.hypot(cajas[j]["cx"] - cajas[i]["cx"], cajas[j]["cy"] - cajas[i]["cy"]))
+            corregidos.append(j)
+        else:
+            corregidos.append(i)
+    return corregidos
+
+
 def armar_plan(datos, cajas, campos, s, img, zoom=1.0):
     """Lista de pasos: [{'punto': (x, y, desc) o None, 'texto': str o None}, ...]."""
     tipo = str(datos.get("tipo") or "").strip().lower()
@@ -586,6 +642,7 @@ def armar_plan(datos, cajas, campos, s, img, zoom=1.0):
         ids = [datos.get("id")] if datos.get("id") is not None else []
         if not ids and datos.get("x") is not None:
             ids = [{"x": datos.get("x"), "y": datos.get("y")}]
+    ids = corregir_ids(ids, datos.get("respuesta"), cajas)
     vistos = set()
     for obj in ids:
         punto = resolver_objetivo(obj, cajas, campos, s, img, zoom, escribir_ahi=False)

@@ -63,5 +63,9 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: escritorio
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Abrir {#AppName}"; Flags: nowait postinstall skipifsilent
 
+[UninstallRun]
+; si quedo activa junto al reloj, se cierra antes de borrar sus archivos
+Filename: "{sys}\taskkill.exe"; Parameters: "/IM ""{#AppExe}"" /F"; Flags: runhidden; RunOnceId: "CerrarCLWGANG"
+
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

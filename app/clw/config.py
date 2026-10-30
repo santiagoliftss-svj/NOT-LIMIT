@@ -8,10 +8,13 @@ import threading
 
 from . import rutas
 
+VERSION_AJUSTES = 2
+
 _PREDETERMINADO = {
+    "version_ajustes": VERSION_AJUSTES,
     "modelo": "claude-haiku-5-5",
     "claves": {},
-    "modo_preciso": False,
+    "modo_preciso": True,
     "guardar_capturas": True,
     "modelos_propios": {},   # para cambiar el id de un modelo sin actualizar la app
 }
@@ -80,6 +83,9 @@ class Config:
                 for k, v in guardado.items():
                     if k in self.datos and isinstance(v, type(self.datos[k])):
                         self.datos[k] = v
+                if guardado.get("version_ajustes", 1) < 2:
+                    self.datos["modo_preciso"] = True   # 1.1: pensar antes de contestar por defecto
+                    self.datos["version_ajustes"] = VERSION_AJUSTES
         except (OSError, ValueError):
             pass
 

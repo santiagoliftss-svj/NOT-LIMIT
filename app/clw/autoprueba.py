@@ -16,6 +16,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 RESULTADOS = {}
 OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
+# se reportan aparte (dependen de la barra de tareas y del escritorio de la maquina de pruebas):
+# bandeja, juego, reabrir, e2e, cpu
 
 
 def _paso(nombre, fn):
@@ -32,6 +34,7 @@ def _paso(nombre, fn):
 
 class _IAFalsa(BaseHTTPRequestHandler):
     elegir = None   # funcion(texto_del_pedido) -> str JSON de respuesta
+    pedidos = 0
 
     def log_message(self, *a):
         pass
@@ -40,6 +43,7 @@ class _IAFalsa(BaseHTTPRequestHandler):
         self._enviar(200, {"data": [], "models": []})
 
     def do_POST(self):
+        _IAFalsa.pedidos += 1
         largo = int(self.headers.get("content-length") or 0)
         cuerpo = json.loads(self.rfile.read(largo) or b"{}")
         texto = ""
@@ -185,27 +189,60 @@ def p_interfaz(salida):
     from .ui.vistas import Interfaz
 
     class App:
+        def __init__(self):
+            self.ui = None
+
+        def iniciar(self):
+            self.ui.evento_bot(("estado", "activo"))
+
+        def detener(self):
+            self.ui.evento_bot(("estado", "apagado"))
+
         def __getattr__(self, n):
             return lambda *a, **k: ""
+
+    class Reloj:
+        t = 100.0
+
+        def __call__(self):
+            return self.t
+
+    def foto(ui, reloj, nombre, seg=0.0):
+        fin = reloj.t + seg
+        while reloj.t < fin:
+            reloj.t = min(fin, reloj.t + 1 / 30)
+            ui.render()
+        ui.render().convert("RGB").save(os.path.join(salida, nombre + ".png"))
 
     d = tempfile.mkdtemp()
     hechas = []
     for escala in (1.0, 1.5):
         c = config.Config(os.path.join(d, f"a{escala}.json"))
-        ui = Interfaz(c, App(), escala)
-        ui.render(0).convert("RGB").save(os.path.join(salida, f"ui_{escala}_inicio.png"))
+        reloj = Reloj()
+        app = App()
+        ui = Interfaz(c, app, escala, reloj=reloj)
+        app.ui = ui
+        foto(ui, reloj, f"ui_{escala}_inicio")
         c.poner_clave("claude", "sk-ant-x")
-        ui.evento_bot(("estado", "activo"))
-        ui.evento_bot(("actividad", "Marcó: París", "ok"))
-        ui.render(0.6).convert("RGB").save(os.path.join(salida, f"ui_{escala}_activo.png"))
+        ui.inyectar()
+        foto(ui, reloj, f"ui_{escala}_encendiendo", 0.3)
+        foto(ui, reloj, f"ui_{escala}_anillo", 0.35)
+        foto(ui, reloj, "_", 0.6)
+        assert ui.debe_esconder(), "despues de INYECTAR la ventana debe irse junto al reloj"
+        ui.evento_bot(("actividad", "Marcó: Canberra", "ok"))
+        foto(ui, reloj, f"ui_{escala}_activo", 0.6)
         ui.capa = "modelos"
-        ui.render(0).convert("RGB").save(os.path.join(salida, f"ui_{escala}_modelos.png"))
+        foto(ui, reloj, f"ui_{escala}_modelos", 0.3)
         ui.capa = None
         ui.pantalla = "ajustes"
-        ui.render(0).convert("RGB").save(os.path.join(salida, f"ui_{escala}_ajustes.png"))
+        foto(ui, reloj, f"ui_{escala}_ajustes")
         ui.abrir_clave("gemini")
-        ui.render(0).convert("RGB").save(os.path.join(salida, f"ui_{escala}_clave.png"))
+        foto(ui, reloj, f"ui_{escala}_clave", 0.4)
         hechas.append(escala)
+    try:
+        os.remove(os.path.join(salida, "_.png"))
+    except OSError:
+        pass
     return hechas
 
 
@@ -244,24 +281,47 @@ def _ventana_y_e2e(salida):
         im.save(os.path.join(salida, nombre + ".png"))
         return im
 
+    cpu = {}
+
+    def grab_seguro(nombre, w=None):
+        try:
+            grab_ventana(nombre, w)
+        except Exception:
+            pass
+
+    def medir_cpu(nombre, seg, despues):
+        """% de un nucleo que usa CLW GANG (todos sus hilos) durante 'seg' segundos."""
+        t0, c0 = time.time(), time.process_time()
+
+        def fin():
+            cpu[nombre] = round(100 * (time.process_time() - c0) / max(0.001, time.time() - t0), 2)
+            despues()
+        root.after(int(seg * 1000), fin)
+
     def paso_ventana():
         try:
             im = grab_ventana("ventana_inicio")
             claros = sum(1 for p in im.convert("L").getdata() if p > 200)
             RESULTADOS["ventana"] = {"ok": claros > 500, "detalle": {"tam": im.size, "pixeles_claros": claros,
-                                                                     "escala": v.e}}
-            v.iniciar()
-            root.after(700, paso_ventana_activa)
+                                                                     "escala": v.e, "bandeja": v.en_bandeja()}}
+            medir_cpu("ventana_al_frente", 2.0, paso_inyectar)
         except Exception as e:
             RESULTADOS["ventana"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             terminar()
 
-    def paso_ventana_activa():
+    def paso_inyectar():
+        v.ui.inyectar()                     # como tocar el boton
+        root.after(300, lambda: grab_seguro("ventana_encendiendo"))
+        root.after(1800, paso_escondida)
+
+    def paso_escondida():
         try:
-            grab_ventana("ventana_activa")
-        except Exception:
-            pass
-        root.after(400, e2e_opcion)
+            det = {"activo": bot.activo, "visible": v.visible, "estado_tk": root.state(), "bandeja": v.en_bandeja()}
+            RESULTADOS["bandeja"] = {"ok": bool(bot.activo and not v.visible and det["estado_tk"] == "withdrawn"
+                                                and det["bandeja"]), "detalle": det}
+        except Exception as e:
+            RESULTADOS["bandeja"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+        medir_cpu("escondida_y_activa", 3.0, e2e_opcion)
 
     # -------- E2E 1: opcion multiple
     def e2e_opcion():
@@ -387,31 +447,127 @@ def _ventana_y_e2e(salida):
                         pass
                     _cerrar_nativo(hwnd)
                     top.destroy()
-                    root.after(200, terminar)
+                    root.after(300, juego_pantalla_completa)
                 else:
                     root.after(200, revisar)
             root.after(500, revisar)
         except Exception as e:
             pruebas["escribir_nativo"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, juego_pantalla_completa)
+
+    # -------- un "juego" en pantalla completa: Ctrl + clic ahi NO debe hacer nada
+    juego = {}
+
+    def juego_pantalla_completa():
+        try:
+            antes, pedidos = bot.ignorados.get("pantalla_completa", 0), _IAFalsa.pedidos
+            W, H = root.winfo_screenwidth(), root.winfo_screenheight()
+            top = tk.Toplevel(root)
+            top.overrideredirect(True)
+            top.geometry(f"{W}x{H}+0+0")
+            top.configure(bg="#0b2a12")
+            tk.Label(top, text="1. ¿Capital de Francia?   París   Roma", font=("Arial", 28), bg="#0b2a12",
+                     fg="white").place(x=80, y=80)
+            top.attributes("-topmost", True)
+            top.update()
+            top.lift()
+            top.focus_force()
+            _IAFalsa.elegir = lambda t: json.dumps({"tipo": "ninguna"})
+
+            def clic():
+                time.sleep(0.6)
+                juego["al_frente"] = entrada.clase_ventana(entrada.ventana_al_frente())
+                juego["detecta_juego"] = entrada.juego_en_pantalla_completa()
+                _ctrl_clic(260, 100)
+            threading.Thread(target=clic, daemon=True).start()
+
+            def revisar():
+                juego["ignorados"] = bot.ignorados.get("pantalla_completa", 0) - antes
+                juego["pedidos_ia"] = _IAFalsa.pedidos - pedidos
+                juego["ok_pantalla_completa"] = juego["ignorados"] >= 1 and juego["pedidos_ia"] == 0
+                top.destroy()
+                root.after(300, ctrl_sostenido)
+            root.after(2800, revisar)
+        except Exception as e:
+            juego["error"] = repr(e)
+            root.after(100, ctrl_sostenido)
+
+    # -------- Ctrl apretado mucho rato (como en juegos para agacharse) + clic: tampoco hace nada
+    def ctrl_sostenido():
+        try:
+            antes, pedidos = bot.ignorados.get("ctrl_sostenido", 0), _IAFalsa.pedidos
+            top = tk.Toplevel(root)
+            top.title("Prueba ctrl")
+            top.geometry("700x240+0+0")
+            top.configure(bg="white")
+            tk.Label(top, text="3. ¿Cuánto es 5 x 5?", font=("Arial", 22), bg="white", fg="#222").place(x=40, y=60)
+            top.attributes("-topmost", True)
+            top.update()
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+
+            def hilo():
+                entrada._enviar([(entrada.VK_CONTROL, 0, 0)])
+                time.sleep(3.3)
+                entrada.U32.SetCursorPos(int(lx + 150), int(ly + 80))
+                time.sleep(0.1)
+                entrada.U32.mouse_event(0x0002, 0, 0, 0, 0)
+                time.sleep(0.08)
+                entrada.U32.mouse_event(0x0004, 0, 0, 0, 0)
+                time.sleep(0.1)
+                entrada._enviar([(entrada.VK_CONTROL, 0, 2)])
+            threading.Thread(target=hilo, daemon=True).start()
+
+            def revisar():
+                juego["ignorados_ctrl"] = bot.ignorados.get("ctrl_sostenido", 0) - antes
+                juego["pedidos_ia_ctrl"] = _IAFalsa.pedidos - pedidos
+                juego["ok_ctrl_sostenido"] = juego["ignorados_ctrl"] >= 1 and juego["pedidos_ia_ctrl"] == 0
+                top.destroy()
+                RESULTADOS["juego"] = {"ok": bool(juego.get("ok_pantalla_completa") and juego.get("ok_ctrl_sostenido")),
+                                       "detalle": juego}
+                root.after(300, reabrir)
+            root.after(5200, revisar)
+        except Exception as e:
+            juego["error_ctrl"] = repr(e)
+            RESULTADOS["juego"] = {"ok": False, "detalle": juego}
+            root.after(100, reabrir)
+
+    # -------- abrir CLW GANG otra vez (como doble clic al icono): la ventana escondida vuelve
+    def reabrir():
+        try:
+            import ctypes
+            k32 = ctypes.windll.kernel32
+            k32.OpenEventW.restype = ctypes.c_void_p
+            h = k32.OpenEventW(0x0002, False, "CLWGANG_mostrar")
+            if h:
+                k32.SetEvent(ctypes.c_void_p(h))
+                k32.CloseHandle(ctypes.c_void_p(h))
+
+            def revisar():
+                det = {"evento": bool(h), "visible": v.visible, "estado_tk": root.state(), "activo": bot.activo}
+                RESULTADOS["reabrir"] = {"ok": bool(h and v.visible and det["estado_tk"] == "normal"), "detalle": det}
+                grab_seguro("ventana_reabierta")
+                root.after(200, terminar)
+            root.after(1500, revisar)
+        except Exception as e:
+            RESULTADOS["reabrir"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, terminar)
 
     def terminar():
+        if estado["fin"]:
+            return
         RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 3,
                              "detalle": pruebas}
+        RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         try:
             for f in os.listdir(os.path.join(d, "revision")):
                 Image.open(os.path.join(d, "revision", f)).save(os.path.join(salida, "revision_" + f))
         except Exception:
             pass
         estado["fin"] = True
-        try:
-            bot.detener()
-        except Exception:
-            pass
-        root.after(100, root.destroy)
+        root.after(100, v.salir)
 
     root.after(900, paso_ventana)
-    root.after(120000, lambda: (not estado["fin"]) and terminar())
+    root.after(150000, terminar)
     root.mainloop()
 
 

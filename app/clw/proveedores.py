@@ -40,16 +40,17 @@ class Modelo:
     id: str
     nombre: str
     nota: str
+    corto: str = ""
 
 
 MODELOS = [
-    Modelo("claude", "claude-haiku-5-5", "Claude Haiku 5.5", "Rápido"),
-    Modelo("claude", "claude-sonnet-5-5", "Claude Sonnet 5.5", "Equilibrado"),
-    Modelo("claude", "claude-opus-5-5", "Claude Opus 5.5", "El más listo"),
-    Modelo("gemini", "gemini-flash-latest", "Gemini Flash", "Clave gratis"),
-    Modelo("gemini", "gemini-pro-latest", "Gemini Pro", "Preciso"),
-    Modelo("openai", "gpt-6-luna", "GPT-6 Luna", "Rápido"),
-    Modelo("openai", "gpt-6.1-terra", "GPT-6.1 Terra", "Bueno con imágenes"),
+    Modelo("claude", "claude-haiku-5-5", "Claude Haiku 5.5", "Rápido", "Haiku 5.5"),
+    Modelo("claude", "claude-sonnet-5-5", "Claude Sonnet 5.5", "Equilibrado", "Sonnet 5.5"),
+    Modelo("claude", "claude-opus-5-5", "Claude Opus 5.5", "El más listo", "Opus 5.5"),
+    Modelo("gemini", "gemini-flash-latest", "Gemini Flash", "Clave gratis", "Flash"),
+    Modelo("gemini", "gemini-pro-latest", "Gemini Pro", "Preciso", "Pro"),
+    Modelo("openai", "gpt-6-luna", "GPT-6 Luna", "Rápido", "GPT-6 Luna"),
+    Modelo("openai", "gpt-6.1-terra", "GPT-6.1 Terra", "Visión", "GPT-6.1 Terra"),
 ]
 
 
@@ -149,21 +150,21 @@ def _base(proveedor, predeterminada):
 def _variantes(proveedor, preciso):
     if proveedor == "claude":
         if preciso:
-            return [{"output_config": {"effort": "high"}}, {}]
+            return [{"output_config": {"effort": "low"}}, {}]
         return [{"thinking": {"type": "disabled"}},
                 {"thinking": {"type": "between_tools"}},
                 {"output_config": {"effort": "low"}},
                 {}]
     if proveedor == "gemini":
         if preciso:
-            return [{"thinkingConfig": {"thinkingLevel": "high"}}, {}]
+            return [{"thinkingConfig": {"thinkingLevel": "low"}}, {}]
         return [{"thinkingConfig": {"thinkingLevel": "minimal"}},
                 {"thinkingConfig": {"thinkingLevel": "low"}},
                 {"thinkingConfig": {"thinkingBudget": 0}},
                 {}]
     if proveedor == "openai":
         if preciso:
-            return [{"reasoning_effort": "high"}, {"reasoning_effort": "medium"}, {}]
+            return [{"reasoning_effort": "low"}, {}]
         return [{"reasoning_effort": "none"}, {"reasoning_effort": "minimal"}, {"reasoning_effort": "low"}, {}]
     return [{}]
 

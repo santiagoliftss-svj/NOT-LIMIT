@@ -19,11 +19,14 @@
   :root {
     --negro: #000;
     --blanco: #fff;
-    --texto: #f4f4f4;
-    --suave: #969696;
-    --tenue: #606060;
-    --linea: rgba(255, 255, 255, .15);
+    --texto: #fff;
+    --suave: #c4c4c4;
+    --tenue: #808080;
+    --linea: rgba(255, 255, 255, .14);
+    --vidrio: rgba(255, 255, 255, .045);
+    --curva: cubic-bezier(.2, .8, .2, 1);
   }
+  @property --giro { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { background: var(--negro); }
   body {
@@ -35,133 +38,260 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
-  #cielo { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-  .brillo {
-    position: fixed; left: 50%; top: -18vh; width: 120vw; height: 70vh; transform: translateX(-50%);
-    background: radial-gradient(closest-side, rgba(255,255,255,.10), rgba(255,255,255,0));
-    z-index: 0; pointer-events: none;
+  .ancho { font-variation-settings: "wdth" 125; }
+  .luz {
+    position: absolute; left: 0; right: 0; top: 0; height: 90vh;
+    background: radial-gradient(60% 55% at 50% 0%, rgba(255,255,255,.055), rgba(255,255,255,0) 72%);
+    pointer-events: none;
   }
-  main {
-    position: relative; z-index: 1;
-    max-width: 640px; margin: 0 auto; padding: 72px 16px 56px;
-    display: flex; flex-direction: column; align-items: center; text-align: center;
+  .atajo { white-space: nowrap; }
+  main { position: relative; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------------- portada */
+  .portada {
+    min-height: min(92vh, 860px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    padding: 72px 0 56px;
   }
-  h1 { width: min(560px, 100%); }
-  h1 img { display: block; width: 100%; height: auto; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .lema {
-    margin-top: 10px; color: var(--suave); font-size: 17px; line-height: 1.5; max-width: 40ch;
-  }
-  .lema, .meta, .pasos, footer { text-shadow: 0 0 2px #000, 0 0 6px #000, 0 0 10px #000; }
+  .marca { position: relative; width: min(640px, 100%); }
+  .marca img { display: block; width: 100%; height: auto; }
+  .marca svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .marca .quieta { display: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .lema { margin-top: 22px; color: var(--suave); font-size: 18px; line-height: 1.5; }
+  .lema kbd { font-size: 15px; }
+
   .descargar {
-    margin-top: 36px;
-    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-    min-width: 280px; height: 66px; padding: 0 36px; border-radius: 999px;
-    background: var(--blanco); color: #000; text-decoration: none;
-    font-weight: 800; font-size: 17px; letter-spacing: .16em;
+    position: relative; isolation: isolate; margin-top: 44px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 14px;
+    min-width: 300px; height: 64px; padding: 0 40px; border-radius: 999px;
+    color: var(--blanco); text-decoration: none;
+    font-weight: 780; font-size: 15px; letter-spacing: .26em;
     font-variation-settings: "wdth" 125;
-    transition: background .15s ease, transform .15s ease;
+    background: linear-gradient(90deg, #fff 50%, rgba(255,255,255,.05) 50%) 100% 0 / 200% 100% no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.28);
+    transition: background-position .55s var(--curva), color .3s ease .1s, box-shadow .3s ease, transform .15s ease;
   }
-  .descargar:hover { background: #e6e6e6; }
+  .descargar::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; z-index: -1;
+    background: conic-gradient(from var(--giro), rgba(255,255,255,0) 0deg, rgba(255,255,255,.95) 50deg, rgba(255,255,255,0) 100deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: girar 3.4s linear infinite;
+  }
+  .descargar:hover, .descargar:focus-visible {
+    background-position: 0 0; color: #000;
+    box-shadow: inset 0 0 0 1px #fff, 0 0 42px rgba(255,255,255,.22);
+  }
   .descargar:active { transform: scale(.98); }
-  .descargar:focus-visible { outline: 2px solid var(--blanco); outline-offset: 4px; }
-  .descargar svg { width: 18px; height: 18px; }
-  .meta { margin-top: 14px; color: var(--tenue); font-size: 13px; }
-  .pasos {
-    margin-top: 64px; width: 100%; list-style: none; text-align: left;
-    border-top: 1px solid var(--linea);
+  .descargar:focus-visible { outline: none; }
+  .descargar svg { width: 17px; height: 17px; }
+  @keyframes girar { to { --giro: 360deg; } }
+  .meta { margin-top: 16px; color: var(--tenue); font-size: 13px; letter-spacing: .02em; }
+
+  /* ---------------- la app y los pasos */
+  .como {
+    display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 64px; align-items: center;
+    padding: 40px 0 96px;
   }
+  .vista { margin: 0 auto; width: min(380px, 100%); }
+  .ventana {
+    border-radius: 14px; overflow: hidden; background: #000;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 30px 90px rgba(255,255,255,.07);
+  }
+  .barra {
+    height: 34px; display: flex; align-items: center; justify-content: space-between;
+    padding-left: 14px; font: 12px "Segoe UI", system-ui, sans-serif; color: #e8e8e8;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .barra .botones { display: flex; height: 100%; }
+  .barra .botones span { width: 44px; display: grid; place-items: center; color: #bdbdbd; }
+  .barra .botones span.apagado { color: #555; }
+  .barra .botones svg { width: 10px; height: 10px; }
+  .ventana img { display: block; width: 100%; height: auto; }
+  .vista figcaption { margin-top: 14px; text-align: center; color: var(--tenue); font-size: 13px; }
+
+  .titulo {
+    font-weight: 860; font-size: clamp(26px, 4vw, 34px); letter-spacing: .02em; line-height: 1.05;
+    font-variation-settings: "wdth" 125;
+  }
+  .pasos { list-style: none; margin-top: 28px; display: grid; gap: 12px; }
   .pasos li {
-    display: grid; grid-template-columns: 44px 1fr; gap: 4px 12px;
-    padding: 22px 4px; border-bottom: 1px solid var(--linea);
+    display: grid; grid-template-columns: 52px 1fr; gap: 6px 14px;
+    padding: 20px 22px; border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+    box-shadow: inset 0 0 0 1px var(--linea);
   }
   .pasos .n {
-    grid-row: span 2; font-weight: 800; font-size: 15px; color: var(--tenue);
-    font-variation-settings: "wdth" 125; padding-top: 2px;
+    grid-row: span 2; font-weight: 860; font-size: 15px; letter-spacing: .08em; color: var(--tenue);
+    font-variation-settings: "wdth" 125; padding-top: 3px;
   }
-  .pasos h2 { font-size: 17px; font-weight: 650; color: var(--texto); }
-  .pasos p { color: var(--suave); font-size: 15px; line-height: 1.55; max-width: 60ch; }
-  .pasos a { color: var(--texto); text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
+  .pasos h3 { font-weight: 800; font-size: 15px; letter-spacing: .14em; font-variation-settings: "wdth" 125; }
+  .pasos p { color: var(--suave); font-size: 15px; line-height: 1.55; }
+  .pasos a { color: var(--texto); text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.4); }
   .pasos a:hover { text-decoration-color: var(--blanco); }
+  .estrellita { display: inline-block; width: 13px; height: 13px; vertical-align: -1px; }
   kbd {
-    display: inline-block; padding: 1px 7px; border: 1px solid rgba(255,255,255,.3); border-radius: 6px;
-    font: inherit; font-size: 13px; color: var(--texto); background: rgba(255,255,255,.04);
+    display: inline-block; padding: 1px 8px; border-radius: 7px;
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--texto);
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
   }
+
+  /* ---------------- no estorba */
+  .calma { padding: 8px 0 96px; text-align: center; }
+  .calma .titulo { margin-bottom: 28px; }
+  .tarjetas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; }
+  .tarjetas div {
+    padding: 22px; border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+    box-shadow: inset 0 0 0 1px var(--linea);
+  }
+  .tarjetas h3 { font-size: 16px; font-weight: 700; }
+  .tarjetas p { margin-top: 8px; color: var(--suave); font-size: 14.5px; line-height: 1.55; }
+
   footer {
-    position: relative; z-index: 1; text-align: center; color: var(--tenue); font-size: 13px;
-    padding: 8px 16px 40px;
+    border-top: 1px solid var(--linea);
+    max-width: 1080px; margin: 0 auto; padding: 28px 16px 44px;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    color: var(--tenue); font-size: 13px;
   }
+  footer b { color: var(--suave); font-weight: 800; letter-spacing: .14em; font-variation-settings: "wdth" 125; }
   footer a { color: var(--suave); text-underline-offset: 3px; }
+  footer a:hover { color: var(--blanco); }
+
+  @media (max-width: 860px) {
+    .como { grid-template-columns: 1fr; gap: 48px; padding-top: 8px; }
+    .como .texto { order: -1; }
+    .tarjetas { grid-template-columns: 1fr; }
+  }
   @media (max-width: 480px) {
-    main { padding-top: 48px; }
-    .descargar { min-width: 0; width: 100%; }
+    .portada { padding-top: 56px; min-height: 0; }
     .lema { font-size: 16px; }
+    .descargar { min-width: 0; width: 100%; }
+    .pasos li { grid-template-columns: 40px 1fr; padding: 18px; }
+    footer { flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marca .mueve { display: none; }
+    .marca .quieta { display: inline; }
+    .descargar::before { animation: none; }
+    .descargar { transition: none; }
   }
 </style>
 </head>
 <body>
-<canvas id="cielo" aria-hidden="true"></canvas>
-<div class="brillo" aria-hidden="true"></div>
+<div class="luz" aria-hidden="true"></div>
 
 <main>
-  <h1><img src="assets/wordmark.png" alt="" width="1400" height="402"><span class="sr">CLW GANG</span></h1>
-  <p class="lema">Contesta preguntas de la pantalla con un Ctrl&nbsp;+&nbsp;clic.</p>
+  <section class="portada">
+    <h1 class="marca">
+      <img src="assets/marca.png" alt="" width="2453" height="661">
+      <svg viewBox="0 0 2453 661" aria-hidden="true">
+        <defs>
+          <radialGradient id="brillo">
+            <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+            <stop offset=".45" stop-color="#fff" stop-opacity=".16"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </radialGradient>
+          <g id="estrella">
+            <circle r="72" fill="url(#brillo)"/>
+            <path d="M0 -40 L5.6 -5.6 L40 0 L5.6 5.6 L0 40 L-5.6 5.6 L-40 0 L-5.6 -5.6 Z" fill="#fff"/>
+          </g>
+          <path id="orbita" d="M2432.18 339.29 A1205.43 202.82 0 1 1 21.32 339.29 A1205.43 202.82 0 1 1 2432.18 339.29"/>
+        </defs>
+        <g transform="rotate(-6 1226.75 339.29)">
+          <g class="mueve">
+            <animateMotion dur="10s" repeatCount="indefinite"><mpath href="#orbita"/></animateMotion>
+            <g>
+              <animateTransform attributeName="transform" type="scale" values="1;1;.7;.7;1"
+                keyTimes="0;.46;.54;.96;1" dur="10s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="1;1;.32;.32;1" keyTimes="0;.46;.54;.96;1"
+                dur="10s" repeatCount="indefinite"/>
+              <use href="#estrella"/>
+            </g>
+          </g>
+          <use class="quieta" href="#estrella" x="2385.5" y="395.2"/>
+        </g>
+      </svg>
+      <span class="sr">CLW GANG</span>
+    </h1>
+    <p class="lema">Contesta preguntas de la pantalla con un <span class="atajo"><kbd>Ctrl</kbd> + <kbd>clic</kbd></span></p>
 
-  <a class="descargar" id="descargar" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/CLW-GANG-Setup.exe">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
-    DESCARGAR
-  </a>
-  <p class="meta" id="meta">Para Windows 10 y 11</p>
+    <a class="descargar" id="descargar" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/CLW-GANG-Setup.exe">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+      DESCARGAR
+    </a>
+    <p class="meta" id="meta">Para Windows 10 y 11</p>
+  </section>
 
-  <ol class="pasos">
-    <li>
-      <span class="n">1</span>
-      <h2>Instálala</h2>
-      <p>Abre el archivo que bajaste. Si Windows dice <em>“Windows protegió tu PC”</em>, toca <strong>Más información</strong> y luego <strong>Ejecutar de todas formas</strong>. Sigue el instalador y listo.</p>
-    </li>
-    <li>
-      <span class="n">2</span>
-      <h2>Pega tu API key</h2>
-      <p>Elige el modelo y pega tu clave. La de Gemini es gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Las de <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude</a> y <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">ChatGPT</a> necesitan saldo.</p>
-    </li>
-    <li>
-      <span class="n">3</span>
-      <h2>Toca INYECTAR</h2>
-      <p>Pon el puntero sobre la pregunta y haz <kbd>Ctrl</kbd> + <kbd>clic</kbd>. En opción múltiple marca la respuesta. En preguntas abiertas la escribe sola.</p>
-    </li>
-  </ol>
+  <section class="como">
+    <figure class="vista">
+      <div class="ventana">
+        <div class="barra">
+          <span>CLW GANG</span>
+          <span class="botones" aria-hidden="true">
+            <span><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" stroke-width="1"/></svg></span>
+            <span class="apagado"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg></span>
+            <span><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1"/></svg></span>
+          </span>
+        </div>
+        <img src="assets/app.png" alt="CLW GANG activo: modelo Claude Haiku 5.5, botón Detener y lo último que contestó" width="760" height="1200" loading="lazy">
+      </div>
+      <figcaption>Así se ve. Al tocar Inyectar se va junto al reloj.</figcaption>
+    </figure>
+
+    <div class="texto">
+      <h2 class="titulo">CÓMO SE USA</h2>
+      <ol class="pasos">
+        <li>
+          <span class="n">01</span>
+          <h3>INSTÁLALA</h3>
+          <p>Abre el archivo que bajaste. Si Windows dice <em>“Windows protegió tu PC”</em>, toca <strong>Más información</strong> y luego <strong>Ejecutar de todas formas</strong>.</p>
+        </li>
+        <li>
+          <span class="n">02</span>
+          <h3>PEGA TU CLAVE</h3>
+          <p>Elige el modelo y pega tu clave. La de Gemini es gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. Las de <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude</a> y <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">ChatGPT</a> necesitan saldo.</p>
+        </li>
+        <li>
+          <span class="n">03</span>
+          <h3>TOCA INYECTAR</h3>
+          <p>La ventana se va junto al reloj y sigue activa ahí. Toca la estrella <svg class="estrellita" viewBox="-40 -40 80 80" aria-label="estrella"><path d="M0 -40 L6 -6 L40 0 L6 6 L0 40 L-6 6 L-40 0 L-6 -6 Z" fill="#fff"/></svg> para abrirla, detenerla o cerrarla.</p>
+        </li>
+        <li>
+          <span class="n">04</span>
+          <h3>CTRL + CLIC</h3>
+          <p>Pon el puntero sobre la pregunta y haz <span class="atajo"><kbd>Ctrl</kbd> + <kbd>clic</kbd></span>. En opción múltiple marca la respuesta. En preguntas abiertas la escribe sola.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="calma">
+    <h2 class="titulo">NO ESTORBA</h2>
+    <div class="tarjetas">
+      <div>
+        <h3>Jugando, no hace nada</h3>
+        <p>Si tienes un juego en pantalla completa, el Ctrl&nbsp;+&nbsp;clic no hace nada. Tampoco si dejas Ctrl apretado para agacharte.</p>
+      </div>
+      <div>
+        <h3>Escondida casi no gasta</h3>
+        <p>Junto al reloj no dibuja nada. Solo trabaja el ratito en que lee la pregunta.</p>
+      </div>
+      <div>
+        <h3>No se mete en nada</h3>
+        <p>No inyecta nada en otros programas ni en la memoria. Solo mira la pantalla cuando haces Ctrl&nbsp;+&nbsp;clic.</p>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
+  <b>CLW GANG</b>
   <a href="https://github.com/santiagoliftss-svj/clw-gang">Código en GitHub</a>
 </footer>
 
 <script>
-  // cielo de estrellas (fijo, sin animacion)
-  (function () {
-    var c = document.getElementById("cielo");
-    var ctx = c.getContext("2d");
-    function dibujar() {
-      var r = window.devicePixelRatio || 1;
-      var w = window.innerWidth, h = window.innerHeight;
-      c.width = w * r; c.height = h * r;
-      ctx.setTransform(r, 0, 0, r, 0, 0);
-      ctx.clearRect(0, 0, w, h);
-      var semilla = 7;
-      function azar() { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; }
-      var n = Math.round(w * h / 2600);
-      for (var i = 0; i < n; i++) {
-        var x = azar() * w, y = azar() * h;
-        if (azar() < (y / h) * 0.6) continue;
-        var rad = [0.5, 0.6, 0.7, 0.9, 1.1][Math.floor(azar() * 5)];
-        ctx.fillStyle = "rgba(255,255,255," + (0.18 + azar() * 0.62) * (1 - y / h * 0.45) + ")";
-        ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    dibujar();
-    var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(dibujar, 150); });
-  })();
-
   // version y tamano reales del ultimo instalador
   fetch("https://api.github.com/repos/santiagoliftss-svj/clw-gang/releases/latest")
     .then(function (r) { return r.ok ? r.json() : null; })

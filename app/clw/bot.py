@@ -52,7 +52,8 @@ class Bot:
         self._ocupado = threading.Lock()
         self._cancelar = threading.Event()
         self.hwnd_propio = None
-        self.escucha = EscuchaCtrlClic(self._disparo, es_propia=self._es_propia)
+        self.escucha = EscuchaCtrlClic(self._disparo, es_propia=self._es_propia, al_ignorar=self._ignorado)
+        self.ignorados = {"ctrl_sostenido": 0, "pantalla_completa": 0}
 
     # ------------------------------------------------ control
     def _emitir(self, *evento):
@@ -93,6 +94,9 @@ class Bot:
         log.info("detenido")
 
     # ------------------------------------------------ trabajo
+    def _ignorado(self, motivo):
+        self.ignorados[motivo] = self.ignorados.get(motivo, 0) + 1
+
     def _disparo(self, x, y):
         if not self.activo:
             return
@@ -109,6 +113,7 @@ class Bot:
 
     def _trabajo(self, x, y):
         self._cancelar.clear()
+        entrada.bajar_prioridad_hilo()
         try:
             self._emitir("estado", "leyendo")
             self._esperar_que_suelte_ctrl()

@@ -168,3 +168,33 @@ def prueba_ninguna():
     img, _, _ = muestras.quiz_oscuro()
     res = motor.procesar(img, 10, 10, _ia(lambda t: '{"tipo": "ninguna"}'), 1.0, None)
     assert motor.ejecutar(res, 0, 0, acciones=Acciones()) == ("nada", 0)
+
+
+def prueba_corrige_error_de_indice():
+    """La IA dice 'París' pero pone el id de otra opcion (le paso con Canberra/Sydney): se corrige."""
+    img, tarjetas, (px, py) = muestras.quiz_oscuro()
+
+    def ia(texto):
+        lineas = _lineas(texto)
+        madrid = next(c[0] for c in lineas if not c[0].startswith("C") and "Madrid" in c[3])
+        return json.dumps({"tipo": "opcion", "respuesta": "París", "ids": [int(madrid)]})
+
+    res = motor.procesar(img, px, py, _ia(ia), 1.0, OCR_)
+    acc = Acciones()
+    motor.ejecutar(res, 0, 0, acciones=acc)
+    assert _dentro(acc.log[0][1:], tarjetas["París"]), acc.log
+
+
+def prueba_no_corrige_si_no_hay_algo_mejor():
+    cajas = [{"texto": "Q.6", "cx": 30, "cy": 30}, {"texto": "8466 m", "cx": 150, "cy": 137},
+             {"texto": "x O ss124m", "cx": 104, "cy": 195}, {"texto": "8488 m", "cx": 152, "cy": 253}]
+    assert motor.corregir_ids([2], "8844 m", cajas) == [2]          # OCR leyo mal: se respeta el id
+    assert motor.corregir_ids([1], "8488 m", cajas) == [3]          # el id no coincide y hay uno exacto
+    assert motor.corregir_ids([3], "8488 m", cajas) == [3]
+    cajas2 = [{"texto": "Sydney", "cx": 480, "cy": 380}, {"texto": "Melbourne", "cx": 180, "cy": 596},
+              {"texto": "Canberra", "cx": 175, "cy": 654}, {"texto": "Xx O Sydney", "cx": 117, "cy": 713}]
+    assert motor.corregir_ids([3], "Canberra", cajas2) == [2]
+    assert motor.corregir_ids([0], "Sydney", cajas2) == [0]
+    assert motor.corregir_ids([1, 2], "Melbourne | Canberra", cajas2) == [1, 2]
+    assert motor.corregir_ids([{"x": 1, "y": 2}], "Canberra", cajas2) == [{"x": 1, "y": 2}]
+    assert motor.parecido("París", "O París") > 0.75 and motor.parecido("Paris", "París") == 1.0

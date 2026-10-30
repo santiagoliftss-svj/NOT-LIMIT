@@ -7,7 +7,7 @@ import threading
 
 from . import rutas
 
-_SIN_VENTANA = 0x08000000 if rutas.WINDOWS else 0  # CREATE_NO_WINDOW
+_SIN_VENTANA = (0x08000000 | 0x00004000) if rutas.WINDOWS else 0  # CREATE_NO_WINDOW + prioridad baja
 
 
 class OCR:

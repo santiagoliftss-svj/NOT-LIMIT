@@ -43,6 +43,7 @@ if U32 is not None:
     U32.WindowFromPoint.restype = ctypes.c_void_p
     U32.GetAncestor.argtypes = [ctypes.c_void_p, ctypes.c_uint]
     U32.GetAncestor.restype = ctypes.c_void_p
+    U32.GetForegroundWindow.restype = ctypes.c_void_p
     U32.SendInput.argtypes = [ctypes.c_uint, ctypes.c_void_p, ctypes.c_int]
 
 VK_LBUTTON, VK_RBUTTON, VK_CONTROL, VK_ESCAPE = 0x01, 0x02, 0x11, 0x1B
@@ -77,6 +78,13 @@ def posicion_mouse():
     return p.x, p.y
 
 
+def ventana_al_frente():
+    try:
+        return U32.GetForegroundWindow()
+    except Exception:
+        return None
+
+
 def ventana_raiz_en(x, y):
     try:
         h = U32.WindowFromPoint(_POINT(int(x), int(y)))
@@ -106,6 +114,62 @@ def rect_ventana(hwnd):
     except Exception:
         pass
     return None
+
+
+class _MONITORINFO(ctypes.Structure):
+    _fields_ = [("cbSize", ctypes.c_ulong), ("rcMonitor", _RECT), ("rcWork", _RECT), ("dwFlags", ctypes.c_ulong)]
+
+
+# ventanas de navegador: aunque esten en pantalla completa (F11) si se contestan
+_NAVEGADORES = ("Chrome_WidgetWin_1", "MozillaWindowClass", "ApplicationFrameWindow", "OperaWindowClass")
+_ESCRITORIO = ("Progman", "WorkerW", "Shell_TrayWnd", "Shell_SecondaryTrayWnd")
+
+
+def clase_ventana(hwnd):
+    buf = ctypes.create_unicode_buffer(256)
+    try:
+        U32.GetClassNameW(ctypes.c_void_p(hwnd), buf, 256)
+    except Exception:
+        return ""
+    return buf.value
+
+
+def juego_en_pantalla_completa():
+    """True si al frente hay una app en pantalla completa que no es navegador (casi siempre un juego)."""
+    try:
+        h = U32.GetForegroundWindow()
+        if not h:
+            return False
+        clase = clase_ventana(h)
+        if clase in _ESCRITORIO or clase in _NAVEGADORES:
+            return False
+        U32.GetWindowLongW.restype = ctypes.c_long
+        estilo = U32.GetWindowLongW(ctypes.c_void_p(h), -16) & 0xFFFFFFFF   # GWL_STYLE
+        if estilo & 0x00C00000 == 0x00C00000:   # tiene barra de titulo: es una ventana maximizada, no un juego
+            return False
+        r = _RECT()
+        if not U32.GetWindowRect(ctypes.c_void_p(h), ctypes.byref(r)):
+            return False
+        U32.MonitorFromWindow.restype = ctypes.c_void_p
+        mon = U32.MonitorFromWindow(ctypes.c_void_p(h), 2)
+        mi = _MONITORINFO()
+        mi.cbSize = ctypes.sizeof(_MONITORINFO)
+        if not U32.GetMonitorInfoW(ctypes.c_void_p(mon), ctypes.byref(mi)):
+            return False
+        m = mi.rcMonitor
+        return r.left <= m.left and r.top <= m.top and r.right >= m.right and r.bottom >= m.bottom
+    except Exception:
+        return False
+
+
+def bajar_prioridad_hilo():
+    """El hilo actual corre con prioridad baja (para no robarle fuerza a un juego)."""
+    try:
+        k32 = ctypes.windll.kernel32
+        k32.GetCurrentThread.restype = ctypes.c_void_p
+        k32.SetThreadPriority(ctypes.c_void_p(k32.GetCurrentThread()), -1)   # BELOW_NORMAL
+    except Exception:
+        pass
 
 
 def clic(x, y):
@@ -162,4 +226,5 @@ def tam_input():
 
 
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic",
-           "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta"]
+           "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
+           "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente"]

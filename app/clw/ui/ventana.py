@@ -1,4 +1,8 @@
-"""La ventana de Windows (Tk). Solo muestra lo que dibuja la Interfaz y le pasa el mouse y el teclado."""
+"""La ventana de Windows (Tk). Muestra lo que dibuja la Interfaz y le pasa el mouse y el teclado.
+
+Cuando CLW GANG queda activo, la ventana se esconde junto al reloj (icono en la bandeja): asi no dibuja nada
+ni estorba mientras juegas. Desde ese icono se vuelve a abrir, se detiene o se cierra.
+"""
 
 import ctypes
 import json
@@ -6,18 +10,25 @@ import logging
 import os
 import queue
 import threading
+import time
 import urllib.request
 import webbrowser
 
 import tkinter as tk
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
 from .. import entrada, rutas, version
+from ..bandeja import Bandeja
 from ..proveedores import validar_clave
 from .estilo import ALTO
 from .vistas import Interfaz
 
 log = logging.getLogger("clw")
+
+EVENTO_MOSTRAR = "CLWGANG_mostrar"   # si abren CLW GANG otra vez, esa copia avisa por aqui y se cierra
+T_FUNDIDO = 0.16
+AVISO_BANDEJA = ("Sigue activo junto al reloj (si no ves la estrella, está en la flechita ^). "
+                 "Ctrl + clic sobre cualquier pregunta.")
 
 
 def _ver(texto):
@@ -28,8 +39,26 @@ def _ver(texto):
     return tuple(partes + [0] * (3 - len(partes)))
 
 
+def _crear_evento():
+    try:
+        k32 = ctypes.windll.kernel32
+        k32.CreateEventW.restype = ctypes.c_void_p
+        return k32.CreateEventW(None, False, False, EVENTO_MOSTRAR)
+    except Exception:
+        return None
+
+
+def _hay_aviso(evento):
+    if not evento:
+        return False
+    try:
+        return ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_void_p(evento), 0) == 0
+    except Exception:
+        return False
+
+
 class Ventana:
-    def __init__(self, config, bot, escala=1.0, raiz=None):
+    def __init__(self, config, bot, escala=1.0, raiz=None, con_bandeja=True):
         self.config = config
         self.bot = bot
         self.root = raiz or tk.Tk(className="CLW GANG")
@@ -60,13 +89,19 @@ class Ventana:
         self.lbl.bind("<ButtonPress-1>", lambda e: self._raton(self.ui.presionar(e.x / self.e, e.y / self.e)))
         self.lbl.bind("<ButtonRelease-1>", lambda e: self._raton(self.ui.soltar(e.x / self.e, e.y / self.e)))
         self.root.bind("<Key>", self._tecla)
-        self.root.protocol("WM_DELETE_WINDOW", self.cerrar)
+        self.root.protocol("WM_DELETE_WINDOW", self._al_cerrar)
 
         self.cola = queue.Queue()          # funciones que deben correr en el hilo de la ventana
         self.foto = None
         self._mostrada = None
         self._cursor = "arrow"
         self._cerrado = False
+        self.visible = True                # False = escondida junto al reloj
+        self._avisado = False              # ya se dijo una vez que sigue activo junto al reloj
+        self._fundido = None               # (desde, hasta, t0, al_terminar)
+        self._activo_bandeja = None
+        self._evento = _crear_evento()
+        self.bandeja = self._crear_bandeja() if con_bandeja else None
 
         self.root.update_idletasks()
         self._barra_oscura()
@@ -76,7 +111,8 @@ class Ventana:
             self.root.focus_force()
         except Exception:
             pass
-        self.bot.hwnd_propio = self.hwnd()
+        self._hwnd = self.hwnd()
+        self.bot.hwnd_propio = self._hwnd
         self._pintar()
         self.root.after(30, self._tick)
         threading.Thread(target=self._buscar_actualizacion, name="version", daemon=True).start()
@@ -87,6 +123,25 @@ class Ventana:
             return entrada.U32.GetAncestor(self.root.winfo_id(), 2)
         except Exception:
             return None
+
+    def _crear_bandeja(self):
+        try:
+            imagenes = {"activo": Image.open(rutas.asset("bandeja.png")).convert("RGBA"),
+                        "apagado": Image.open(rutas.asset("bandeja_apagado.png")).convert("RGBA")}
+            icos = {"activo": rutas.asset("bandeja.ico"), "apagado": rutas.asset("bandeja_apagado.ico")}
+            b = Bandeja(imagenes,
+                        al_abrir=lambda: self.cola.put(self.mostrar),
+                        al_alternar=lambda: self.cola.put(self._alternar),
+                        al_salir=lambda: self.cola.put(self.salir),
+                        esta_activo=lambda: bool(self.bot.activo),
+                        icos=icos)
+            return b if b.icono is not None else None
+        except Exception as ex:
+            log.warning("sin icono junto al reloj: %s", ex)
+            return None
+
+    def en_bandeja(self):
+        return self.bandeja is not None and self.bandeja.disponible
 
     def _barra_oscura(self):
         """Barra de titulo negra (Windows 10/11)."""
@@ -107,6 +162,126 @@ class Ventana:
         import traceback
         log.error("error en la ventana: %s", "".join(traceback.format_exception(tipo, valor, tb)))
 
+    def _estado_tk(self):
+        try:
+            return self.root.state()
+        except tk.TclError:
+            return "withdrawn"
+
+    def _enfocada(self):
+        h = entrada.ventana_al_frente()
+        return h is None or h == self._hwnd if entrada.U32 is not None else True
+
+    def _alfa(self, a):
+        try:
+            self.root.attributes("-alpha", max(0.0, min(1.0, a)))
+        except tk.TclError:
+            pass
+
+    # ---------------------------------------------------------------- mostrar / esconder
+    def esconder(self):
+        """Se va junto al reloj (si no hay icono en la bandeja, solo se minimiza)."""
+        if self._cerrado or not self.visible:
+            return
+        self.visible = False
+        self.ui.visible = False
+        self.ui.salir()
+        if not self.en_bandeja():
+            try:
+                self.root.iconify()
+            except tk.TclError:
+                pass
+            return
+        self._fundido = (1.0, 0.0, time.time(), self._retirar)
+        if not self._avisado:
+            self._avisado = True
+            self.bandeja.avisar(AVISO_BANDEJA)
+        log.info("ventana escondida junto al reloj")
+
+    def _retirar(self):
+        try:
+            self.root.withdraw()
+        except tk.TclError:
+            pass
+        self._alfa(1.0)
+
+    def mostrar(self):
+        if self._cerrado:
+            return
+        self._fundido = None
+        if self._estado_tk() != "normal":
+            self._alfa(0.0)
+            try:
+                self.root.deiconify()
+            except tk.TclError:
+                return
+            self._fundido = (0.0, 1.0, time.time(), None)
+        else:
+            self._alfa(1.0)
+        self.visible = True
+        self.ui.visible = True
+        try:
+            self.root.lift()
+            self.root.attributes("-topmost", True)
+            self.root.after(300, self._sin_encima)
+            self.root.focus_force()
+        except tk.TclError:
+            pass
+        self._mostrada = None
+        self._pintar()
+
+    def _sin_encima(self):
+        try:
+            self.root.attributes("-topmost", False)
+        except tk.TclError:
+            pass
+
+    def _fundir(self, ahora):
+        if not self._fundido:
+            return None
+        desde, hasta, t0, al_terminar = self._fundido
+        p = (ahora - t0) / T_FUNDIDO
+        if p >= 1:
+            self._fundido = None
+            self._alfa(hasta)
+            if al_terminar:
+                al_terminar()
+            return None
+        k = 1 - (1 - p) ** 3
+        self._alfa(desde + (hasta - desde) * k)
+        return 16
+
+    def _al_cerrar(self):
+        """La X: si esta activo se queda trabajando junto al reloj; si no, se cierra."""
+        if self.bot.activo and self.en_bandeja():
+            self.esconder()
+        else:
+            self.salir()
+
+    def salir(self):
+        if self._cerrado:
+            return
+        self._cerrado = True
+        try:
+            self.bot.detener()
+        except Exception:
+            pass
+        if self.bandeja is not None:
+            self.bandeja.cerrar()
+        try:
+            self.root.destroy()
+        except tk.TclError:
+            pass
+
+    cerrar = salir
+
+    def _alternar(self):
+        """Activar / Detener desde el icono del reloj."""
+        if not self.bot.activo and not self.bot.puede_iniciar():
+            self.mostrar()          # falta la clave: hay que pedirla en la ventana
+        self.ui.inyectar()
+
+    # ---------------------------------------------------------------- dibujo y eventos
     def _raton(self, cambio):
         if self.ui.cursor != self._cursor:
             self._cursor = self.ui.cursor
@@ -123,6 +298,8 @@ class Ventana:
             self._pintar()
 
     def _pintar(self):
+        if not self.visible or self._cerrado:
+            return
         img = self.ui.render()
         if img is self._mostrada:
             return
@@ -133,12 +310,23 @@ class Ventana:
             self.foto.paste(img)
         self._mostrada = img
 
+    def _evento_aparte(self, ev):
+        """Lo que hace falta ademas de la interfaz: abrir la ventana o avisar junto al reloj."""
+        if ev[0] == "falta_clave":
+            self.mostrar()
+        elif ev[0] == "actividad" and not self.visible and len(ev) > 2 and ev[2] in ("error", "info"):
+            if self.en_bandeja():
+                self.bandeja.avisar(ev[1])
+
     def _tick(self):
         if self._cerrado:
             return
+        ahora = time.time()
         try:
             while True:
-                self.ui.evento_bot(self.bot.eventos.get_nowait())
+                ev = self.bot.eventos.get_nowait()
+                self.ui.evento_bot(ev)
+                self._evento_aparte(ev)
         except queue.Empty:
             pass
         try:
@@ -148,16 +336,27 @@ class Ventana:
             pass
         except Exception as ex:
             log.error("cola: %s", ex)
-        self._pintar()
-        self.root.after(50 if self.ui.animando() else 120, self._tick)
+        if self._cerrado:
+            return
+        if _hay_aviso(self._evento):
+            self.mostrar()
+        if self.bandeja is not None and bool(self.bot.activo) != self._activo_bandeja:
+            self._activo_bandeja = bool(self.bot.activo)
+            self.bandeja.estado(self._activo_bandeja)
+        if self.ui.debe_esconder(ahora):
+            self.esconder()
 
-    def cerrar(self):
-        self._cerrado = True
-        try:
-            self.bot.detener()
-        except Exception:
-            pass
-        self.root.destroy()
+        espera = self._fundir(ahora)
+        en_pantalla = self.visible and self._estado_tk() == "normal"
+        self.ui.visible = en_pantalla
+        if en_pantalla:
+            self.ui.enfocado = self._enfocada()
+            self._pintar()
+            if espera is None:
+                espera = self.ui.ritmo(ahora) or 150
+        elif espera is None:
+            espera = 250                    # escondida: no dibuja nada, solo revisa avisos
+        self.root.after(espera, self._tick)
 
     # ---------------------------------------------------------------- acciones que pide la interfaz
     def iniciar(self):
