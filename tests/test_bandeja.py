@@ -67,7 +67,7 @@ def prueba_menu_estado_avisos_y_cierre():
                     lambda: llamadas.append("alternar"), lambda: llamadas.append("salir"), lambda: activo[0])
         assert b.disponible and b.icono.icon == "B"
         items = b.icono.menu.items
-        assert items[0].text == "Abrir CLW GANG" and items[0].default
+        assert items[0].text == "Abrir NO LIMIT" and items[0].default
         assert items[1].text == "Activar"
         activo[0] = True
         assert items[1].text == "Detener"
@@ -79,7 +79,7 @@ def prueba_menu_estado_avisos_y_cierre():
             items[i].action(b.icono, items[i])
         assert llamadas == ["abrir", "alternar", "salir"]
         b.avisar("hola")
-        assert b.icono.avisos == [("hola", "CLW GANG")]
+        assert b.icono.avisos == [("hola", "NO LIMIT")]
         icono = b.icono
         b.cerrar()
         assert icono.parar.is_set() and not b.disponible

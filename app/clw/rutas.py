@@ -26,7 +26,14 @@ def carpeta_datos():
     base = os.environ.get("CLW_DATOS")
     if not base:
         if WINDOWS:
-            base = os.path.join(os.environ.get("APPDATA") or os.path.expanduser("~"), "CLW GANG")
+            raiz = os.environ.get("APPDATA") or os.path.expanduser("~")
+            base = os.path.join(raiz, "NO LIMIT")
+            viejo = os.path.join(raiz, "CLW GANG")       # antes se llamaba asi: se conservan claves y ajustes
+            if not os.path.exists(base) and os.path.isdir(viejo):
+                try:
+                    os.rename(viejo, base)
+                except OSError:
+                    base = viejo
         else:
             base = os.path.join(os.path.expanduser("~"), ".clw-gang")
     os.makedirs(base, exist_ok=True)

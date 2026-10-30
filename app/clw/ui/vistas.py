@@ -1,4 +1,4 @@
-"""Pantallas de CLW GANG: total black, vidrio, letras anchas y animaciones suaves.
+"""Pantallas de NO LIMIT: total black, vidrio, logo 3D y animaciones suaves.
 
 Todo es logica pura + dibujo con PIL (se puede probar sin ventana). La parte fija de cada pantalla se guarda
 en cache; encima se pintan las piezas que se mueven (estrella del halo, boton, punto de estado, transiciones).
@@ -25,11 +25,11 @@ ESTADOS = {
 }
 OCUPADO = ("leyendo", "pensando", "escribiendo")
 
-MARCA_ANCHO = 324
+MARCA_ANCHO, MARCA_Y = 268, 16
 BOTON = (90, 252, 200, 54)          # x, y, w, h de INYECTAR
 T_ENCENDER, T_ANILLO, T_APAGAR = 0.5, 0.45, 0.32
 T_TRANSICION, T_CAPA, T_FILA = 0.26, 0.24, 0.4
-VUELTA_ESTRELLA = 10.0              # segundos por vuelta del halo
+CICLO_BRILLO, T_BRILLO = 4.5, 1.4   # cada cuanto cruza el reflejo del logo y cuanto tarda
 VUELTA_HAZ = 3.4                    # segundos por vuelta de la luz del boton
 
 
@@ -72,8 +72,8 @@ class Interfaz:
         self._t_fila = -10.0
         self._punto_estado = (ANCHO / 2, 332)
         self._textos = {}
-        self._grados = None                # angulo de la estrella del halo
-        self._t_estrella = None
+        self._fase = 0.0                   # segundos dentro del ciclo del reflejo del logo
+        self._t_brillo = None
 
     # ================================================================ estado
     def modelo_actual(self):
@@ -349,7 +349,7 @@ class Interfaz:
             self._cache, self._cache_llave = l.im, llave
 
         if not self.animando(t):
-            llave_q = (llave, "quieto", round(self._grados or 0, 1))
+            llave_q = (llave, "quieto")
             if llave_q != self._quieto_llave:
                 l = Lienzo(self.e, base=self._cache)
                 self._encima(l, t, quieto=True)
@@ -386,7 +386,7 @@ class Interfaz:
     # ---------------------------------------------------------------- piezas que se mueven
     def _encima(self, l, t, quieto):
         if self.pantalla == "principal":
-            self._estrella(l, t, quieto)
+            self._brillo(l, t, quieto)
             self._boton(l, t, quieto)
             self._punto(l, t, quieto)
             if not quieto and t - self._t_fila < T_FILA and self.actividad:
@@ -394,25 +394,20 @@ class Interfaz:
         if self.capa == "modelos":
             self._modelos(l, 1.0 if quieto else E.suave((t - self._capa_t0) / T_CAPA))
 
-    def _estrella(self, l, t, quieto):
-        im, geo = E.marca(l.px(MARCA_ANCHO))
-        X0 = (l.w - im.width) // 2
-        Y0 = l.px(30)
-        if self._grados is None:
-            self._grados = geo["estrella"]
+    def _brillo(self, l, t, quieto):
+        """Un reflejo de luz cruza el logo cada pocos segundos (solo con la ventana al frente)."""
         if quieto:
-            self._t_estrella = None
-        else:
-            if self._t_estrella is not None:
-                paso = max(0.0, min(0.1, t - self._t_estrella))
-                self._grados = (self._grados + 360 * paso / VUELTA_ESTRELLA) % 360
-            self._t_estrella = t
-        grados = self._grados
-        x, y = E.punto_halo(geo, grados)
-        adelante = 0 <= grados <= 180
-        r = max(3, int(geo["alto_letras"] * (0.17 if adelante else 0.12)))
-        sprite = E.estrella(r, 255 if adelante else 80)
-        l.pegar_px(sprite, X0 + x - sprite.width / 2, Y0 + y - sprite.height / 2)
+            self._t_brillo = None
+            return
+        if self._t_brillo is not None:
+            self._fase = (self._fase + max(0.0, min(0.1, t - self._t_brillo))) % CICLO_BRILLO
+        self._t_brillo = t
+        if self._fase >= T_BRILLO:
+            return
+        ancho = l.px(MARCA_ANCHO)
+        paso = int(E.suave(self._fase / T_BRILLO) * (E.PASOS_BRILLO - 1))
+        capa = E.brillo_marca(ancho, paso)
+        l.pegar_px(capa, (l.w - capa.width) // 2, l.px(MARCA_Y))
 
     def _boton(self, l, t, quieto):
         x, y, w, h = BOTON
@@ -509,8 +504,8 @@ class Interfaz:
     # ---------------------------------------------------------------- principal
     def _principal(self, l, t):
         c = self.config
-        im, _ = E.marca(l.px(MARCA_ANCHO))
-        l.pegar_px(im, (l.w - im.width) // 2, l.px(30))
+        im = E.marca(l.px(MARCA_ANCHO))
+        l.pegar_px(im, (l.w - im.width) // 2, l.px(MARCA_Y))
 
         # modelo
         m = self.modelo_actual()
@@ -708,7 +703,7 @@ class Interfaz:
         l.zona("carpeta", 42, 484, ancho + 8, 26)
 
         hov = self.hover == "pagina"
-        ancho = l.texto_centrado_v(30, 564, "Página de CLW GANG", "chico", TEXTO if hov else SUAVE)
+        ancho = l.texto_centrado_v(30, 564, "Página de NO LIMIT", "chico", TEXTO if hov else SUAVE)
         l.icono("afuera", 34 + ancho, 558, 12, TEXTO if hov else SUAVE)
         l.zona("pagina", 24, 550, ancho + 30, 28)
         l.texto_centrado_v(350, 564, f"v{version.VERSION}", "mini", TENUE, ancla="ra")

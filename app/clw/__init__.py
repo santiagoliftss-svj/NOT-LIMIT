@@ -1,1 +1,1 @@
-"""CLW GANG: contesta preguntas de la pantalla con un Ctrl + clic."""
+"""NO LIMIT: contesta preguntas de la pantalla con un Ctrl + clic."""

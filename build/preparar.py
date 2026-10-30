@@ -16,13 +16,13 @@ texto = f"""VSVersionInfo(
                     fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[
     StringFileInfo([StringTable('040A04B0', [
-      StringStruct('CompanyName', 'CLW GANG'),
-      StringStruct('FileDescription', 'CLW GANG'),
+      StringStruct('CompanyName', 'NO LIMIT'),
+      StringStruct('FileDescription', 'NO LIMIT'),
       StringStruct('FileVersion', '{VERSION}'),
-      StringStruct('InternalName', 'CLW GANG'),
-      StringStruct('LegalCopyright', 'CLW GANG'),
-      StringStruct('OriginalFilename', 'CLW GANG.exe'),
-      StringStruct('ProductName', 'CLW GANG'),
+      StringStruct('InternalName', 'NO LIMIT'),
+      StringStruct('LegalCopyright', 'NO LIMIT'),
+      StringStruct('OriginalFilename', 'NO LIMIT.exe'),
+      StringStruct('ProductName', 'NO LIMIT'),
       StringStruct('ProductVersion', '{VERSION}')])]),
     VarFileInfo([VarStruct('Translation', [1034, 1200])])
   ]

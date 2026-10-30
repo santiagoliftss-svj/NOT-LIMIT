@@ -21,11 +21,11 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="CLW GANG",
+    name="NO LIMIT",
     console=False,
     icon=os.path.join(APP, "assets", "icono.ico"),
     version=os.path.join(SPECPATH, "version_info.txt"),
     upx=False,
 )
 
-coll = COLLECT(exe, a.binaries, a.datas, upx=False, name="CLW GANG")
+coll = COLLECT(exe, a.binaries, a.datas, upx=False, name="NO LIMIT")

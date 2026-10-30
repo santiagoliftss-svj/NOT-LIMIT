@@ -1,4 +1,6 @@
-# CLW GANG
+# NO LIMIT
+
+(Antes se llamaba CLW GANG.)
 
 Contesta preguntas de la pantalla con un **Ctrl + clic**.
 
@@ -7,7 +9,7 @@ Contesta preguntas de la pantalla con un **Ctrl + clic**.
 - Opción múltiple: marca la respuesta.
 - Preguntas abiertas: escribe la respuesta sola (corta o larga según la pregunta), y llena varias cajitas si la pregunta tiene varias.
 - Funciona con Claude, Gemini (clave gratis) o ChatGPT. Cada quien pone su propia API key; se guarda cifrada en su computadora.
-- Al tocar **INYECTAR** la ventana se va junto al reloj (icono de estrella) y sigue activa ahí: desde el icono se abre, se detiene o se cierra. Escondida no dibuja nada.
+- Al tocar **INYECTAR** la ventana se va junto al reloj (icono junto al reloj) y sigue activa ahí: desde el icono se abre, se detiene o se cierra. Escondida no dibuja nada.
 - No estorba en juegos: con un juego en pantalla completa, o con Ctrl apretado mucho rato (agacharse), el Ctrl + clic no hace nada.
 - No inyecta nada en otros programas ni en la memoria: solo toma una captura cuando haces Ctrl + clic.
 

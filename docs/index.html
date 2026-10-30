@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CLW GANG</title>
+<title>NO LIMIT</title>
 <meta name="description" content="Contesta preguntas de la pantalla con un Ctrl + clic. Descarga para Windows.">
-<meta property="og:title" content="CLW GANG">
+<meta property="og:title" content="NO LIMIT">
 <meta property="og:description" content="Contesta preguntas de la pantalla con un Ctrl + clic.">
 <meta property="og:image" content="https://santiagoliftss-svj.github.io/clw-gang/assets/compartir.png">
 <meta property="og:type" content="website">
@@ -53,10 +53,17 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     padding: 72px 0 56px;
   }
-  .marca { position: relative; width: min(640px, 100%); }
+  .marca { position: relative; width: min(600px, 100%); }
   .marca img { display: block; width: 100%; height: auto; }
-  .marca svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .marca .quieta { display: none; }
+  .reflejo {
+    position: absolute; inset: 0; pointer-events: none;
+    -webkit-mask: url(assets/marca.png) center / 100% 100% no-repeat;
+    mask: url(assets/marca.png) center / 100% 100% no-repeat;
+    background: linear-gradient(105deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.75) 50%, rgba(255,255,255,0) 60%)
+                -150% 0 / 250% 100% no-repeat;
+    animation: reflejo 4.5s cubic-bezier(.2,.8,.2,1) infinite;
+  }
+  @keyframes reflejo { 0% { background-position: 150% 0; } 32%, 100% { background-position: -150% 0; } }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .lema { margin-top: 22px; color: var(--suave); font-size: 18px; line-height: 1.5; }
   .lema kbd { font-size: 15px; }
@@ -130,7 +137,6 @@
   .pasos p { color: var(--suave); font-size: 15px; line-height: 1.55; }
   .pasos a { color: var(--texto); text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.4); }
   .pasos a:hover { text-decoration-color: var(--blanco); }
-  .estrellita { display: inline-block; width: 13px; height: 13px; vertical-align: -1px; }
   kbd {
     display: inline-block; padding: 1px 8px; border-radius: 7px;
     font: inherit; font-size: 13px; font-weight: 600; color: var(--texto);
@@ -172,8 +178,7 @@
     footer { flex-direction: column; align-items: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .marca .mueve { display: none; }
-    .marca .quieta { display: inline; }
+    .reflejo { animation: none; opacity: 0; }
     .descargar::before { animation: none; }
     .descargar { transition: none; }
   }
@@ -185,39 +190,13 @@
 <main>
   <section class="portada">
     <h1 class="marca">
-      <img src="assets/marca.png" alt="" width="2453" height="661">
-      <svg viewBox="0 0 2453 661" aria-hidden="true">
-        <defs>
-          <radialGradient id="brillo">
-            <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
-            <stop offset=".45" stop-color="#fff" stop-opacity=".16"/>
-            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-          </radialGradient>
-          <g id="estrella">
-            <circle r="72" fill="url(#brillo)"/>
-            <path d="M0 -40 L5.6 -5.6 L40 0 L5.6 5.6 L0 40 L-5.6 5.6 L-40 0 L-5.6 -5.6 Z" fill="#fff"/>
-          </g>
-          <path id="orbita" d="M2432.18 339.29 A1205.43 202.82 0 1 1 21.32 339.29 A1205.43 202.82 0 1 1 2432.18 339.29"/>
-        </defs>
-        <g transform="rotate(-6 1226.75 339.29)">
-          <g class="mueve">
-            <animateMotion dur="10s" repeatCount="indefinite"><mpath href="#orbita"/></animateMotion>
-            <g>
-              <animateTransform attributeName="transform" type="scale" values="1;1;.7;.7;1"
-                keyTimes="0;.46;.54;.96;1" dur="10s" repeatCount="indefinite"/>
-              <animate attributeName="opacity" values="1;1;.32;.32;1" keyTimes="0;.46;.54;.96;1"
-                dur="10s" repeatCount="indefinite"/>
-              <use href="#estrella"/>
-            </g>
-          </g>
-          <use class="quieta" href="#estrella" x="2385.5" y="395.2"/>
-        </g>
-      </svg>
-      <span class="sr">CLW GANG</span>
+      <img src="assets/marca.png" alt="" width="1400" height="592">
+      <span class="reflejo" aria-hidden="true"></span>
+      <span class="sr">NO LIMIT</span>
     </h1>
     <p class="lema">Contesta preguntas de la pantalla con un <span class="atajo"><kbd>Ctrl</kbd> + <kbd>clic</kbd></span></p>
 
-    <a class="descargar" id="descargar" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/CLW-GANG-Setup.exe">
+    <a class="descargar" id="descargar" href="https://github.com/santiagoliftss-svj/clw-gang/releases/latest/download/NO-LIMIT-Setup.exe">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
       DESCARGAR
     </a>
@@ -228,14 +207,14 @@
     <figure class="vista">
       <div class="ventana">
         <div class="barra">
-          <span>CLW GANG</span>
+          <span>NO LIMIT</span>
           <span class="botones" aria-hidden="true">
             <span><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" stroke-width="1"/></svg></span>
             <span class="apagado"><svg viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg></span>
             <span><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1"/></svg></span>
           </span>
         </div>
-        <img src="assets/app.png" alt="CLW GANG activo: modelo Claude Haiku 5.5, botón Detener y lo último que contestó" width="760" height="1200" loading="lazy">
+        <img src="assets/app.png" alt="NO LIMIT activo: modelo Claude Haiku 5.5, botón Detener y lo último que contestó" width="760" height="1200" loading="lazy">
       </div>
       <figcaption>Así se ve. Al tocar Inyectar se va junto al reloj.</figcaption>
     </figure>
@@ -256,7 +235,7 @@
         <li>
           <span class="n">03</span>
           <h3>TOCA INYECTAR</h3>
-          <p>La ventana se va junto al reloj y sigue activa ahí. Toca la estrella <svg class="estrellita" viewBox="-40 -40 80 80" aria-label="estrella"><path d="M0 -40 L6 -6 L40 0 L6 6 L0 40 L-6 6 L-40 0 L-6 -6 Z" fill="#fff"/></svg> para abrirla, detenerla o cerrarla.</p>
+          <p>La ventana se va junto al reloj y sigue activa ahí. Toca su icono para abrirla; clic derecho para detenerla o cerrarla.</p>
         </li>
         <li>
           <span class="n">04</span>
@@ -287,7 +266,7 @@
 </main>
 
 <footer>
-  <b>CLW GANG</b>
+  <b>NO LIMIT</b>
   <a href="https://github.com/santiagoliftss-svj/clw-gang">Código en GitHub</a>
 </footer>
 

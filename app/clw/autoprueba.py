@@ -1,4 +1,4 @@
-"""Autoprueba del .exe ya armado: 'CLW GANG.exe --autoprueba <carpeta>'.
+"""Autoprueba del .exe ya armado: 'NO LIMIT.exe --autoprueba <carpeta>'.
 
 Revisa OCR, motor, proveedores (con un servidor falso), cifrado, interfaz y, si hay escritorio,
 una prueba de punta a punta: Ctrl + clic de verdad, captura, IA falsa, clic y escritura en ventanas de prueba.
@@ -290,7 +290,7 @@ def _ventana_y_e2e(salida):
             pass
 
     def medir_cpu(nombre, seg, despues):
-        """% de un nucleo que usa CLW GANG (todos sus hilos) durante 'seg' segundos."""
+        """% de un nucleo que usa NO LIMIT (todos sus hilos) durante 'seg' segundos."""
         t0, c0 = time.time(), time.process_time()
 
         def fin():
@@ -531,7 +531,7 @@ def _ventana_y_e2e(salida):
             RESULTADOS["juego"] = {"ok": False, "detalle": juego}
             root.after(100, reabrir)
 
-    # -------- abrir CLW GANG otra vez (como doble clic al icono): la ventana escondida vuelve
+    # -------- abrir NO LIMIT otra vez (como doble clic al icono): la ventana escondida vuelve
     def reabrir():
         try:
             import ctypes

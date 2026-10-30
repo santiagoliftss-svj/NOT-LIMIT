@@ -1,4 +1,4 @@
-CLW GANG usa estas piezas de terceros:
+NO LIMIT usa estas piezas de terceros:
 
 - Tesseract OCR (Apache License 2.0) - https://github.com/tesseract-ocr/tesseract
   Datos de idioma tessdata (Apache License 2.0) - https://github.com/tesseract-ocr/tessdata
@@ -6,7 +6,6 @@ CLW GANG usa estas piezas de terceros:
 - Pillow (HPND / MIT-CMU License) - https://python-pillow.org
 - Tcl/Tk (licencia BSD) - https://www.tcl.tk
 - Fuente Archivo (SIL Open Font License 1.1) - https://github.com/Omnibus-Type/Archivo
-  (tambien es la del logo)
 - pystray, icono junto al reloj (GNU LGPL v3) - https://github.com/moses-palmer/pystray
-  Se usa sin cambios. El codigo de CLW GANG y como se arma estan en
+  Se usa sin cambios. El codigo de NO LIMIT y como se arma estan en
   https://github.com/santiagoliftss-svj/clw-gang, asi que se puede volver a armar con otra version.

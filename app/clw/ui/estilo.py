@@ -1,6 +1,5 @@
 """Colores, letras y piezas de la interfaz (total black, vidrio y blanco). Todo se dibuja con PIL."""
 
-import json
 import math
 from functools import lru_cache
 
@@ -219,46 +218,30 @@ def icono(nombre, tam, color):
 
 @lru_cache(maxsize=4)
 def marca(ancho_px):
-    """Letras + halo (sin estrella) y la geometria del halo escalada."""
+    """Logo NO LIMIT (3D, sin fondo) al ancho pedido."""
     im = Image.open(rutas.asset("marca.png")).convert("RGBA")
-    with open(rutas.asset("marca.json"), encoding="utf-8") as f:
-        geo = json.load(f)
     k = ancho_px / im.width
-    im = im.resize((ancho_px, max(1, int(im.height * k))), Image.LANCZOS)
-    geo = {n: (v * k if n in ("cx", "cy", "rx", "ry", "grosor", "alto_letras") else v) for n, v in geo.items()}
-    return im, geo
+    return im.resize((ancho_px, max(1, int(im.height * k))), Image.LANCZOS)
 
 
-def punto_halo(geo, grados):
-    t = math.radians(grados)
-    x, y = geo["rx"] * math.cos(t), geo["ry"] * math.sin(t)
-    a = math.radians(geo["ang"])
-    return geo["cx"] + x * math.cos(a) - y * math.sin(a), geo["cy"] + x * math.sin(a) + y * math.cos(a)
+PASOS_BRILLO = 36
 
 
-@lru_cache(maxsize=32)
-def estrella(r, alfa=255):
-    T = max(4, int(r * 3.2))
-    im = Image.new("RGBA", (T * 2, T * 2), (0, 0, 0, 0))
-    c = T
-
-    def picos(d, rr, a):
-        pts = []
-        for i in range(8):
-            ang = math.pi / 4 * i - math.pi / 2
-            radio = rr if i % 2 == 0 else rr * 0.2
-            pts.append((c + math.cos(ang) * radio, c + math.sin(ang) * radio))
-        d.polygon(pts, fill=(255, 255, 255, a))
-
-    g = Image.new("RGBA", im.size, (0, 0, 0, 0))
-    picos(ImageDraw.Draw(g), r * 2.5, 150)
-    ImageDraw.Draw(g).ellipse((c - r * 0.7, c - r * 0.7, c + r * 0.7, c + r * 0.7), fill=(255, 255, 255, 120))
-    im.alpha_composite(g.filter(ImageFilter.GaussianBlur(r * 0.45)))
-    picos(ImageDraw.Draw(im), r * 2, 255)
-    im = im.resize((T, T), Image.LANCZOS)
-    if alfa < 255:
-        im.putalpha(im.getchannel("A").point(lambda v: v * alfa // 255))
-    return im
+@lru_cache(maxsize=48)
+def brillo_marca(ancho_px, paso):
+    """Reflejo de luz que cruza las letras en diagonal (paso 0..PASOS_BRILLO-1)."""
+    im = marca(ancho_px)
+    W, H = im.size
+    centro = -0.25 * W + 1.5 * W * paso / (PASOS_BRILLO - 1)
+    media, sesgo = 0.07 * W, 0.32 * H
+    banda = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(banda).polygon([(centro - media + sesgo, 0), (centro + media + sesgo, 0),
+                                   (centro + media - sesgo, H), (centro - media - sesgo, H)], fill=255)
+    banda = banda.filter(ImageFilter.GaussianBlur(media * 0.6))
+    alfa = ImageChops.multiply(banda, im.getchannel("A")).point(lambda v: int(v * 0.62))
+    capa = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+    capa.putalpha(alfa)
+    return capa
 
 
 # ---------------------------------------------------------------- lienzo

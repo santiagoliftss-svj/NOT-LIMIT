@@ -1,4 +1,4 @@
-"""CLW GANG - punto de entrada."""
+"""NO LIMIT (antes CLW GANG) - punto de entrada."""
 
 import ctypes
 import os
@@ -38,7 +38,7 @@ def _ya_abierta():
                 k32.SetEvent(ctypes.c_void_p(evento))
                 k32.CloseHandle(ctypes.c_void_p(evento))
             else:   # version vieja abierta
-                h = u32.FindWindowW(None, "CLW GANG")
+                h = u32.FindWindowW(None, "NO LIMIT") or u32.FindWindowW(None, "CLW GANG")
                 if h:
                     u32.ShowWindow(h, 9)
                     u32.SetForegroundWindow(h)
@@ -95,8 +95,8 @@ if __name__ == "__main__":
         traza = traceback.format_exc()
         logging.getLogger("clw").error("la app se cerro por un error:\n%s", traza)
         try:
-            ctypes.windll.user32.MessageBoxW(None, "CLW GANG se cerró por un error:\n\n" + traza[-800:],
-                                             "CLW GANG", 0x10)
+            ctypes.windll.user32.MessageBoxW(None, "NO LIMIT se cerró por un error:\n\n" + traza[-800:],
+                                             "NO LIMIT", 0x10)
         except Exception:
             print(traza, file=sys.stderr)
         _codigo = 1

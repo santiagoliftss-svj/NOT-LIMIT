@@ -266,17 +266,23 @@ def prueba_cache_y_animacion():
     assert app.log[-1][0] == "url"
 
 
-def prueba_estrella_no_salta_al_perder_foco():
+def prueba_brillo_del_logo_no_salta_al_perder_foco():
     ui, app, c, reloj = _nuevo(1.0)
-    _pasar(ui, reloj, 1.0)
-    antes = ui._grados
+    _pasar(ui, reloj, 0.5)
+    antes = ui._fase
+    assert antes > 0.3
     ui.enfocado = False
     _pasar(ui, reloj, 5.0)
-    assert ui._grados == antes, "sin foco la estrella se queda donde iba"
+    assert ui._fase == antes, "sin foco el reflejo se queda quieto"
     ui.enfocado = True
     _pasar(ui, reloj, 0.1)
-    avance = (ui._grados - antes) % 360
-    assert 0 < avance < 10, avance
+    assert 0 < ui._fase - antes < 0.2
+    # el reflejo si cambia la imagen mientras cruza el logo
+    ui._fase = 0.2
+    a = ui.render().copy()
+    reloj.t += 0.3
+    b = ui.render()
+    assert a.tobytes() != b.tobytes()
 
 
 def prueba_cambiar_modelo_activo_sin_clave_detiene():
@@ -307,8 +313,9 @@ def prueba_todas_las_escalas():
     for escala in (0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5):
         ui, app, c, reloj = _nuevo(escala)
         c.poner_clave("claude", "sk-ant-x")
-        for i in range(0, 360, 30):          # la estrella en todo el halo
-            ui._grados = i
+        for i in range(12):                  # el reflejo en todo su recorrido
+            ui._fase = i * vistas.T_BRILLO / 11
+            reloj.t += 0.001
             ui.render()
         _clic(ui, "inyectar")
         _pasar(ui, reloj, 1.3)

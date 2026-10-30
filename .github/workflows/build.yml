@@ -1,4 +1,4 @@
-name: Armar CLW GANG
+name: Armar NO LIMIT
 
 on:
   push:
@@ -50,17 +50,17 @@ jobs:
       - name: Meter Tesseract en la app
         shell: pwsh
         run: |
-          Copy-Item build\tesseract "dist\CLW GANG\tesseract" -Recurse
-          Copy-Item app\assets\fuentes\OFL-Archivo.txt "dist\CLW GANG\"
-          Copy-Item LICENCIAS.txt "dist\CLW GANG\"
-          $tam = (Get-ChildItem "dist\CLW GANG" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Copy-Item build\tesseract "dist\NO LIMIT\tesseract" -Recurse
+          Copy-Item app\assets\fuentes\OFL-Archivo.txt "dist\NO LIMIT\"
+          Copy-Item LICENCIAS.txt "dist\NO LIMIT\"
+          $tam = (Get-ChildItem "dist\NO LIMIT" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
           Write-Host ("App: {0:N1} MB" -f $tam)
 
       - name: Autoprueba del .exe (en Windows de verdad)
         id: autoprueba
         shell: pwsh
         run: |
-          Start-Process -FilePath "dist\CLW GANG\CLW GANG.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -Wait
+          Start-Process -FilePath "dist\NO LIMIT\NO LIMIT.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -Wait
           python build/resumen.py autoprueba/resultado.json *>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP\resumen.txt"
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
@@ -72,14 +72,14 @@ jobs:
           if (-not (Test-Path $iscc)) { $iscc = (Get-Command iscc).Source }
           & $iscc "/DAppVersion=${{ steps.ver.outputs.version }}" installer\clw_gang.iss
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          Get-Item salida\CLW-GANG-Setup.exe | Format-List Name, Length
+          Get-Item salida\NO-LIMIT-Setup.exe | Format-List Name, Length
 
       - name: Probar el instalador
         shell: pwsh
         run: |
           $dir = "$env:RUNNER_TEMP\clw_instalado"
-          Start-Process salida\CLW-GANG-Setup.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$dir`"" -Wait
-          foreach ($f in @("CLW GANG.exe", "tesseract\tesseract.exe", "tesseract\tessdata\spa.traineddata")) {
+          Start-Process salida\NO-LIMIT-Setup.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$dir`"" -Wait
+          foreach ($f in @("NO LIMIT.exe", "tesseract\tesseract.exe", "tesseract\tessdata\spa.traineddata")) {
             if (-not (Test-Path "$dir\$f")) { Write-Host "::error::Falta $f en la instalacion"; exit 1 }
           }
           Write-Host "Instalacion OK"
@@ -89,7 +89,7 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          if (-not (Test-Path salida\CLW-GANG-Setup.exe)) { exit 0 }
+          if (-not (Test-Path salida\NO-LIMIT-Setup.exe)) { exit 0 }
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           New-Item -ItemType Directory -Force autoprueba | Out-Null
           function Captura($nombre) {
@@ -100,7 +100,7 @@ jobs:
             $bmp.Save("$PWD\autoprueba\$nombre.png")
             $g.Dispose(); $bmp.Dispose()
           }
-          $p = Start-Process salida\CLW-GANG-Setup.exe -ArgumentList "/DIR=`"$env:RUNNER_TEMP\clw_captura`"" -PassThru
+          $p = Start-Process salida\NO-LIMIT-Setup.exe -ArgumentList "/DIR=`"$env:RUNNER_TEMP\clw_captura`"" -PassThru
           $ws = New-Object -ComObject WScript.Shell
           Start-Sleep 5
           Captura "instalador_1"
@@ -114,7 +114,7 @@ jobs:
           }
           Start-Sleep 3
           Captura "despues_de_instalar"
-          Get-Process "CLW GANG" -ErrorAction SilentlyContinue | Stop-Process -Force
+          Get-Process "NO LIMIT" -ErrorAction SilentlyContinue | Stop-Process -Force
           if (-not $p.HasExited) { Stop-Process $p -Force }
 
       - name: Subir autoprueba a la rama ci-autoprueba (para revisarla)
@@ -143,7 +143,7 @@ jobs:
           name: clw-gang-${{ steps.ver.outputs.version }}
           path: |
             autoprueba
-            salida/CLW-GANG-Setup.exe
+            salida/NO-LIMIT-Setup.exe
           retention-days: 14
           if-no-files-found: ignore
 
@@ -159,4 +159,4 @@ jobs:
             Write-Host "La version $tag ya existe: no se publica de nuevo."
             exit 0
           }
-          gh release create $tag salida\CLW-GANG-Setup.exe --title "CLW GANG ${{ steps.ver.outputs.version }}" --notes-file NOTAS.md --latest
+          gh release create $tag salida\NO-LIMIT-Setup.exe --title "NO LIMIT ${{ steps.ver.outputs.version }}" --notes-file NOTAS.md --latest

@@ -1,18 +1,18 @@
-﻿; Instalador de CLW GANG (Inno Setup 6). Se compila en GitHub Actions:
+﻿; Instalador de NO LIMIT (antes CLW GANG) (Inno Setup 6). Se compila en GitHub Actions:
 ;   ISCC.exe /DAppVersion=1.0.0 installer\clw_gang.iss
 
-#define AppName "CLW GANG"
+#define AppName "NO LIMIT"
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
-#define AppExe "CLW GANG.exe"
+#define AppExe "NO LIMIT.exe"
 
 [Setup]
 AppId={{5B7C2E1A-6F0D-4C9B-9E3A-2D8F4A1C7E55}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=CLW GANG
+AppPublisher=NO LIMIT
 AppPublisherURL=https://santiagoliftss-svj.github.io/clw-gang/
 AppSupportURL=https://github.com/santiagoliftss-svj/clw-gang
 DefaultDirName={autopf}\{#AppName}
@@ -21,7 +21,7 @@ DisableProgramGroupPage=yes
 DisableWelcomePage=no
 PrivilegesRequired=lowest
 OutputDir=..\salida
-OutputBaseFilename=CLW-GANG-Setup
+OutputBaseFilename=NO-LIMIT-Setup
 SetupIconFile=..\app\assets\icono.ico
 UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
@@ -54,18 +54,35 @@ es.FinishedLabel=Ya puedes abrir [name] desde el escritorio o el menú Inicio.
 Name: "escritorio"; Description: "Crear un acceso directo en el escritorio"; GroupDescription: "Accesos directos:"
 
 [Files]
-Source: "..\dist\CLW GANG\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\NO LIMIT\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: escritorio
+
+[InstallDelete]
+; lo de cuando se llamaba CLW GANG
+Type: files; Name: "{app}\CLW GANG.exe"
+Type: files; Name: "{autoprograms}\CLW GANG.lnk"
+Type: files; Name: "{autodesktop}\CLW GANG.lnk"
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Abrir {#AppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 ; si quedo activa junto al reloj, se cierra antes de borrar sus archivos
-Filename: "{sys}\taskkill.exe"; Parameters: "/IM ""{#AppExe}"" /F"; Flags: runhidden; RunOnceId: "CerrarCLWGANG"
+Filename: "{sys}\taskkill.exe"; Parameters: "/IM ""{#AppExe}"" /F"; Flags: runhidden; RunOnceId: "CerrarNOLIMIT"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+
+[Code]
+// cierra la version abierta (aunque este escondida junto al reloj, o sea la vieja CLW GANG) antes de instalar
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  Codigo: Integer;
+begin
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "CLW GANG.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "NO LIMIT.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
+  Result := '';
+end;

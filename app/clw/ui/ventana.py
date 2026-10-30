@@ -1,6 +1,6 @@
 """La ventana de Windows (Tk). Muestra lo que dibuja la Interfaz y le pasa el mouse y el teclado.
 
-Cuando CLW GANG queda activo, la ventana se esconde junto al reloj (icono en la bandeja): asi no dibuja nada
+Cuando NO LIMIT queda activo, la ventana se esconde junto al reloj (icono en la bandeja): asi no dibuja nada
 ni estorba mientras juegas. Desde ese icono se vuelve a abrir, se detiene o se cierra.
 """
 
@@ -25,9 +25,9 @@ from .vistas import Interfaz
 
 log = logging.getLogger("clw")
 
-EVENTO_MOSTRAR = "CLWGANG_mostrar"   # si abren CLW GANG otra vez, esa copia avisa por aqui y se cierra
+EVENTO_MOSTRAR = "CLWGANG_mostrar"   # si abren NO LIMIT otra vez, esa copia avisa por aqui y se cierra
 T_FUNDIDO = 0.16
-AVISO_BANDEJA = ("Sigue activo junto al reloj (si no ves la estrella, está en la flechita ^). "
+AVISO_BANDEJA = ("Sigue activo junto al reloj (si no ves el icono, está en la flechita ^). "
                  "Ctrl + clic sobre cualquier pregunta.")
 
 
@@ -61,9 +61,9 @@ class Ventana:
     def __init__(self, config, bot, escala=1.0, raiz=None, con_bandeja=True):
         self.config = config
         self.bot = bot
-        self.root = raiz or tk.Tk(className="CLW GANG")
+        self.root = raiz or tk.Tk(className="NO LIMIT")
         self.root.withdraw()
-        self.root.title("CLW GANG")
+        self.root.title("NO LIMIT")
         self.root.configure(bg="#000000")
         self.root.resizable(False, False)
         self.root.report_callback_exception = self._error_tk

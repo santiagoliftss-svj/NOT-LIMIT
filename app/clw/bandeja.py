@@ -12,7 +12,7 @@ log = logging.getLogger("clw")
 
 
 class Bandeja:
-    def __init__(self, imagenes, al_abrir, al_alternar, al_salir, esta_activo, titulo="CLW GANG", icos=None):
+    def __init__(self, imagenes, al_abrir, al_alternar, al_salir, esta_activo, titulo="NO LIMIT", icos=None):
         """imagenes: {"activo": PIL.Image, "apagado": PIL.Image}; icos: lo mismo pero rutas .ico (se ven nitidos)"""
         self.imagenes = imagenes
         self.icos = icos
@@ -28,13 +28,13 @@ class Bandeja:
             return
         try:
             menu = pystray.Menu(
-                pystray.MenuItem("Abrir CLW GANG", lambda icon, item: al_abrir(), default=True),
+                pystray.MenuItem("Abrir " + titulo, lambda icon, item: al_abrir(), default=True),
                 pystray.MenuItem(lambda item: "Detener" if self._esta_activo() else "Activar",
                                  lambda icon, item: al_alternar()),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Salir", lambda icon, item: al_salir()),
             )
-            self.icono = pystray.Icon("clw_gang", imagenes["apagado"], titulo, menu)
+            self.icono = pystray.Icon("no_limit", imagenes["apagado"], titulo, menu)
             if sys.platform == "win32" and icos:
                 self._icono_nitido()
             self._hilo = threading.Thread(target=self.icono.run, name="bandeja", daemon=True)

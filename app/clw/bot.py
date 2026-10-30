@@ -142,7 +142,7 @@ class Bot:
             self._ocupado.release()
 
     def _tapar_ventana_propia(self, img, left, top, paso=16):
-        """Pinta de negro solo la parte VISIBLE de la ventana de CLW GANG en la captura
+        """Pinta de negro solo la parte VISIBLE de la ventana de NO LIMIT en la captura
         (si esta detras del navegador no se tapa nada)."""
         if not self.hwnd_propio:
             return
