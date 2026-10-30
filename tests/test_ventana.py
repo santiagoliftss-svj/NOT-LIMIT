@@ -1,5 +1,6 @@
-"""Logica de la ventana con un Tk falso (corre en cualquier sistema): esconderse junto al reloj despues de
-INYECTAR, no dibujar nada escondida, avisos, volver a abrir, la X y el menu del icono del reloj."""
+"""Logica de la ventana con un Tk falso (corre en cualquier sistema): irse volando junto al reloj despues de
+INYECTAR, no dibujar nada escondida, que no aparezca nada mientras contesta, volver a abrir, la X, el menu del
+icono del reloj, repintar solo pedazos y la actualizacion sola."""
 
 import os
 import queue
@@ -36,6 +37,14 @@ class Reloj:
         return self.t
 
 
+class TkFalso:
+    def __init__(self):
+        self.copias = []
+
+    def call(self, *args):
+        self.copias.append(args)
+
+
 class RaizFalsa:
     def __init__(self):
         self.estado = "normal"
@@ -43,6 +52,9 @@ class RaizFalsa:
         self.topmost = False
         self.destruida = False
         self.siguiente = None
+        self.pos = (700, 200)
+        self.recorrido = []
+        self.tk = TkFalso()
 
     def state(self):
         return self.estado
@@ -64,6 +76,25 @@ class RaizFalsa:
         elif nombre == "-topmost":
             self.topmost = valor
 
+    def geometry(self, valor=None):
+        if valor is None:
+            return f"380x600+{self.pos[0]}+{self.pos[1]}"
+        x, y = valor.lstrip("+").split("+")
+        self.pos = (int(x), int(y))
+        self.recorrido.append(self.pos)
+
+    def winfo_width(self):
+        return 380
+
+    def winfo_height(self):
+        return 600
+
+    def winfo_screenwidth(self):
+        return 1920
+
+    def winfo_screenheight(self):
+        return 1080
+
     def lift(self):
         pass
 
@@ -79,11 +110,15 @@ class RaizFalsa:
 
 
 class FotoFalsa:
-    pegadas = 0
+    completas = 0                       # la ventana entera (380 x 600)
 
     def __init__(self, img):
         self.w, self.h = img.size
-        FotoFalsa.pegadas += 1
+        if img.size == (380, 600):
+            FotoFalsa.completas += 1
+
+    def __str__(self):
+        return "foto%d" % id(self)
 
     def width(self):
         return self.w
@@ -92,7 +127,8 @@ class FotoFalsa:
         return self.h
 
     def paste(self, img):
-        FotoFalsa.pegadas += 1
+        if img.size == (380, 600):
+            FotoFalsa.completas += 1
 
 
 class EtiquetaFalsa:
@@ -106,8 +142,8 @@ class BandejaFalsa:
     def __init__(self):
         self.avisos, self.estados, self.cerrada = [], [], False
 
-    def estado(self, activo):
-        self.estados.append(activo)
+    def estado(self, activo, alerta=None):
+        self.estados.append((activo, alerta))
 
     def avisar(self, texto, titulo=None):
         self.avisos.append(texto)
@@ -153,16 +189,30 @@ def _ventana(con_bandeja=True, con_clave=True):
     v.lbl = EtiquetaFalsa()
     v.cola = queue.Queue()
     v.foto = v._mostrada = None
+    v._chicas = {}
     v._cursor = "arrow"
     v._cerrado = False
     v.visible = True
-    v._avisado = False
     v._fundido = None
+    v._origen = None
     v._activo_bandeja = None
+    v._alerta = None
+    v._instalador = None
+    v._actualizando = False
     v._evento = None
     v._hwnd = None
     v.bandeja = BandejaFalsa() if con_bandeja else None
     v._enfocada = lambda: True
+    # cuenta los cuadros que de verdad llegan a la pantalla
+    v.cuadros = 0
+    pintar = v._pintar
+
+    def contar():
+        antes = v._mostrada
+        pintar()
+        if v._mostrada is not antes:
+            v.cuadros += 1
+    v._pintar = contar
     v._pintar()
     return v, bot, reloj
 
@@ -178,7 +228,7 @@ def _correr(v, reloj, seg):
     return vueltas
 
 
-def prueba_inyectar_se_va_junto_al_reloj():
+def prueba_inyectar_se_va_volando_junto_al_reloj():
     v, bot, reloj = _ventana()
     _correr(v, reloj, 0.5)
     v.ui.inyectar()
@@ -186,40 +236,56 @@ def prueba_inyectar_se_va_junto_al_reloj():
     assert bot.activo and v.visible, "primero se ve la animacion"
     _correr(v, reloj, 1.0)
     assert not v.visible and v.root.estado == "withdrawn" and v.root.alfa == 1.0
-    assert v.bandeja.estados[-1] is True
+    # se fue volando hacia la esquina del reloj y regreso a su lugar ya escondida
+    assert max(x for x, _ in v.root.recorrido) > 1300 and max(y for _, y in v.root.recorrido) > 700
+    assert v.root.pos == (700, 200)
+    assert v.bandeja.estados[-1] == (True, None)
     assert len(v.bandeja.avisos) == 1 and "reloj" in v.bandeja.avisos[0]
     # escondida: no dibuja nada y casi no despierta
-    antes = FotoFalsa.pegadas
+    antes = v.cuadros
     vueltas = _correr(v, reloj, 5.0)
-    assert FotoFalsa.pegadas == antes and vueltas <= 21, vueltas
+    assert v.cuadros == antes and vueltas <= 21, vueltas
     assert v.root.siguiente == 250
+    # el aviso del reloj sale una sola vez en la vida
+    v.mostrar()
+    _correr(v, reloj, 0.5)
+    assert v.visible and v.root.pos == (700, 200) and v.root.alfa == 1.0
+    v.esconder()
+    _correr(v, reloj, 0.6)
+    assert not v.visible and len(v.bandeja.avisos) == 1
 
 
-def prueba_avisos_mientras_esta_escondida():
+def prueba_mientras_contesta_no_aparece_nada():
     v, bot, reloj = _ventana()
     v.ui.inyectar()
     _correr(v, reloj, 2.0)
     assert not v.visible
     bot.eventos.put(("actividad", "Tu cuenta de Claude no tiene saldo.", "error"))
-    bot.eventos.put(("actividad", "Marcó: Canberra", "ok"))
     bot.eventos.put(("actividad", "No vi ninguna pregunta ahí", "info"))
     _correr(v, reloj, 0.5)
-    assert v.bandeja.avisos[1:] == ["Tu cuenta de Claude no tiene saldo.", "No vi ninguna pregunta ahí"]
-    # si falta la clave hay que abrir la ventana
+    assert len(v.bandeja.avisos) == 1, "ni una notificacion mientras contesta"
+    assert v.bandeja.estados[-1] == (True, "Tu cuenta de Claude no tiene saldo."), "solo lo marca el icono del reloj"
+    bot.eventos.put(("actividad", "Marcó: Canberra", "ok"))
+    _correr(v, reloj, 0.3)
+    assert v.bandeja.estados[-1] == (True, None)
+    # si falta la clave tampoco se abre sola: solo marca el icono
     bot.eventos.put(("falta_clave", "claude"))
     _correr(v, reloj, 0.5)
-    assert v.visible and v.root.estado == "normal" and v.ui.pantalla == "clave"
+    assert not v.visible and v.root.estado == "withdrawn"
+    assert v.bandeja.estados[-1] == (True, "Revisa tu clave")
+    v.mostrar()
+    assert v.visible and v.ui.pantalla == "clave" and v.bandeja.estados[-1] == (True, None)
 
 
 def prueba_abrir_desde_el_reloj_con_fundido():
     v, bot, reloj = _ventana()
     v.ui.inyectar()
     _correr(v, reloj, 2.0)
-    v.cola.put(v.mostrar)                  # "Abrir CLW GANG" (llega de otro hilo por la cola)
+    v.cola.put(v.mostrar)                  # "Abrir NO LIMIT" (llega de otro hilo por la cola)
     v._tick()
     assert v.visible and v.root.estado == "normal" and v.root.alfa < 0.5 and v.root.topmost
     _correr(v, reloj, 0.5)
-    assert v.root.alfa == 1.0
+    assert v.root.alfa == 1.0 and v.root.pos == (700, 200)
     # ya visible y activa: muestra DETENER y no se vuelve a esconder sola
     _correr(v, reloj, 3.0)
     assert v.visible and v.ui.estado == "activo"
@@ -235,7 +301,7 @@ def prueba_la_x_esconde_si_esta_activo_y_cierra_si_no():
     # Detener desde el menu del reloj
     v.cola.put(v._alternar)
     _correr(v, reloj, 0.5)
-    assert not bot.activo and bot.log[-1] == "detener" and v.bandeja.estados[-1] is False
+    assert not bot.activo and bot.log[-1] == "detener" and v.bandeja.estados[-1] == (False, None)
     v.mostrar()
     _correr(v, reloj, 0.5)
     v._al_cerrar()
@@ -267,9 +333,9 @@ def prueba_sin_icono_del_reloj_solo_minimiza():
     _correr(v, reloj, 2.0)
     assert v.root.estado == "iconic" and bot.activo
     # minimizada tampoco dibuja
-    antes = FotoFalsa.pegadas
+    antes = v.cuadros
     _correr(v, reloj, 2.0)
-    assert FotoFalsa.pegadas == antes
+    assert v.cuadros == antes
     # la X sin icono del reloj cierra todo (si no, no habria como volver)
     v.mostrar()
     v._al_cerrar()
@@ -279,10 +345,71 @@ def prueba_sin_icono_del_reloj_solo_minimiza():
 def prueba_sin_foco_dibuja_poco():
     v, bot, reloj = _ventana()
     v._enfocada = lambda: False
-    antes = FotoFalsa.pegadas
+    antes = v.cuadros
     vueltas = _correr(v, reloj, 3.0)
-    assert FotoFalsa.pegadas - antes <= 1 and vueltas <= 22, (FotoFalsa.pegadas - antes, vueltas)
+    assert v.cuadros - antes <= 1 and vueltas <= 22, (v.cuadros - antes, vueltas)
     v._enfocada = lambda: True
-    antes = FotoFalsa.pegadas
+    antes = v.cuadros
     _correr(v, reloj, 1.0)
-    assert FotoFalsa.pegadas - antes >= 20, "con foco la estrella se mueve"
+    assert v.cuadros - antes >= 20, "con foco el borde del boton brilla"
+
+
+def prueba_repinta_solo_pedazos():
+    v, bot, reloj = _ventana()
+    _correr(v, reloj, 0.3)
+    completas, copias = FotoFalsa.completas, len(v.root.tk.copias)
+    _correr(v, reloj, 1.0)                    # el borde del boton brilla y el logo refleja: solo pedazos
+    assert FotoFalsa.completas == completas, "sin cambios grandes no repinta la ventana entera"
+    assert len(v.root.tk.copias) > copias + 15
+    # pasar el mouse por los botones tambien es un pedazo
+    v._raton(v.ui.mover(190, 295))
+    v._raton(v.ui.mover(190, 205))
+    v._raton(v.ui.salir())
+    assert FotoFalsa.completas == completas
+    # cambiar de pantalla si repinta todo
+    v.ui._accion("ajustes")
+    _correr(v, reloj, 0.1)
+    assert FotoFalsa.completas > completas
+
+
+def _actualizador_falso(llamadas):
+    viejo = (V.actualizar.buscar, V.actualizar.descargar, V.actualizar.instalar)
+
+    def descargar(ver, url, tam=0, al_avance=None, cancelar=None):
+        for p in (12, 57, 99):
+            al_avance(p)
+        return "C:/datos/actualizacion/NO-LIMIT-Setup-%s.exe" % ver
+
+    V.actualizar.buscar = lambda timeout=8: ("9.9.9", "https://x/NO-LIMIT-Setup.exe", 10)
+    V.actualizar.descargar = descargar
+    V.actualizar.instalar = lambda ruta, relanzar=True: llamadas.append((ruta, relanzar)) or True
+    return viejo
+
+
+def prueba_se_actualiza_sola():
+    v, bot, reloj = _ventana()
+    llamadas = []
+    viejo = _actualizador_falso(llamadas)
+    try:
+        v._buscar_actualizacion()               # (en la app corre en otro hilo)
+        _correr(v, reloj, 0.2)
+        assert v.ui.actualizacion_lista and v.ui.nueva_version == "9.9.9" and v.ui.descarga is None
+        assert v._instalador.endswith("9.9.9.exe") and llamadas == []
+        # tocar "Actualizar": instala sin ventanas y se vuelve a abrir sola
+        v.ui._accion("actualizar")
+        assert llamadas == [(v._instalador, True)] and v._cerrado and not bot.activo
+    finally:
+        V.actualizar.buscar, V.actualizar.descargar, V.actualizar.instalar = viejo
+
+
+def prueba_al_salir_instala_callada():
+    v, bot, reloj = _ventana()
+    llamadas = []
+    viejo = _actualizador_falso(llamadas)
+    try:
+        v._buscar_actualizacion()
+        _correr(v, reloj, 0.2)
+        v.salir()                              # cerrar NO LIMIT con la version nueva ya bajada
+        assert llamadas == [(v._instalador, False)], llamadas
+    finally:
+        V.actualizar.buscar, V.actualizar.descargar, V.actualizar.instalar = viejo

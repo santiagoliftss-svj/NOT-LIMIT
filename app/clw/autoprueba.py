@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 RESULTADOS = {}
 OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
 # se reportan aparte (dependen de la barra de tareas y del escritorio de la maquina de pruebas):
-# bandeja, juego, reabrir, e2e, cpu
+# bandeja, juego, reabrir, e2e, cpu, rendimiento
 
 
 def _paso(nombre, fn):
@@ -304,15 +304,65 @@ def _ventana_y_e2e(salida):
             claros = sum(1 for p in im.convert("L").getdata() if p > 200)
             RESULTADOS["ventana"] = {"ok": claros > 500, "detalle": {"tam": im.size, "pixeles_claros": claros,
                                                                      "escala": v.e, "bandeja": v.en_bandeja()}}
-            medir_cpu("ventana_al_frente", 2.0, paso_inyectar)
+            medir_cpu("ventana_al_frente", 2.0, paso_rendimiento)
         except Exception as e:
             RESULTADOS["ventana"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             terminar()
 
+    # -------- que no se trabe: cuanto tarda cada cuadro (dibujar + pegar en la ventana de verdad)
+    def paso_rendimiento():
+        tiempos = {}
+
+        def cuadro(accion=None):
+            t0 = time.perf_counter()
+            if accion:
+                accion()                    # el mouse: la ventana repinta solo si algo cambio
+            else:
+                v._pintar()
+            root.update_idletasks()
+            return (time.perf_counter() - t0) * 1000
+
+        def anotar(nombre, ts):
+            ts = sorted(ts)
+            tiempos[nombre] = {"prom": round(sum(ts) / len(ts), 2), "p90": round(ts[int(len(ts) * .9) - 1], 2),
+                               "max": round(ts[-1], 2), "n": len(ts)}
+
+        def durante(seg):
+            ts, fin = [], time.time() + seg
+            while time.time() < fin:
+                ts.append(cuadro())
+            return ts
+
+        try:
+            E = v.e
+            puntos = [(190, 295), (190, 204), (60, 566), (190, 120), (320, 470), (300, 204), (190, 295), (20, 590)]
+            ts = [cuadro(lambda p=p: v._raton(v.ui.mover(p[0] + i % 3, p[1]))) for i in range(6) for p in puntos]
+            anotar("mouse_principal", ts)
+            v._raton(v.ui.salir())
+            anotar("quieta_animada", durante(0.6))
+            v.ui._accion("ajustes")
+            anotar("transicion_ajustes", durante(0.35))
+            puntos = [(300, 157), (300, 215), (320, 372), (320, 448), (60, 566), (60, 30), (190, 520)]
+            anotar("mouse_ajustes", [cuadro(lambda p=p: v._raton(v.ui.mover(p[0], p[1] + i % 2))) for i in range(6)
+                                     for p in puntos])
+            v.ui._accion("volver")
+            durante(0.35)
+            v.ui._accion("modelo")
+            anotar("hoja_abriendo", durante(0.3))
+            anotar("mouse_hoja", [cuadro(lambda y=y: v._raton(v.ui.mover(190, y))) for y in range(240, 590, 9)])
+            v.ui._accion("cerrar_capa")
+            v._raton(v.ui.salir())
+            durante(0.2)
+            peor = max(t["p90"] for t in tiempos.values())
+            RESULTADOS["rendimiento"] = {"ok": peor < 33, "detalle": {"escala": E, "ms": tiempos}}
+        except Exception as e:
+            RESULTADOS["rendimiento"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+        root.after(200, paso_inyectar)
+
     def paso_inyectar():
         v.ui.inyectar()                     # como tocar el boton
         root.after(300, lambda: grab_seguro("ventana_encendiendo"))
-        root.after(1800, paso_escondida)
+        root.after(2300, paso_escondida)
 
     def paso_escondida():
         try:

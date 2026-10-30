@@ -206,9 +206,14 @@ def prueba_selector_modelos():
     ui.presionar(5, 5)
     ui.soltar(5, 5)
     assert ui.capa is None
-    # y con Escape
+    # y con Escape (la hoja se va de verdad: tocar "Ajustes" ya no elige un modelo escondido)
     _clic(ui, "modelo")
     assert ui.tecla("", "Escape") and ui.capa is None
+    ui.render()
+    assert not any(z[0] in ("cerrar_capa", "panel") or z[0].startswith("modelo:") for z in ui.zonas)
+    antes = c["modelo"]
+    _clic(ui, "ajustes")
+    assert ui.pantalla == "ajustes" and c["modelo"] == antes
 
 
 def prueba_ajustes():
@@ -260,7 +265,7 @@ def prueba_cache_y_animacion():
     assert ui.render() is x
     ui.tecla("", "Escape")
     _pasar(ui, reloj, 0.4)
-    ui.evento_bot(("nueva_version", "1.2.0"))
+    ui.evento_bot(("nueva_version", "1.4.0"))
     _guardar(ui, "15_actualizacion")
     _clic(ui, "actualizar")
     assert app.log[-1][0] == "url"
@@ -332,3 +337,79 @@ def prueba_todas_las_escalas():
         _pasar(ui, reloj, 0.3)
         im = ui.render()
         assert im.size == (round(380 * escala), round(600 * escala))
+
+
+def prueba_pedazos_igual_que_todo():
+    """Lo que la ventana arma repintando solo pedazos (ui.sucio) queda igual que el cuadro completo."""
+    import random
+    from PIL import ImageChops
+
+    for escala in (1.25, 2.0):
+        ui, app, c, reloj = _nuevo(escala)
+        rnd = random.Random(7)
+        pantalla = {"im": None}
+
+        def paso(que, dt=1 / 60):
+            reloj.t += dt
+            img = ui.render()
+            if pantalla["im"] is None or ui.sucio is None:
+                pantalla["im"] = img.copy()
+                return
+            for caja in ui.sucio:
+                pantalla["im"].paste(img.crop(caja), caja[:2])
+            dif = ImageChops.difference(pantalla["im"].convert("RGB"), img.convert("RGB"))
+            peor = max(e[1] for e in dif.getextrema())
+            assert peor <= 2, f"{escala} {que}: quedo basura en {dif.getbbox()} (sucio {ui.sucio})"
+
+        def clic(x, y):
+            ui.mover(x, y)
+            ui.presionar(x, y)
+            ui.soltar(x, y)
+
+        for _ in range(40):
+            paso("quieta")
+        for _ in range(120):
+            ui.mover(rnd.uniform(0, 380), rnd.uniform(0, 600))
+            paso("mouse")
+        ui.presionar(190, 295)
+        ui.mover(5, 5)
+        paso("arrastrar")
+        ui.soltar(5, 5)
+        paso("soltar afuera")
+        clic(190, 295)                              # sin clave: pide la clave
+        for ch in "sk-ant-abc":
+            ui.tecla(ch, ch)
+            paso("tecla")
+        ui.mover(274, 541)
+        for _ in range(40):
+            paso("gotas de guardar")
+        ui.guardar_clave()
+        ui.clave_verificada("claude", ui.clave["texto"], None)
+        for _ in range(90):
+            paso("encendiendo")
+        ui.evento_bot(("actividad", "Marcó: Canberra", "ok"))
+        ui.mover(190, 295)
+        for _ in range(60):
+            paso("detener con gotas")
+        ui.evento_bot(("estado", "pensando"))
+        for _ in range(30):
+            paso("pensando")
+        clic(190, 204)                              # hoja de modelos
+        for _ in range(40):
+            ui.mover(rnd.uniform(0, 380), rnd.uniform(200, 600))
+            paso("hoja")
+        ui.tecla("", "Escape")
+        for que in (("nueva_version", "9.0.0"), ("descarga", 40), ("actualizacion_lista", "9.0.0")):
+            ui.evento_bot(que)
+            paso(que[0])
+        clic(60, 566)                               # ajustes
+        for _ in range(60):
+            ui.mover(rnd.uniform(0, 380), rnd.uniform(0, 600))
+            paso("ajustes")
+        ui.tecla("", "Escape")
+        ui.enfocado = False
+        for _ in range(10):
+            paso("sin foco")
+        ui.enfocado = True
+        for _ in range(60):
+            paso("con foco", 1 / 25)

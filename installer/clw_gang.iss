@@ -68,6 +68,8 @@ Type: files; Name: "{autodesktop}\CLW GANG.lnk"
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Abrir {#AppName}"; Flags: nowait postinstall skipifsilent
+; actualizacion sola (la app corre esto con /VERYSILENT /RELANZAR=1): se vuelve a abrir al terminar
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: Relanzar
 
 [UninstallRun]
 ; si quedo activa junto al reloj, se cierra antes de borrar sus archivos
@@ -85,4 +87,10 @@ begin
   Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "CLW GANG.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
   Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "NO LIMIT.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
   Result := '';
+end;
+
+// /RELANZAR=1 lo pone la app cuando el usuario toca "Actualizar" (si se instala al cerrarla, no se vuelve a abrir)
+function Relanzar(): Boolean;
+begin
+  Result := ExpandConstant('{param:RELANZAR|0}') = '1';
 end;

@@ -17,6 +17,7 @@ _PREDETERMINADO = {
     "modo_preciso": True,
     "guardar_capturas": True,
     "modelos_propios": {},   # para cambiar el id de un modelo sin actualizar la app
+    "aviso_bandeja": False,
 }
 
 _candado = threading.Lock()
@@ -112,6 +113,9 @@ class Config:
         self.guardar()
 
     # atajos
+    def get(self, k, defecto=None):
+        return self.datos.get(k, defecto)
+
     def __getitem__(self, k):
         return self.datos[k]
 

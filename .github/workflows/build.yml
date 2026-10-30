@@ -83,6 +83,15 @@ jobs:
             if (-not (Test-Path "$dir\$f")) { Write-Host "::error::Falta $f en la instalacion"; exit 1 }
           }
           Write-Host "Instalacion OK"
+          # actualizacion sola: la app corre el instalador encima con /RELANZAR=1 y debe volver a abrirse
+          # (WaitForExit y no -Wait: -Wait tambien esperaria a NO LIMIT, que se queda abierta)
+          $p = Start-Process salida\NO-LIMIT-Setup.exe -PassThru -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/RELANZAR=1", "/DIR=`"$dir`""
+          $p.WaitForExit()
+          $abierta = $null
+          for ($i = 0; $i -lt 20 -and -not $abierta; $i++) { Start-Sleep -Milliseconds 500; $abierta = Get-Process "NO LIMIT" -ErrorAction SilentlyContinue }
+          if (-not $abierta) { Write-Host "::error::Con /RELANZAR=1 NO LIMIT no se volvio a abrir"; exit 1 }
+          $abierta | Stop-Process -Force
+          Write-Host "Actualizacion con relanzar OK"
 
       - name: Capturas del instalador
         if: always()

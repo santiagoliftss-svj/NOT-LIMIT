@@ -51,8 +51,8 @@ def _no():
     return Image.composite(c, Image.new("RGB", c.size, (0, 0, 0)), m)
 
 
-def icono(tam=1024, apagado=False):
-    """Cuadro negro redondeado con el NO 3D."""
+def icono(tam=1024, apagado=False, alerta=False):
+    """Cuadro negro redondeado con el NO 3D (alerta: con un punto blanco arriba a la derecha)."""
     base = Image.new("RGBA", (tam, tam), (0, 0, 0, 0))
     ImageDraw.Draw(base).rounded_rectangle((0, 0, tam - 1, tam - 1), int(tam * 0.22), fill=(0, 0, 0, 255))
     no = sin_fondo(_no())
@@ -63,6 +63,15 @@ def icono(tam=1024, apagado=False):
     k = lado / max(no.width, no.height)
     no = no.resize((max(1, int(no.width * k)), max(1, int(no.height * k))), Image.LANCZOS)
     base.alpha_composite(no, ((tam - no.width) // 2, (tam - no.height) // 2))
+    if alerta:
+        T = tam * 8
+        capa = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+        d = ImageDraw.Draw(capa)
+        r = T * .2
+        cx, cy = T - r * 1.05, r * 1.05
+        d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(0, 0, 0, 255))
+        d.ellipse((cx - r * .7, cy - r * .7, cx + r * .7, cy + r * .7), fill=(255, 255, 255, 255))
+        base.alpha_composite(capa.resize((tam, tam), Image.LANCZOS))
     return base
 
 
@@ -104,10 +113,11 @@ def main():
     grande.resize((64, 64), Image.LANCZOS).save(os.path.join(WEB, "favicon.png"))
 
     # junto al reloj: prendido / apagado (tenue)
-    for nombre, apagado in (("bandeja", False), ("bandeja_apagado", True)):
-        ims = {t: icono(t, apagado) for t in (64, 48, 40, 32, 24, 20, 16)}
+    for nombre, apagado, alerta in (("bandeja", False, False), ("bandeja_apagado", True, False),
+                                    ("bandeja_alerta", False, True)):
+        ims = {t: icono(t, apagado, alerta) for t in (64, 48, 40, 32, 24, 20, 16)}
         ims[64].save(os.path.join(ASSETS, nombre + ".png"))
-        if not apagado:
+        if nombre == "bandeja":
             ims[64].save(os.path.join(WEB, "bandeja.png"), optimize=True)
         _ico(os.path.join(ASSETS, nombre + ".ico"), ims)
 

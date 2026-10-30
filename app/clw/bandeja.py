@@ -19,6 +19,7 @@ class Bandeja:
         self.titulo = titulo
         self._esta_activo = esta_activo
         self._activo = None
+        self._alerta = None
         self.icono = None
         self._hilo = None
         try:
@@ -58,7 +59,7 @@ class Bandeja:
             try:
                 u32 = ctypes.windll.user32
                 cx, cy = u32.GetSystemMetrics(49), u32.GetSystemMetrics(50)   # SM_CXSMICON, SM_CYSMICON
-                ruta = self.icos["activo" if self._activo else "apagado"]
+                ruta = self.icos.get(self._cual()) or self.icos["apagado"]
                 icono._icon_handle = win32.LoadImage(None, ruta, win32.IMAGE_ICON, cx, cy, win32.LR_LOADFROMFILE)
             except Exception:
                 original()
@@ -69,14 +70,21 @@ class Bandeja:
     def disponible(self):
         return self.icono is not None and self._hilo is not None and self._hilo.is_alive()
 
-    def estado(self, activo):
-        """Cambia el icono, el texto al pasar el mouse y el menu (Activar / Detener)."""
-        if not self.disponible or activo == self._activo:
+    def _cual(self):
+        if self._alerta and "alerta" in self.imagenes:
+            return "alerta"
+        return "activo" if self._activo else "apagado"
+
+    def estado(self, activo, alerta=None):
+        """Cambia el icono, el texto al pasar el mouse y el menu (Activar / Detener).
+        'alerta' = texto corto de un problema: el icono lo marca sin mostrar nada en pantalla."""
+        if not self.disponible or (activo == self._activo and alerta == self._alerta):
             return
-        self._activo = activo
+        self._activo, self._alerta = activo, alerta
         try:
-            self.icono.icon = self.imagenes["activo" if activo else "apagado"]
-            self.icono.title = f"{self.titulo} · {'Activo' if activo else 'Apagado'}"
+            self.icono.icon = self.imagenes[self._cual()]
+            detalle = alerta if alerta else ("Activo" if activo else "Apagado")
+            self.icono.title = f"{self.titulo} · {detalle}"[:120]
             self.icono.update_menu()
         except Exception as ex:
             log.warning("bandeja estado: %s", ex)

@@ -133,3 +133,27 @@ def prueba_modelo_propio():
     c["modelos_propios"] = {"claude-haiku-5-5": "claude-haiku-9"}
     m, real = b.modelo()
     assert m.id == "claude-haiku-5-5" and real == "claude-haiku-9"
+
+
+def prueba_esc_mientras_piensa_cancela_sin_clic():
+    acc_esc = {"desde": None}
+
+    def ia(texto):
+        acc_esc["desde"] = time.time()          # el usuario presiona Esc mientras la IA piensa
+        time.sleep(0.4)
+        return json.dumps({"tipo": "opcion", "ids": [0]}), False
+    b, c, acc, cli = _bot(ia)
+    acc.tecla_abajo = lambda vk: vk == 0x1B and acc_esc["desde"] is not None and time.time() - acc_esc["desde"] < 0.3
+    img, _, (qx, qy) = muestras.quiz_oscuro()
+    motor_capturar = motor.capturar
+    motor.capturar = lambda x, y: (img, 0, 0)
+    try:
+        assert b.iniciar()
+        b._disparo(qx, qy)
+        _esperar(b)
+    finally:
+        motor.capturar = motor_capturar
+        b.detener()
+    evs = _eventos(b)
+    assert not any(a[0] == "clic" for a in acc.log), acc.log
+    assert ("actividad", "Cancelado", "info") in evs, evs

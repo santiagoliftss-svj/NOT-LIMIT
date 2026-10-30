@@ -111,15 +111,33 @@ class Bot:
             time.sleep(0.03)
         time.sleep(0.12)
 
+    def _vigilar_esc(self, fin):
+        """Mientras lee y piensa: si presionan Esc se cancela al instante (no da clic ni escribe nada)."""
+        entrada.bajar_prioridad_hilo()
+        while not fin.is_set():
+            try:
+                if self.acciones.tecla_abajo(entrada.VK_ESCAPE):
+                    self._cancelar.set()
+                    return
+            except Exception:
+                return
+            fin.wait(0.025)
+
     def _trabajo(self, x, y):
         self._cancelar.clear()
         entrada.bajar_prioridad_hilo()
+        fin = threading.Event()
+        threading.Thread(target=self._vigilar_esc, args=(fin,), name="esc", daemon=True).start()
         try:
             self._emitir("estado", "leyendo")
             self._esperar_que_suelte_ctrl()
+            if self._cancelar.is_set():
+                raise entrada.Cancelado()
             img, left, top = motor.capturar(x, y)
             self._tapar_ventana_propia(img, left, top)
             res = self.analizar(img, x - left, y - top, motor.factor_zoom())
+            if self._cancelar.is_set():
+                raise entrada.Cancelado()
             if res is None:
                 return
             if res.tipo == "abierta" and any(p["punto"] for p in res.pasos):
@@ -138,6 +156,7 @@ class Bot:
             log.error("fallo: %s\n%s", e, traceback.format_exc())
             self._emitir("actividad", f"Algo falló: {_corto(e, 70)}", "error")
         finally:
+            fin.set()
             self._emitir("estado", "activo" if self.activo else "apagado")
             self._ocupado.release()
 
