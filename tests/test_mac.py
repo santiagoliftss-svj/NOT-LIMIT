@@ -125,13 +125,13 @@ def prueba_llave_en_el_llavero():
         assert all(guardado["w"] not in " ".join(a) for a, _ in llamadas)
         assert llavero.llave() is k, "se lee una sola vez"
         # config usa el Llavero en Mac
-        viejo_mac = config.rutas.MAC
-        config.rutas.MAC = True
+        viejo = (config.rutas.MAC, config.rutas.WINDOWS)
+        config.rutas.MAC, config.rutas.WINDOWS = True, False      # (como si fuera una Mac)
         try:
             v = config.proteger("sk-ant-prueba")
             assert v.startswith("mac:") and config.desproteger(v) == "sk-ant-prueba"
         finally:
-            config.rutas.MAC = viejo_mac
+            config.rutas.MAC, config.rutas.WINDOWS = viejo
     finally:
         llavero._correr, llavero._cache = viejo, {}
 
