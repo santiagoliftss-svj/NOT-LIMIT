@@ -15,8 +15,22 @@ concurrency:
 
 jobs:
   mac:
-    runs-on: macos-latest
+    # M1 (Apple Silicon) y, por si no hay Macs M1 libres en GitHub, tambien Intel (corre en M1 con Rosetta)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            arch: arm64
+            dmg: NO-LIMIT-Mac.dmg
+          - runner: macos-15-intel
+            arch: x86_64
+            dmg: NO-LIMIT-Mac-Intel.dmg
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
+    env:
+      MAC_ARCH: ${{ matrix.arch }}
+      DMG: ${{ matrix.dmg }}
     steps:
       - uses: actions/checkout@v4
 
@@ -69,7 +83,7 @@ jobs:
       - name: DMG
         run: bash build/dmg_mac.sh
 
-      - name: Subir autoprueba a la rama ci-autoprueba-mac (para revisarla)
+      - name: Subir autoprueba a la rama ci-autoprueba-mac-(arch) (para revisarla)
         if: always()
         continue-on-error: true
         run: |
@@ -81,19 +95,19 @@ jobs:
           git init -q
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git checkout -q -b ci-autoprueba-mac
+          git checkout -q -b "ci-autoprueba-mac-$MAC_ARCH"
           git add -A
-          git commit -q -m "autoprueba mac ${{ github.sha }}"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-autoprueba-mac
+          git commit -q -m "autoprueba mac $MAC_ARCH ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "ci-autoprueba-mac-$MAC_ARCH"
 
       - name: Guardar resultados
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: no-limit-mac-${{ steps.ver.outputs.version }}
+          name: no-limit-mac-${{ matrix.arch }}-${{ steps.ver.outputs.version }}
           path: |
             autoprueba
-            salida/NO-LIMIT-Mac.dmg
+            salida/${{ matrix.dmg }}
           retention-days: 14
           if-no-files-found: ignore
 
@@ -103,9 +117,10 @@ jobs:
         run: |
           notas="$RUNNER_TEMP/notas.md"
           {
-            echo "**NO LIMIT ${{ steps.ver.outputs.version }} para Mac (beta)** · Apple Silicon (M1, M2, M3, M4)"
+            echo "**NO LIMIT ${{ steps.ver.outputs.version }} para Mac (beta)**"
             echo
-            echo "Descarga \`NO-LIMIT-Mac.dmg\` (abajo, en *Assets*)."
+            echo "Descarga \`NO-LIMIT-Mac.dmg\` (abajo, en *Assets*) si tu Mac es M1, M2, M3 o M4."
+            echo "\`NO-LIMIT-Mac-Intel.dmg\` es para Macs con Intel (en una M1 tambien corre, con Rosetta)."
             echo
             echo '```'
             cat build/LEEME_MAC.txt
@@ -114,7 +129,7 @@ jobs:
             echo "Armada desde ${GITHUB_SHA::7} el $(date -u '+%Y-%m-%d %H:%M') UTC."
           } > "$notas"
           if ! gh release view mac-beta >/dev/null 2>&1; then
-            gh release create mac-beta --prerelease --title "NO LIMIT para Mac (beta)" --notes-file "$notas" --target "$GITHUB_SHA"
+            gh release create mac-beta --prerelease --title "NO LIMIT para Mac (beta)" --notes-file "$notas" --target "$GITHUB_SHA" || sleep 5
           fi
-          gh release upload mac-beta salida/NO-LIMIT-Mac.dmg --clobber
+          gh release upload mac-beta "salida/$DMG" --clobber
           gh release edit mac-beta --prerelease --notes-file "$notas"
