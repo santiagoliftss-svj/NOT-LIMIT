@@ -1,0 +1,117 @@
+name: Armar NO LIMIT para Mac
+
+on:
+  push:
+    branches: [main, mac]
+    paths-ignore: ["docs/**", "README.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-mac.txt "pyinstaller>=6.10,<7"
+          sw_vers
+          python -c "import platform, sys; print(sys.version, platform.machine())"
+
+      - name: Version
+        id: ver
+        run: python build/preparar.py
+
+      - name: Tesseract (OCR) sin Homebrew
+        run: python build/empacar_tesseract_mac.py preparar
+
+      - name: Pruebas
+        env:
+          CLW_TESSERACT: ${{ github.workspace }}/build/tesseract_mac/tesseract
+        run: python tests/correr.py
+
+      - name: Armar NO LIMIT.app
+        run: |
+          pyinstaller build/clw_gang_mac.spec --noconfirm --distpath dist --workpath build/temp
+          python build/empacar_tesseract_mac.py meter "dist/NO LIMIT.app"
+          cp LICENCIAS.txt app/assets/fuentes/OFL-Archivo.txt "dist/NO LIMIT.app/Contents/Resources/"
+          codesign --force --deep -s - "dist/NO LIMIT.app"
+          codesign --verify --deep --strict --verbose=2 "dist/NO LIMIT.app"
+          du -sh "dist/NO LIMIT.app"
+
+      - name: Autoprueba de la app (en una Mac de verdad)
+        run: |
+          mkdir -p autoprueba
+          set +e
+          # (perl alarm: si la app se queda colgada, a los 6 minutos se corta)
+          perl -e 'alarm shift; exec @ARGV' 360 "dist/NO LIMIT.app/Contents/MacOS/NO LIMIT" --autoprueba "$PWD/autoprueba" > autoprueba/salida.txt 2>&1
+          echo "codigo de salida: $?"
+          tail -40 autoprueba/salida.txt
+          python build/resumen.py autoprueba/resultado.json | tee autoprueba/resumen.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: DMG
+        run: bash build/dmg_mac.sh
+
+      - name: Subir autoprueba a la rama ci-autoprueba-mac (para revisarla)
+        if: always()
+        continue-on-error: true
+        run: |
+          dst="$RUNNER_TEMP/ci"
+          mkdir -p "$dst"
+          [ -d autoprueba ] && cp -R autoprueba/. "$dst/"
+          echo "${{ github.sha }}" > "$dst/commit.txt"
+          cd "$dst"
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -q -b ci-autoprueba-mac
+          git add -A
+          git commit -q -m "autoprueba mac ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-autoprueba-mac
+
+      - name: Guardar resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-limit-mac-${{ steps.ver.outputs.version }}
+          path: |
+            autoprueba
+            salida/NO-LIMIT-Mac.dmg
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Publicar beta de Mac (link fijo para probarla)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notas="$RUNNER_TEMP/notas.md"
+          {
+            echo "**NO LIMIT ${{ steps.ver.outputs.version }} para Mac (beta)** · Apple Silicon (M1, M2, M3, M4)"
+            echo
+            echo "Descarga \`NO-LIMIT-Mac.dmg\` (abajo, en *Assets*)."
+            echo
+            echo '```'
+            cat build/LEEME_MAC.txt
+            echo '```'
+            echo
+            echo "Armada desde ${GITHUB_SHA::7} el $(date -u '+%Y-%m-%d %H:%M') UTC."
+          } > "$notas"
+          if ! gh release view mac-beta >/dev/null 2>&1; then
+            gh release create mac-beta --prerelease --title "NO LIMIT para Mac (beta)" --notes-file "$notas" --target "$GITHUB_SHA"
+          fi
+          gh release upload mac-beta salida/NO-LIMIT-Mac.dmg --clobber
+          gh release edit mac-beta --prerelease --notes-file "$notas"

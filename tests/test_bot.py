@@ -53,7 +53,20 @@ def _bot(fn, con_clave=True):
     acc = Acciones()
     cli = Cliente(fn)
     b = Bot(c, queue.Queue(), ocr=OCR(), cliente=cli, acciones=acc)
+    b.escucha = EscuchaFalsa()           # (el Ctrl / Option + clic de verdad se prueba en la autoprueba)
     return b, c, acc, cli
+
+
+class EscuchaFalsa:
+    def __init__(self, permiso=True):
+        self.permiso, self.corriendo = permiso, False
+
+    def iniciar(self):
+        self.corriendo = self.permiso
+        return self.permiso
+
+    def detener(self):
+        self.corriendo = False
 
 
 def _eventos(b):
@@ -157,3 +170,13 @@ def prueba_esc_mientras_piensa_cancela_sin_clic():
     evs = _eventos(b)
     assert not any(a[0] == "clic" for a in acc.log), acc.log
     assert ("actividad", "Cancelado", "info") in evs, evs
+
+
+def prueba_sin_permiso_de_escuchar_no_arranca():
+    """En Mac, sin el permiso de Accesibilidad la escucha no arranca: se avisa y queda apagado."""
+    b, c, acc, cli = _bot(lambda t: ("{}", False))
+    b.escucha = EscuchaFalsa(permiso=False)
+    assert b.iniciar() is False and not b.activo
+    ev = _eventos(b)
+    assert ("estado", "apagado") in ev and any(e[0] == "actividad" and "Accesibilidad" in e[1] for e in ev), ev
+

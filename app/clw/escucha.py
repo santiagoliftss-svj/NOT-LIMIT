@@ -5,6 +5,7 @@ Para no estorbar en juegos:
 - y solo cuenta el clic si el Ctrl se presiono hace poco (en juegos el Ctrl se deja apretado para agacharse).
 """
 
+import sys
 import threading
 import time
 
@@ -65,3 +66,7 @@ class EscuchaCtrlClic:
                     pass
             antes = abajo
             time.sleep(self.intervalo)
+
+
+if sys.platform == "darwin":             # Mac: Option + clic con un event tap de Quartz
+    from .mac.escucha import EscuchaCtrlClic  # noqa: F401,F811,E402

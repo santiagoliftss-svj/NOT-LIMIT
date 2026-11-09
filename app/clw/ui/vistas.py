@@ -13,20 +13,22 @@ from datetime import datetime
 
 from PIL import Image, ImageDraw
 
-from .. import version
+from .. import plataforma, version
 from ..proveedores import MODELOS, PROVEEDORES, buscar_modelo, clave_parece_de
 from . import estilo as E
 from .estilo import ALTO, ANCHO, BLANCO, ERROR, NEGRO, SUAVE, TENUE, TEXTO, Lienzo
 
 ESTADOS = {
-    "apagado": ("Apagado", "Toca Inyectar y se va junto al reloj"),
-    "activo": ("Activo", "Ctrl + clic sobre cualquier pregunta"),
+    "apagado": ("Apagado", f"Toca Inyectar y se va {plataforma.A_DONDE}"),
+    "activo": ("Activo", f"{plataforma.ATAJO} sobre cualquier pregunta"),
     "leyendo": ("Leyendo la pantalla…", "Esc cancela"),
     "pensando": ("Pensando la respuesta…", "Esc cancela"),
     "escribiendo": ("Escribiendo…", "No toques el teclado. Esc cancela"),
 }
 OCUPADO = ("leyendo", "pensando", "escribiendo")
 SELLOS = {"claude": "Cl", "gemini": "Ge", "openai": "GPT"}
+PERMISOS = (("accesibilidad", "Accesibilidad", "Para dar clic y escribir"),
+            ("pantalla", "Grabación de pantalla", "Para leer la pregunta"))
 
 MARCA_W, MARCA_X, MARCA_Y = 250, 65, 20
 MARCA_H = MARCA_W * 592 / 1400
@@ -62,7 +64,7 @@ def _union(a, b):
 class Interfaz:
     """Controlador de pantallas. 'app' da las acciones de afuera:
        iniciar(), detener(), verificar_clave(prov, texto), leer_portapapeles(), abrir_url(u), abrir_carpeta(),
-       actualizar()"""
+       actualizar(); y en Mac: faltan_permisos(), permisos(), pedir_permiso(cual)"""
 
     def __init__(self, config, app, escala=1.0, reloj=time.time):
         self.config = config
@@ -105,6 +107,7 @@ class Interfaz:
         self._panel = None                 # (llave, imagen, y, caja) de la hoja de modelos
         self._prev_completo = False
         self._por_calentar = None          # pantallas que se arman antes de verlas (ver precalentar)
+        self.msg_permisos = ""
 
     # ================================================================ estado
     def modelo_actual(self):
@@ -212,7 +215,25 @@ class Interfaz:
                       "volver": volver, "iniciar": iniciar}
         self._ir("clave", 1)
 
+    def _faltan_permisos(self):
+        f = getattr(self.app, "faltan_permisos", None)
+        try:
+            return bool(f and f())
+        except Exception:
+            return False
+
+    def _estado_permisos(self):
+        f = getattr(self.app, "permisos", None)
+        try:
+            return dict(f()) if f else {}
+        except Exception:
+            return {}
+
     def _encender(self):
+        if self._faltan_permisos():          # Mac: sin los permisos no puede leer ni dar clic
+            self.msg_permisos = ""
+            self._ir("permisos", 1)
+            return
         ahora = self.reloj()
         self.app.iniciar()
         self._anim_boton = ("encender", ahora)
@@ -288,6 +309,23 @@ class Interfaz:
             self.guardar_clave()
         elif zid in ("cancelar_clave", "volver_clave"):
             self._ir(self.clave["volver"], -1)
+        elif zid.startswith("permiso:"):
+            self.app.pedir_permiso(zid.split(":", 1)[1])
+            self.msg_permisos = ""
+        elif zid == "volver_permisos":
+            self._ir("principal", -1)
+        elif zid == "permisos_listo":
+            faltan = [n for k, n, _ in PERMISOS if not self._estado_permisos().get(k, True)]
+            if faltan:
+                self.msg_permisos = (f"Todavía falta {' y '.join(faltan)}. Si ya lo activaste, cierra NO LIMIT y "
+                                     "vuelve a abrirla.")
+            else:
+                self._ir("principal", -1)
+                prov = self.modelo_actual().proveedor
+                if c.tiene_clave(prov):
+                    self._encender()
+                else:
+                    self.abrir_clave(prov, iniciar=True, msg="Agrega tu clave para empezar.", tipo="info")
 
     def guardar_clave(self):
         k = self.clave
@@ -394,7 +432,7 @@ class Interfaz:
             else:
                 return False
             return True
-        if self.pantalla == "ajustes" and keysym == "Escape":
+        if self.pantalla in ("ajustes", "permisos") and keysym == "Escape":
             self._ir("principal", -1)
             return True
         return False
@@ -406,6 +444,8 @@ class Interfaz:
         if self.pantalla == "clave":
             extra = (k["prov"], k["texto"], k["msg"], k["tipo"], k["verificando"], int(t * 2) % 2,
                      int(t * 3) % 4 if k["verificando"] else 0)
+        elif self.pantalla == "permisos":
+            extra = (tuple(sorted(self._estado_permisos().items())), self.msg_permisos)
         c = self.config
         fila_animada = t - self._t_fila < T_FILA
         return (self.pantalla, self.capa, self.estado, tuple(self.actividad), fila_animada, c["modelo"], c["modo_preciso"],
@@ -466,6 +506,8 @@ class Interfaz:
                 self._ajustes(l)
             elif self.pantalla == "clave":
                 self._pantalla_clave(l, t)
+            elif self.pantalla == "permisos":
+                self._permisos(l)
             if self.capa == "modelos":
                 self._zonas_modelos(l)
             if solo_mouse:
@@ -942,6 +984,44 @@ class Interfaz:
         l.icono("afuera", 28 + ancho, PIE_Y - 6, 12, TEXTO if hov else SUAVE)
         l.zona("pagina", 18, PIE_Y - 14, ancho + 30, 28)
         self._chip_version(l)
+
+    # ---------------------------------------------------------------- permisos (Mac)
+    def _permisos(self, l):
+        estado = self._estado_permisos()
+        listos = all(estado.get(k, True) for k, _, _ in PERMISOS)
+        self._volver(l, "volver_permisos")
+        l.texto_plata(24, 56, "Permisos de Mac", "titulo")
+        desc = "Para leer la pregunta y dar clic, macOS pide dos permisos. Se dan una sola vez."
+        for j, linea in enumerate(E.partir(desc, "cuerpo", self.e, 330 * self.e)):
+            l.texto(24, 100 + j * 19, linea, "cuerpo", SUAVE)
+
+        l.texto(26, 160, "PERMISOS", "seccion", TENUE)
+        l.vidrio(24, 178, 332, 140, 20, borde=(95, 22), relleno=(10, 3))
+        for i, (clave, nombre, para) in enumerate(PERMISOS):
+            y = 178 + i * 70
+            l.texto(40, y + 18, nombre, "nombre", TEXTO)
+            l.texto(40, y + 41, para, "chico", SUAVE)
+            if estado.get(clave, True):
+                ancho = E.medir("Listo", "chico", self.e) / self.e
+                l.icono("palomita", 340 - ancho - 16, y + 29, 12, TEXTO)
+                l.texto_centrado_v(340, y + 35, "Listo", "chico", TEXTO, ancla="ra")
+            else:
+                self._boton_vidrio(l, "permiso:" + clave, 262, y + 20, 80, 30, "ABRIR")
+            if i == 0:
+                l.linea_h(40, y + 70, 300, (255, 255, 255, 26))
+
+        pasos = ("1. Toca ABRIR: se abre Ajustes del Sistema.",
+                 "2. Activa NO LIMIT en la lista.",
+                 "3. Si macOS te pide salir y volver a abrir, dale que sí.")
+        for j, paso in enumerate(pasos):
+            l.texto(24, 340 + j * 21, paso, "chico", SUAVE)
+        if self.msg_permisos and not listos:
+            for j, linea in enumerate(E.partir(self.msg_permisos, "chico", self.e, 330 * self.e)[:3]):
+                l.texto(24, 420 + j * 17, linea, "chico", ERROR)
+        if listos:
+            self._boton_blanco(l, "permisos_listo", 24, 514, 332, 54, "LISTO, INYECTAR")
+        else:
+            self._boton_vidrio(l, "permisos_listo", 24, 514, 332, 54, "YA LOS DI")
 
     # ---------------------------------------------------------------- clave
     def _guardar_activo(self, k=None):

@@ -1,0 +1,21 @@
+NO LIMIT para Mac (beta) - Apple Silicon (M1, M2, M3, M4)
+
+1. Arrastra "NO LIMIT" a la carpeta Aplicaciones.
+
+2. La primera vez macOS la bloquea porque no esta firmada por Apple. Lo mas facil:
+   abre Terminal, pega esto y dale Enter:
+
+       xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"
+
+   (O abrela, dale "Listo" al aviso y ve a Ajustes del Sistema > Privacidad y seguridad >
+   "Abrir de todos modos".)
+
+3. Abre NO LIMIT, elige tu IA, pega tu clave y toca INYECTAR.
+   La primera vez te pide dos permisos (Accesibilidad y Grabacion de pantalla): toca ABRIR en
+   cada uno y activa NO LIMIT. Si macOS te pide salir y volver a abrir, dale que si.
+
+4. Pon el puntero sobre una pregunta y haz Option + clic. Esc cancela.
+   NO LIMIT se queda en la barra de arriba: desde su icono se abre, se detiene o se cierra.
+
+Si algo falla: en Ajustes de NO LIMIT > "Abrir carpeta" estan las capturas, y el registro
+esta en ~/Library/Application Support/NO LIMIT/registro.txt

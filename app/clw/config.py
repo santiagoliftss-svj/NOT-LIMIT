@@ -1,4 +1,5 @@
-"""Ajustes del usuario. Las API keys se guardan cifradas con la cuenta de Windows (DPAPI)."""
+"""Ajustes del usuario. Las API keys se guardan cifradas: en Windows con la cuenta del usuario (DPAPI) y en
+Mac con una llave del Llavero de macOS."""
 
 import base64
 import ctypes
@@ -52,6 +53,12 @@ def proteger(texto):
             return "dpapi:" + base64.b64encode(_dpapi(datos, True)).decode("ascii")
         except Exception:
             pass
+    if rutas.MAC:
+        try:
+            from .mac import llavero
+            return "mac:" + llavero.cifrar(datos)
+        except Exception:
+            pass
     return "b64:" + base64.b64encode(datos).decode("ascii")
 
 
@@ -61,6 +68,9 @@ def desproteger(valor):
     try:
         if valor.startswith("dpapi:"):
             return _dpapi(base64.b64decode(valor[6:]), False).decode("utf-8")
+        if valor.startswith("mac:"):
+            from .mac import llavero
+            return llavero.descifrar(valor[4:]).decode("utf-8")
         if valor.startswith("b64:"):
             return base64.b64decode(valor[4:]).decode("utf-8")
     except Exception:

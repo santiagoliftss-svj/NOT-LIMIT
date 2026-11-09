@@ -20,6 +20,15 @@ def _preparar_windows():
         pass
 
 
+def _preparar_mac():
+    # el Python que va dentro de la app no ve los certificados del sistema: se usan los de certifi
+    try:
+        import certifi
+        os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+    except Exception:
+        pass
+
+
 def _ya_abierta():
     """Evita dos copias abiertas (contestarian doble). Si ya hay una (aunque este escondida junto al reloj),
     le pide que se muestre."""
@@ -61,7 +70,10 @@ def _terminar(codigo):
 
 
 def main():
-    _preparar_windows()
+    if sys.platform == "darwin":
+        _preparar_mac()
+    else:
+        _preparar_windows()
     if "--autoprueba" in sys.argv:
         from clw import autoprueba
         i = sys.argv.index("--autoprueba")
@@ -73,13 +85,17 @@ def main():
 
     from clw.bot import Bot, configurar_registro
     from clw.config import Config
-    from clw.motor import factor_zoom
-    from clw.ui.ventana import Ventana
 
     configurar_registro()
     config = Config()
     bot = Bot(config)
-    ventana = Ventana(config, bot, factor_zoom())
+    if sys.platform == "darwin":
+        from clw.mac.ventana import VentanaMac
+        ventana = VentanaMac(config, bot)
+    else:
+        from clw.motor import factor_zoom
+        from clw.ui.ventana import Ventana
+        ventana = Ventana(config, bot, factor_zoom())
     ventana.root.mainloop()
     return 0
 
@@ -95,8 +111,15 @@ if __name__ == "__main__":
         traza = traceback.format_exc()
         logging.getLogger("clw").error("la app se cerro por un error:\n%s", traza)
         try:
-            ctypes.windll.user32.MessageBoxW(None, "NO LIMIT se cerró por un error:\n\n" + traza[-800:],
-                                             "NO LIMIT", 0x10)
+            if sys.platform == "darwin":
+                import subprocess
+                texto = traza[-600:].replace("\\", "/").replace('"', "'")
+                subprocess.run(["/usr/bin/osascript", "-e",
+                                f'display alert "NO LIMIT se cerró por un error" message "{texto}" as critical'],
+                               timeout=120)
+            else:
+                ctypes.windll.user32.MessageBoxW(None, "NO LIMIT se cerró por un error:\n\n" + traza[-800:],
+                                                 "NO LIMIT", 0x10)
         except Exception:
             print(traza, file=sys.stderr)
         _codigo = 1

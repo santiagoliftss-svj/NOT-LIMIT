@@ -16,6 +16,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 RESULTADOS = {}
 OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
+if sys.platform == "darwin":
+    OBLIGATORIAS += ("red",)       # en Mac los certificados de internet vienen dentro de la app
 # se reportan aparte (dependen de la barra de tareas y del escritorio de la maquina de pruebas):
 # bandeja, juego, reabrir, e2e, cpu, rendimiento
 
@@ -181,7 +183,33 @@ def p_cifrado():
     assert config.desproteger(v) == "sk-ant-prueba"
     if sys.platform == "win32":
         assert v.startswith("dpapi:"), v[:10]
+    if sys.platform == "darwin":
+        assert v.startswith("mac:"), v[:10]
+        assert config.desproteger(config.proteger("otra")) == "otra"
     return v[:6]
+
+
+def p_red():
+    """Una pregunta de verdad por internet con los certificados que trae la app (Mac)."""
+    import ssl
+    import urllib.error
+    import urllib.request
+    from . import proveedores, version
+    det = {"cert": os.environ.get("SSL_CERT_FILE"), "openssl": ssl.OPENSSL_VERSION}
+    req = urllib.request.Request(f"https://api.github.com/repos/{version.REPO}", headers={"user-agent": "no-limit"})
+    with urllib.request.urlopen(req, timeout=20, context=proveedores._CTX) as r:
+        det["github"] = r.status
+    req = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models",
+                                 headers={"user-agent": "no-limit"})
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=proveedores._CTX) as r:
+            det["google"] = r.status
+    except urllib.error.HTTPError as e:      # sin clave contesta 403: lo importante es que el candado sirvio
+        det["google"] = e.code
+    with urllib.request.urlopen(urllib.request.Request(f"https://api.github.com/repos/{version.REPO}",
+                                                       headers={"user-agent": "no-limit"}), timeout=20) as r:
+        det["sin_contexto"] = r.status       # (como lo usa la actualizacion)
+    return det
 
 
 def p_interfaz(salida):
@@ -699,12 +727,20 @@ def main(salida):
     _paso("proveedores", p_proveedores)
     _paso("cifrado", p_cifrado)
     _paso("interfaz", lambda: p_interfaz(salida))
+    if sys.platform == "darwin":
+        _paso("red", p_red)
     try:
-        _ventana_y_e2e(salida)
+        if sys.platform == "darwin":
+            from .mac import autoprueba as mac
+            mac.ventana_y_e2e(salida, RESULTADOS, _IAFalsa, _buscar, ESPERADO)
+        else:
+            _ventana_y_e2e(salida)
     except Exception as e:
         RESULTADOS.setdefault("ventana", {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]})
     srv.shutdown()
     RESULTADOS["_version"] = __import__("clw.version", fromlist=["VERSION"]).VERSION
+    RESULTADOS["_obligatorias"] = list(OBLIGATORIAS)
+    RESULTADOS["_sistema"] = sys.platform
     with open(os.path.join(salida, "resultado.json"), "w", encoding="utf-8") as f:
         json.dump(RESULTADOS, f, ensure_ascii=False, indent=2, default=str)
     malas = [n for n in OBLIGATORIAS if not RESULTADOS.get(n, {}).get("ok")]

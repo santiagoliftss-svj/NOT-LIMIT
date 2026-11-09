@@ -6,3 +6,5 @@ build/version_info.txt
 dist/
 salida/
 autoprueba/
+build/tesseract_mac/
+build/dmg/

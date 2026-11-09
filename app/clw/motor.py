@@ -8,6 +8,7 @@ import json
 import math
 import os
 import re
+import sys
 import threading
 import time
 import unicodedata
@@ -99,6 +100,19 @@ def capturar(px, py):
     left, top, w, h = calcular_zona(px, py, pantalla_virtual(), factor_zoom())
     img = ImageGrab.grab(bbox=(left, top, left + w, top + h), all_screens=True).convert("RGB")
     return img, left, top
+
+
+if sys.platform == "darwin":             # Mac: screencapture, en pixeles reales (Retina)
+    from .mac import captura as _captura_mac
+
+    def factor_zoom():  # noqa: F811
+        return _captura_mac.factor_zoom()
+
+    def pantalla_virtual():  # noqa: F811
+        return _captura_mac.pantalla_virtual()
+
+    def capturar(px, py):  # noqa: F811
+        return _captura_mac.capturar(px, py, TAM_BASE, ARRIBA_BASE)
 
 
 # ================================================================ OCR (texto en pantalla)

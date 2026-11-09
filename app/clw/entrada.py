@@ -1,6 +1,7 @@
 """Mouse y teclado de Windows: clics, escribir texto y leer teclas."""
 
 import ctypes
+import sys
 import time
 
 
@@ -47,6 +48,7 @@ if U32 is not None:
     U32.SendInput.argtypes = [ctypes.c_uint, ctypes.c_void_p, ctypes.c_int]
 
 VK_LBUTTON, VK_RBUTTON, VK_CONTROL, VK_ESCAPE = 0x01, 0x02, 0x11, 0x1B
+VK_ATAJO = VK_CONTROL      # la tecla que va con el clic (en Mac es Option)
 _TECLA_ARRIBA = 0x0002
 _UNICODE = 0x0004
 
@@ -228,3 +230,6 @@ def tam_input():
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente"]
+
+if sys.platform == "darwin":             # Mac: mismos nombres, hechos con Quartz
+    from .mac.entrada import *  # noqa: F401,F403,E402

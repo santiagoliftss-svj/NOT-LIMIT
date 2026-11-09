@@ -75,6 +75,54 @@ def icono(tam=1024, apagado=False, alerta=False):
     return base
 
 
+def icono_mac(tam=1024):
+    """Icono de Mac: cuadro negro con esquinas suaves y margen (como los demas del Dock), con el NO 3D."""
+    T = tam * 2
+    base = Image.new("RGBA", (T, T), (0, 0, 0, 0))
+    m = int(T * 100 / 1024)                           # margen estandar de los iconos de macOS
+    lado = T - 2 * m
+    sombra = Image.new("L", (T, T), 0)
+    ImageDraw.Draw(sombra).rounded_rectangle((m, m + T // 80, m + lado, m + lado + T // 80), int(lado * 0.225),
+                                             fill=120)
+    from PIL import ImageFilter
+    sombra = sombra.filter(ImageFilter.GaussianBlur(T // 70))
+    base.paste((0, 0, 0, 255), (0, 0), sombra)
+    cuerpo = Image.new("L", (T, T), 0)
+    ImageDraw.Draw(cuerpo).rounded_rectangle((m, m, m + lado, m + lado), int(lado * 0.225), fill=255)
+    base.paste((6, 6, 7, 255), (0, 0), cuerpo)
+    borde = Image.new("L", (T, T), 0)
+    ImageDraw.Draw(borde).rounded_rectangle((m, m, m + lado, m + lado), int(lado * 0.225), outline=70,
+                                            width=max(2, T // 400))
+    base.paste((255, 255, 255, 255), (0, 0), borde)
+    no = sin_fondo(_no())
+    k = lado * 0.74 / max(no.width, no.height)
+    no = no.resize((max(1, int(no.width * k)), max(1, int(no.height * k))), Image.LANCZOS)
+    base.alpha_composite(no, ((T - no.width) // 2, (T - no.height) // 2))
+    return base.resize((tam, tam), Image.LANCZOS)
+
+
+def barra_mac(apagado=False, alerta=False, alto=36):
+    """Icono 'plantilla' para la barra de arriba de Mac (@2x): solo forma; macOS lo pinta blanco o negro."""
+    no = _no()
+    lum = no.convert("L")
+    caja = lum.point(lambda v: 255 if v > 40 else 0).getbbox()
+    lum = lum.crop(caja)
+    h = alto - 6
+    w = max(1, int(lum.width * h / lum.height))
+    lum = lum.resize((w, h), Image.LANCZOS).point(lambda v: min(255, int(v * 1.7)))
+    ancho = w + (14 if alerta else 4)
+    capa = Image.new("RGBA", (ancho, alto), (0, 0, 0, 0))
+    negro = Image.new("RGBA", (w, h), (0, 0, 0, 255))
+    capa.paste(negro, (2, 3), lum)
+    if alerta:
+        d = ImageDraw.Draw(capa)
+        d.ellipse((ancho - 11, 1, ancho - 1, 11), fill=(0, 0, 0, 255))
+    if apagado:
+        r, g, b, a = capa.split()
+        capa = Image.merge("RGBA", (r, g, b, a.point(lambda v: int(v * 0.45))))
+    return capa
+
+
 def lateral(w, h):
     """Franja del instalador: negro total con el logo en vertical."""
     im = Image.new("RGB", (w, h), (0, 0, 0))
@@ -120,6 +168,14 @@ def main():
         if nombre == "bandeja":
             ims[64].save(os.path.join(WEB, "bandeja.png"), optimize=True)
         _ico(os.path.join(ASSETS, nombre + ".ico"), ims)
+
+    # Mac: icono de la app (.icns) y el de la barra de arriba
+    im = icono_mac(1024)
+    im.save(os.path.join(ASSETS, "icono.icns"), sizes=[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256),
+                                                         (512, 512), (1024, 1024)])
+    for nombre, apagado, alerta in (("barra_mac", False, False), ("barra_mac_apagado", True, False),
+                                    ("barra_mac_alerta", False, True)):
+        barra_mac(apagado, alerta).save(os.path.join(ASSETS, nombre + ".png"))
 
     for pct, (w, h), (cw, ch) in [(100, (164, 314), (58, 58)), (125, (205, 393), (73, 73)),
                                   (150, (246, 471), (87, 87)), (200, (328, 628), (116, 116))]:

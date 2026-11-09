@@ -6,6 +6,7 @@ import sys
 
 CONGELADO = getattr(sys, "frozen", False)
 WINDOWS = sys.platform == "win32"
+MAC = sys.platform == "darwin"
 
 if CONGELADO:
     CARPETA_APP = os.path.dirname(sys.executable)
@@ -34,6 +35,8 @@ def carpeta_datos():
                     os.rename(viejo, base)
                 except OSError:
                     base = viejo
+        elif MAC:
+            base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "NO LIMIT")
         else:
             base = os.path.join(os.path.expanduser("~"), ".clw-gang")
     os.makedirs(base, exist_ok=True)
@@ -49,6 +52,10 @@ def tesseract():
     nombre = "tesseract.exe" if WINDOWS else "tesseract"
     candidatos.append(os.path.join(CARPETA_APP, "tesseract", nombre))
     candidatos.append(os.path.join(os.path.dirname(CARPETA_APP), "tesseract", nombre))
+    if MAC:   # dentro de NO LIMIT.app: Contents/Resources/tesseract
+        candidatos.append(os.path.join(os.path.dirname(CARPETA_APP), "Resources", "tesseract", nombre))
+        candidatos.append(os.path.join(CARPETA_RECURSOS, "tesseract", nombre))
+        candidatos += ["/opt/homebrew/bin/tesseract", "/usr/local/bin/tesseract"]
     if WINDOWS:
         candidatos.append(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
         candidatos.append(os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "Tesseract-OCR", "tesseract.exe"))

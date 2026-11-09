@@ -17,7 +17,7 @@ if not os.path.exists(ruta):
 with open(ruta, encoding="utf-8") as f:
     r = json.load(f)
 
-obligatorias = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
+obligatorias = tuple(r.get("_obligatorias") or ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana"))
 lineas = []
 mal = False
 for nombre, dato in r.items():

@@ -115,6 +115,11 @@ def _contexto_ssl():
         ctx.load_default_certs()
     except Exception:
         pass
+    try:  # Mac: el Python de la app no ve los certificados del sistema; vienen con certifi
+        import certifi
+        ctx.load_verify_locations(certifi.where())
+    except Exception:
+        pass
     return ctx
 
 

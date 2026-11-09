@@ -79,8 +79,11 @@ class Bot:
             self._emitir("falta_clave", m.proveedor)
             return False
         self._cancelar.clear()
+        if self.escucha.iniciar() is False:      # Mac sin permiso de Accesibilidad
+            self._emitir("actividad", "Falta el permiso de Accesibilidad de macOS", "error")
+            self._emitir("estado", "apagado")
+            return False
         self.activo = True
-        self.escucha.iniciar()
         self._emitir("estado", "activo")
         log.info("activado con %s", m.id)
         return True
@@ -107,7 +110,7 @@ class Bot:
 
     def _esperar_que_suelte_ctrl(self, max_seg=3.0):
         fin = time.time() + max_seg
-        while self.acciones.tecla_abajo(entrada.VK_CONTROL) and time.time() < fin:
+        while self.acciones.tecla_abajo(entrada.VK_ATAJO) and time.time() < fin:
             time.sleep(0.03)
         time.sleep(0.12)
 

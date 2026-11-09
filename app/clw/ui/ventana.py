@@ -13,10 +13,19 @@ import threading
 import time
 import webbrowser
 
-import tkinter as tk
-from PIL import Image, ImageTk
+from PIL import Image
 
-from .. import actualizar, entrada, rutas, version
+try:
+    import tkinter as tk
+    from PIL import ImageTk
+    TclError = tk.TclError
+except ImportError:                      # (en Mac la ventana es de AppKit: clw.mac.ventana)
+    tk = ImageTk = None
+
+    class TclError(Exception):
+        pass
+
+from .. import actualizar, entrada, plataforma, rutas, version
 from ..bandeja import Bandeja
 from ..proveedores import validar_clave
 from .estilo import ALTO
@@ -27,7 +36,7 @@ log = logging.getLogger("clw")
 EVENTO_MOSTRAR = "CLWGANG_mostrar"   # si abren NO LIMIT otra vez, esa copia avisa por aqui y se cierra
 T_IDA, T_VUELTA = 0.36, 0.32         # vuelo hacia el reloj y de regreso
 AVISO_BANDEJA = ("Sigue activo junto al reloj (si no ves el icono, está en la flechita ^). "
-                 "Ctrl + clic sobre cualquier pregunta.")
+                 f"{plataforma.ATAJO} sobre cualquier pregunta.")
 CADA_REVISION = 6 * 3600             # cada cuanto se busca una version nueva
 
 
@@ -180,7 +189,7 @@ class Ventana:
     def _estado_tk(self):
         try:
             return self.root.state()
-        except tk.TclError:
+        except TclError:
             return "withdrawn"
 
     def _enfocada(self):
@@ -190,7 +199,7 @@ class Ventana:
     def _alfa(self, a):
         try:
             self.root.attributes("-alpha", max(0.0, min(1.0, a)))
-        except tk.TclError:
+        except TclError:
             pass
 
     def _posicion(self):
@@ -204,7 +213,7 @@ class Ventana:
     def _mover_a(self, x, y):
         try:
             self.root.geometry(f"+{int(x)}+{int(y)}")
-        except tk.TclError:
+        except TclError:
             pass
 
     def _junto_al_reloj(self):
@@ -226,7 +235,7 @@ class Ventana:
         except Exception:
             try:
                 return self.root.winfo_screenwidth() - W // 2 - 90, self.root.winfo_screenheight() - H // 3
-            except tk.TclError:
+            except TclError:
                 return None
 
     # ---------------------------------------------------------------- mostrar / esconder
@@ -240,7 +249,7 @@ class Ventana:
         if not self.en_bandeja():
             try:
                 self.root.iconify()
-            except tk.TclError:
+            except TclError:
                 pass
             return
         self._origen = self._posicion()
@@ -254,7 +263,7 @@ class Ventana:
     def _retirar(self):
         try:
             self.root.withdraw()
-        except tk.TclError:
+        except TclError:
             pass
         if self._origen:
             self._mover_a(*self._origen)
@@ -272,7 +281,7 @@ class Ventana:
                 self._mover_a(*salida)
             try:
                 self.root.deiconify()
-            except tk.TclError:
+            except TclError:
                 return
             self._fundido = {"t0": time.time(), "dur": T_VUELTA, "a0": 0.0, "a1": 1.0, "de": salida,
                              "a": destino if salida else None, "curva": _frena, "fin": None}
@@ -286,7 +295,7 @@ class Ventana:
             self.root.attributes("-topmost", True)
             self.root.after(300, self._sin_encima)
             self.root.focus_force()
-        except tk.TclError:
+        except TclError:
             pass
         self._mostrada = None
         self._pintar()
@@ -294,7 +303,7 @@ class Ventana:
     def _sin_encima(self):
         try:
             self.root.attributes("-topmost", False)
-        except tk.TclError:
+        except TclError:
             pass
 
     def _fundir(self, ahora):
@@ -335,7 +344,7 @@ class Ventana:
             self.bandeja.cerrar()
         try:
             self.root.destroy()
-        except tk.TclError:
+        except TclError:
             pass
 
     cerrar = salir
@@ -359,7 +368,7 @@ class Ventana:
             self._cursor = self.ui.cursor
             try:
                 self.lbl.configure(cursor=self._cursor)
-            except tk.TclError:
+            except TclError:
                 pass
         if cambio:
             self._pintar()
@@ -384,7 +393,7 @@ class Ventana:
             try:
                 for caja in pedazos:
                     self._pintar_pedazo(img, caja)
-            except (tk.TclError, ValueError):
+            except (TclError, ValueError):
                 self._pintar_todo(img)
         self._mostrada = img
 
@@ -479,7 +488,7 @@ class Ventana:
     def leer_portapapeles(self):
         try:
             return self.root.clipboard_get()
-        except tk.TclError:
+        except TclError:
             return ""
 
     def abrir_url(self, url):
