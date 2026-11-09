@@ -64,9 +64,16 @@ def faltan():
     return [k for k in ("accesibilidad", "pantalla") if not e[k]]
 
 
+_limpiados = set()
+
+
 def limpiar(cual):
     """Cada version nueva de la app (sin firma de Apple) es 'otra app' para macOS: el permiso viejo se queda
-    prendido en la lista pero ya no sirve. Se borra para que la version nueva aparezca y se pueda activar."""
+    prendido en la lista pero ya no sirve. Se borra para que la version nueva aparezca y se pueda activar.
+    Solo una vez por vez que se abre la app (si ya lo dio y falta reiniciar, no se le borra)."""
+    if cual in _limpiados:
+        return
+    _limpiados.add(cual)
     try:
         subprocess.run(["/usr/bin/tccutil", "reset", SERVICIOS[cual], ID_APP], capture_output=True, timeout=10)
     except Exception:

@@ -363,8 +363,8 @@ class VentanaMac(Ventana):
         self.nsapp.setDelegate_(self._delegado)
         _menu_principal(self.nsapp)
 
-        if escala is None:               # se dibuja a la resolucion real (Retina = 2x): se ve nitida
-            escala = max([2.0] + [float(s.backingScaleFactor()) for s in NSScreen.screens()])
+        if escala is None:               # se dibuja a la resolucion real de la pantalla (Retina = 2x): nitida
+            escala = max([1.0] + [float(s.backingScaleFactor()) for s in NSScreen.screens()])
         self.e = escala
         self.ui = Interfaz(config, self, escala)
 
