@@ -7,6 +7,8 @@ import subprocess
 
 log = logging.getLogger("clw")
 
+ID_APP = "mx.nolimit.app"
+SERVICIOS = {"accesibilidad": "Accessibility", "pantalla": "ScreenCapture"}
 AJUSTES = {
     "accesibilidad": "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
     "pantalla": "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture",
@@ -62,8 +64,19 @@ def faltan():
     return [k for k in ("accesibilidad", "pantalla") if not e[k]]
 
 
+def limpiar(cual):
+    """Cada version nueva de la app (sin firma de Apple) es 'otra app' para macOS: el permiso viejo se queda
+    prendido en la lista pero ya no sirve. Se borra para que la version nueva aparezca y se pueda activar."""
+    try:
+        subprocess.run(["/usr/bin/tccutil", "reset", SERVICIOS[cual], ID_APP], capture_output=True, timeout=10)
+    except Exception:
+        pass
+
+
 def pedir(cual):
     """Le pide el permiso a macOS (sale su ventanita la primera vez) y abre Ajustes en esa lista."""
+    if not estado().get(cual, True):
+        limpiar(cual)
     try:
         if cual == "accesibilidad":
             accesibilidad(preguntar=True)

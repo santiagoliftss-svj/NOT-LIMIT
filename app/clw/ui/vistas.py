@@ -317,8 +317,8 @@ class Interfaz:
         elif zid == "permisos_listo":
             faltan = [n for k, n, _ in PERMISOS if not self._estado_permisos().get(k, True)]
             if faltan:
-                self.msg_permisos = (f"Todavía falta {' y '.join(faltan)}. Si ya lo activaste, cierra NO LIMIT y "
-                                     "vuelve a abrirla.")
+                self.msg_permisos = (f"Todavía falta {' y '.join(faltan)}. Si en la lista ya sale prendido, "
+                                     "apágalo y préndelo otra vez; si no cambia, cierra NO LIMIT y vuelve a abrirla.")
             else:
                 self._ir("principal", -1)
                 prov = self.modelo_actual().proveedor
