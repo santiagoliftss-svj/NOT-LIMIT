@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   mac:
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +45,9 @@ jobs:
 
       - name: Armar NO LIMIT.app
         run: |
+          # el OCR sale de Homebrew de esta version de macOS: esa es la minima
+          export MAC_MINIMO="$(sw_vers -productVersion | cut -d. -f1).0"
+          echo "macOS minimo: $MAC_MINIMO"
           pyinstaller build/clw_gang_mac.spec --noconfirm --distpath dist --workpath build/temp
           python build/empacar_tesseract_mac.py meter "dist/NO LIMIT.app"
           cp LICENCIAS.txt app/assets/fuentes/OFL-Archivo.txt "dist/NO LIMIT.app/Contents/Resources/"
