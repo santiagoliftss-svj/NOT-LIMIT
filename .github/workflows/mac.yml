@@ -24,10 +24,10 @@ jobs:
             arch: x86_64
             dmg: NO-LIMIT-Mac-Intel.dmg
           # (las Macs M1 de GitHub a veces no estan libres: se pide en dos versiones de macOS, la que salga)
-          - runner: macos-14
+          - runner: macos-15
             arch: arm64
             dmg: NO-LIMIT-Mac.dmg
-          - runner: macos-15
+          - runner: macos-26
             arch: arm64
             dmg: NO-LIMIT-Mac.dmg
     runs-on: ${{ matrix.runner }}
