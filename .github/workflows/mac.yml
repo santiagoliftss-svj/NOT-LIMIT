@@ -20,12 +20,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-latest
-            arch: arm64
-            dmg: NO-LIMIT-Mac.dmg
           - runner: macos-15-intel
             arch: x86_64
             dmg: NO-LIMIT-Mac-Intel.dmg
+          # (las Macs M1 de GitHub a veces no estan libres: se pide en dos versiones de macOS, la que salga)
+          - runner: macos-14
+            arch: arm64
+            dmg: NO-LIMIT-Mac.dmg
+          - runner: macos-15
+            arch: arm64
+            dmg: NO-LIMIT-Mac.dmg
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
@@ -83,7 +87,7 @@ jobs:
       - name: DMG
         run: bash build/dmg_mac.sh
 
-      - name: Subir autoprueba a la rama ci-autoprueba-mac-(arch) (para revisarla)
+      - name: Subir autoprueba a la rama ci-autoprueba-(runner) (para revisarla)
         if: always()
         continue-on-error: true
         run: |
@@ -95,16 +99,16 @@ jobs:
           git init -q
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git checkout -q -b "ci-autoprueba-mac-$MAC_ARCH"
+          git checkout -q -b "ci-autoprueba-${{ matrix.runner }}"
           git add -A
-          git commit -q -m "autoprueba mac $MAC_ARCH ${{ github.sha }}"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "ci-autoprueba-mac-$MAC_ARCH"
+          git commit -q -m "autoprueba ${{ matrix.runner }} ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "ci-autoprueba-${{ matrix.runner }}"
 
       - name: Guardar resultados
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: no-limit-mac-${{ matrix.arch }}-${{ steps.ver.outputs.version }}
+          name: no-limit-${{ matrix.runner }}-${{ steps.ver.outputs.version }}
           path: |
             autoprueba
             salida/${{ matrix.dmg }}
