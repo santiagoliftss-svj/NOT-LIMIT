@@ -1,0 +1,5 @@
+2026-11-09 16:18:51,694 INFO activado con claude-haiku-5-5
+2026-11-09 16:18:52,792 INFO ventana escondida junto al reloj
+2026-11-09 16:19:01,022 INFO modelo=claude-haiku-5-5 lectura=2.2s ia=0.1s cajas=33 campos=1 salida={"tipo": "opcion", "ids": [13]}
+2026-11-09 16:19:04,920 INFO modelo=claude-haiku-5-5 lectura=1.8s ia=0.3s cajas=31 campos=3 salida={"tipo": "abierta", "respuestas": [{"campo": "C0", "texto": "Cuatro, se\u00f1or \u00bfs\u00ed?"}]}
+2026-11-09 16:19:08,293 INFO detenido
