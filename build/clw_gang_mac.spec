@@ -49,7 +49,7 @@ app = BUNDLE(
         "CFBundleDisplayName": "NO LIMIT",
         "CFBundleShortVersionString": VERSION,
         "CFBundleVersion": VERSION,
-        "LSMinimumSystemVersion": "12.0",
+        "LSMinimumSystemVersion": "15.0",
         "NSHighResolutionCapable": True,
         "LSApplicationCategoryType": "public.app-category.productivity",
         "NSHumanReadableCopyright": "NO LIMIT",
