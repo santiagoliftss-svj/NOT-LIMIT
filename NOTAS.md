@@ -4,6 +4,15 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.0 (la actualización más grande)**
+
+- Trabaja con calma, como una persona: primero ubica la pregunta que señalaste, la lee de cerca (solo esa, no toda la pantalla), la resuelve, la contesta y al final revisa que haya quedado bien. Tarda de 10 a 30 segundos según la pregunta.
+- Ya no da clics a lo loco: nunca toca Siguiente, Enviar ni Terminar (esos los tocas tú), solo escribe en campos de verdad y, si no está segura de dónde contestar, no toca nada y te dice la respuesta.
+- Si un clic no se registró porque la página iba lenta, lo repite una vez. En casillas revisa que estén todas las correctas y ninguna de más.
+- Contesta más tipos de pregunta: menús desplegables (también dentro de un párrafo), relacionar columnas, arrastrar y soltar, ordenar, matrices, graficar puntos en un plano (calcula dónde cae cada punto con los números de los ejes), editores de ecuaciones con fracciones y exponentes, y dar clic en una parte de una imagen.
+- En problemas de calcular piensa más y comprueba el resultado.
+- Suscripción mensual: tu código es tu cuenta. La app te dice hasta cuándo está pagada y se pausa sola si no se renueva.
+
 **Nuevo en 1.5**
 
 - Ahora necesita tu código de NO LIMIT (se compra, un código por persona). Se pega una sola vez.

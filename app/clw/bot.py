@@ -17,6 +17,10 @@ from .proveedores import ClienteIA, ErrorIA, PROVEEDORES, buscar_modelo
 log = logging.getLogger("clw")
 
 
+# modelo ligero de cada proveedor (para ubicar la pregunta y revisar como quedo)
+LIGEROS = {"gemini": "gemini-flash-lite-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna"}
+
+
 def configurar_registro():
     try:
         from logging.handlers import RotatingFileHandler
@@ -182,12 +186,16 @@ class Bot:
         m, id_real = self.modelo()
         clave = self.config.clave(m.proveedor)
         preciso = bool(self.config["modo_preciso"])
+        # ubicar y revisar van con el modelo ligero del mismo proveedor: es rapido y (en Gemini gratis) usa
+        # otro cupo, asi el del modelo que contesta alcanza para mas preguntas
+        ligero = self.config["modelos_propios"].get(LIGEROS.get(m.proveedor, ""), LIGEROS.get(m.proveedor)) or id_real
 
         def preguntar(b64, mime, texto, fase="contestar", esfuerzo=None):
             p = False
             if fase == "contestar" and preciso:
                 p = "alto" if esfuerzo == "alto" else True
-            return self.cliente.preguntar(m.proveedor, id_real, clave, cerebro.SISTEMAS[fase], b64, mime, texto, p)
+            modelo = id_real if fase == "contestar" else ligero
+            return self.cliente.preguntar(m.proveedor, modelo, clave, cerebro.SISTEMAS[fase], b64, mime, texto, p)
         return preguntar, id_real
 
     def _foto(self, left, top, region):

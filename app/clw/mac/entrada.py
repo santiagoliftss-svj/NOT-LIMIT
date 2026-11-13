@@ -231,6 +231,12 @@ def tecla(nombre, veces=1):
         time.sleep(0.03)
 
 
+def mover(x, y):
+    """Solo pone el mouse encima (sin clic). Pixeles."""
+    p = Q.CGPointMake(x / _escala, y / _escala)
+    _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventMouseMoved, p, Q.kCGMouseButtonLeft))
+
+
 def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
     """Presiona en (x0, y0), se mueve poco a poco (eventos de 'arrastrar') y suelta en (x1, y1). Pixeles."""
     s = _escala
@@ -295,7 +301,7 @@ def escribir(texto, cancelar=None):
 
 
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
-           "arrastrar", "TECLAS",
+           "arrastrar", "mover", "TECLAS",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente", "U32", "VK_LBUTTON",
            "VK_RBUTTON", "VK_CONTROL", "VK_ESCAPE", "VK_MENU", "VK_ATAJO"]

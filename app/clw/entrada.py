@@ -220,6 +220,12 @@ def _mover_abs(x, y):
     U32.SendInput(1, ev, ctypes.sizeof(_INPUT))
 
 
+def mover(x, y):
+    """Solo pone el mouse encima (sin clic)."""
+    U32.SetCursorPos(int(round(x)), int(round(y)))
+    _mover_abs(x, y)
+
+
 def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
     """Presiona en (x0, y0), se mueve poco a poco y suelta en (x1, y1)."""
     x0, y0, x1, y1 = (int(round(v)) for v in (x0, y0, x1, y1))
@@ -295,7 +301,7 @@ def tam_input():
 
 
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
-           "arrastrar", "TECLAS",
+           "arrastrar", "mover", "TECLAS",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente"]
 

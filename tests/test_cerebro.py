@@ -55,6 +55,9 @@ class Pantalla:
     def tecla(self, nombre, veces=1):
         self.log.append(("tecla", nombre))
 
+    def mover(self, x, y):                 # pasar el mouse encima pinta un 'hover' (no cuenta como clic)
+        ImageDraw.Draw(self.img).rectangle((x - 40, y - 12, x - 30, y - 2), fill=(200, 200, 210))
+
     def arrastrar(self, x0, y0, x1, y1, pasos=24, cancelar=None):
         self.log.append(("arrastrar", round(x0), round(y0), round(x1), round(y1)))
         ImageDraw.Draw(self.img).rectangle((x1 - 6, y1 - 6, x1 + 6, y1 + 6), fill=(0, 0, 255))
@@ -94,6 +97,7 @@ class ClienteFases:
     def preguntar(self, prov, modelo, clave, sistema, b64, mime, texto, preciso=False):
         fase = texto.split("\n", 1)[0].replace("FASE: ", "").strip()
         self.llamadas.append((fase, preciso, sistema[:30]))
+        self.modelos = getattr(self, "modelos", []) + [(fase, modelo)]
         r = self.f[fase](texto)
         return (r if isinstance(r, str) else json.dumps(r)), False
 
@@ -195,6 +199,36 @@ def prueba_matriz_menu_arrastrar_ordenar():
     assert hechos == ["clic", "clic", "elegir", "arrastrar", "ordenar"], (hechos, plan.rechazadas)
     assert plan.pasos[0]["p"] == (450, 90) and plan.pasos[1]["p"] == (330, 150)
     assert plan.pasos[3]["p2"] == (500, 500)
+
+
+def _plano():
+    # eje x: -4..4 cada 50 px empezando en x=100 (0 en x=300), a la altura y=520
+    # eje y: -4..4 cada 50 px (0 en y=300), alineados a la derecha en x=290
+    cajas = [caja(100 + 50 * i - 6, 512, 100 + 50 * i + 6, 528, str(i - 4).replace("-", "\u2212")) for i in range(9) if i != 4]
+    cajas += [caja(274, 300 - 50 * j - 8, 290, 300 - 50 * j + 8, str(j)) for j in range(-4, 5) if j != 0]
+    cajas.append(caja(120, 20, 500, 40, "Grafica el punto (2, -3)"))
+    return cajas
+
+
+def prueba_graficar_con_coordenadas_del_plano():
+    img = Image.new("RGB", (700, 600), "white")
+    cajas = _plano()
+    e = cerebro.ejes(cajas)
+    assert e["x"] and e["y"], e
+    plan = cerebro.planear({"acciones": [{"hacer": "clic", "en": {"gx": 2, "gy": -3}},
+                                         {"hacer": "arrastrar", "desde": {"x": 300, "y": 300}, "hasta": {"gx": -1, "gy": 4}},
+                                         {"hacer": "arrastrar", "desde": {"x": 400, "y": 300}, "hasta": {"x": 400, "gy": 2.5}}]},
+                           cajas, [], 1.0, img)
+    assert len(plan.pasos) == 3, plan.rechazadas
+    x, y = plan.pasos[0]["p"]
+    assert abs(x - 400) < 2 and abs(y - 450) < 2, (x, y)
+    x, y = plan.pasos[1]["p2"]
+    assert abs(x - 250) < 2 and abs(y - 100) < 2, (x, y)
+    x, y = plan.pasos[2]["p2"]
+    assert abs(x - 400) < 2 and abs(y - 175) < 2, (x, y)
+    # sin numeros en los ejes no adivina
+    plan = cerebro.planear({"acciones": [{"hacer": "clic", "en": {"gx": 2, "gy": -3}}]}, cajas[-1:], [], 1.0, img)
+    assert plan.pasos == [] and plan.rechazadas
 
 
 def prueba_coordenadas_con_escala():
@@ -389,9 +423,25 @@ def prueba_bot_casillas_y_revision_corrige_la_que_falto():
     assert not any(y > 500 for y in ys), p.log                                             # nunca Siguiente
     assert [f for f, _, _ in cli.llamadas] == ["UBICAR", "CONTESTAR", "REVISAR", "REVISAR"], cli.llamadas
     assert cli.llamadas[1][1] is True and cli.llamadas[0][1] is False      # piensa al contestar, no al ubicar
+    assert cli.modelos[0] == ("UBICAR", "claude-haiku-5-5") and cli.modelos[1] == ("CONTESTAR", "claude-haiku-5-5")
     ev = _eventos(b)
     assert ("estado", "revisando") in ev and any(e[0] == "actividad" and e[1].startswith("Marcó") for e in ev), ev
     assert os.path.exists(os.path.join(os.environ["CLW_DATOS"], "revision", "ultima_revision.png"))
+
+
+def prueba_gemini_ubica_y_revisa_con_el_ligero():
+    p = Pantalla()
+    cajas = _quiz(p)
+    cli = ClienteFases(
+        ubicar=lambda t: {"hay_pregunta": True, "caja": [60, 20, 900, 660], "tipo": "opcion_multiple"},
+        contestar=lambda t: {"tipo": "opcion_multiple", "acciones": [{"hacer": "clic", "en": 1}, {"hacer": "clic", "en": 3}]})
+    b, c = _bot(cli, p)
+    c.poner_clave("gemini", "AIza-x")
+    c["modelo"] = "gemini-flash-latest"
+    with Parche(cerebro__leer=lambda img, px, py, zoom, ocr: (cajas, []), motor__capturar_zona=p.foto):
+        b.contestar(p.img.copy(), 0, 0, 150, 125, 1.0)
+    assert cli.modelos == [("UBICAR", "gemini-flash-lite-latest"), ("CONTESTAR", "gemini-flash-latest"),
+                           ("REVISAR", "gemini-flash-lite-latest")], cli.modelos
 
 
 def prueba_bot_numerica_piensa_mas_y_escribe():
@@ -409,6 +459,26 @@ def prueba_bot_numerica_piensa_mas_y_escribe():
     assert cli.llamadas[1][1] == "alto", cli.llamadas
     ev = _eventos(b)
     assert any(e[0] == "actividad" and "Escribió: 75" in e[1] for e in ev), ev
+
+
+def prueba_si_se_lee_lo_escrito_no_gasta_otra_pregunta():
+    p = Pantalla()
+    cajas = [caja(100, 40, 600, 60, "¿En qué año inició la Revolución Mexicana?")]
+    campos = [campo(100, 100, 400, 140)]
+    cli = ClienteFases(
+        ubicar=lambda t: {"hay_pregunta": True, "caja": [60, 20, 700, 300], "tipo": "abierta"},
+        contestar=lambda t: {"tipo": "abierta", "respuesta": "1910",
+                             "acciones": [{"hacer": "escribir", "en": "C0", "texto": "1910"}]})
+    b, c = _bot(cli, p)
+    b.ocr = object()
+
+    def ocr_falso(img, px, py, zoom, ocr):        # despues de escribir, en el campo se lee "1910"
+        return [caja(5, 5, 80, 30, "1910")] if img.width < 500 else cajas
+    with Parche(cerebro__leer=lambda img, px, py, zoom, ocr: (cajas, campos), motor__capturar_zona=p.foto,
+                motor__detectar_cajas=ocr_falso):
+        b.contestar(p.img.copy(), 0, 0, 150, 50, 1.0)
+    assert ("escribe", "1910") in p.log
+    assert [f for f, _, _ in cli.llamadas] == ["UBICAR", "CONTESTAR"], cli.llamadas     # sin REVISAR
 
 
 def prueba_bot_sin_pregunta_no_toca_nada():

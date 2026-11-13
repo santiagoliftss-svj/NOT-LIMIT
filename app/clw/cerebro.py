@@ -85,9 +85,9 @@ Por tipo:
 - NUMERICA (aunque los numeros cambien al azar): usa los numeros que se ven en ESTA imagen, comprueba, y escribe solo el valor (con unidad solo si no aparece ya junto al campo). Redondea como lo pida la pregunta; decimales con punto.
 - MATEMATICA EXACTA (editor de ecuaciones con fracciones, exponentes o raices): escribe con / para fracciones, ^ para exponentes y sqrt para raices, y pon {derecha} para salir de un exponente, del denominador o de una raiz. Ejemplo: x^2{derecha}+3/4{derecha}. En campos normales escribe 3/4, x^2 o √3 tal cual.
 - ZONA DE CLIC (clic sobre una parte de una imagen, mapa o diagrama): un clic en el centro exacto de esa parte; usa las reglas para dar coordenadas precisas.
-- GRAFICAR en un plano cartesiano: ubica el origen y la escala con los numeros de los ejes y las reglas, calcula el punto de la imagen de cada coordenada y da un clic por punto, en el orden que pida. Si hay que mover algo, "arrastrar".
+- GRAFICAR en un plano cartesiano: da un clic por punto con sus coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT calcula donde cae en la pantalla con los numeros de los ejes. Si hay que mover un punto, "arrastrar" con "hasta":{"gx":..,"gy":..}. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
 - PASOS GUIADOS: contesta solo los pasos que se ven ahorita.
-- GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la altura de cada barra o da clic en cada punto.
+- GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la orilla de arriba de cada barra hasta su valor con "hasta":{"x": x de la barra, "gy": valor}, o da clic en cada punto con {"gx","gy"}.
 - ORDENAR: usa "ordenar" con el orden final.
 - ARRASTRAR ETIQUETAS (a un esquema, plano anatomico, mapa o categorias): un "arrastrar" por etiqueta, desde la etiqueta hasta el lugar exacto donde va.
 - MATRIZ (tabla con circulos o casillas): un clic por renglon en la columna correcta con {"fila": id, "columna": id}.
@@ -447,7 +447,72 @@ def _caja_en(x, y, cajas):
     return None
 
 
-def resolver(obj, cajas, campos, s, W, H):
+# ---------------------------------------------------------------- planos cartesianos: de coordenadas a pixeles
+
+def _valor(texto):
+    t = str(texto or "").strip().replace("\u2212", "-").replace("–", "-").replace(",", ".")
+    t = t.replace(" ", "")
+    if not re.fullmatch(r"-?\d+(?:\.\d+)?", t):
+        return None
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
+def _ajuste(pares):
+    """Recta pixel = a * valor + b por minimos cuadrados; None si no cuadra bien."""
+    n = len(pares)
+    if n < 3:
+        return None
+    sv = sum(v for v, _ in pares)
+    sp = sum(p for _, p in pares)
+    svv = sum(v * v for v, _ in pares)
+    svp = sum(v * p for v, p in pares)
+    den = n * svv - sv * sv
+    if abs(den) < 1e-9:
+        return None
+    a = (n * svp - sv * sp) / den
+    b = (sp - a * sv) / n
+    if abs(a) < 1e-6:
+        return None
+    span = max(p for _, p in pares) - min(p for _, p in pares)
+    if max(abs(a * v + b - p) for v, p in pares) > max(4.0, 0.03 * span):
+        return None
+    return a, b
+
+
+def ejes(cajas):
+    """Los numeros de los ejes de un plano (leidos con OCR) -> {"x": (a, b), "y": (a, b)} para pasar de coordenadas
+    del plano a pixeles. Lo que no se pueda calcular queda en None."""
+    nums = [(v, c) for c in cajas for v in [_valor(c["texto"])] if v is not None]
+    out = {"x": None, "y": None}
+    if len(nums) < 3:
+        return out
+    # eje x: numeros en un mismo renglon, crecen a la derecha
+    mejor = None
+    for v0, c0 in nums:
+        fila = [(v, c) for v, c in nums if abs(c["cy"] - c0["cy"]) <= 7]
+        if len(fila) >= 3 and (mejor is None or len(fila) > len(mejor)):
+            mejor = fila
+    if mejor:
+        out["x"] = _ajuste([(v, c["cx"]) for v, c in mejor])
+        if out["x"] and out["x"][0] <= 0:
+            out["x"] = None
+    # eje y: numeros en una misma columna (alineados a la derecha), crecen hacia arriba
+    mejor = None
+    for v0, c0 in nums:
+        col = [(v, c) for v, c in nums if abs(c["caja"][2] - c0["caja"][2]) <= 8]
+        if len(col) >= 3 and (mejor is None or len(col) > len(mejor)):
+            mejor = col
+    if mejor:
+        out["y"] = _ajuste([(v, c["cy"]) for v, c in mejor])
+        if out["y"] and out["y"][0] >= 0:
+            out["y"] = None
+    return out
+
+
+def resolver(obj, cajas, campos, s, W, H, plano=None):
     """Lo que eligio la IA -> (x, y, i_caja, i_campo) en pixeles de la region, o None si no cuadra."""
     if isinstance(obj, str):
         mc = re.fullmatch(r"\s*[Cc]\s*(\d+)\s*", obj)
@@ -467,6 +532,17 @@ def resolver(obj, cajas, campos, s, W, H):
                 return None
             return cajas[c]["cx"], cajas[f]["cy"], None, None
         x, y = motor._numero(obj.get("x")), motor._numero(obj.get("y"))
+        gx, gy = motor._numero(obj.get("gx")), motor._numero(obj.get("gy"))
+        if (gx is not None or gy is not None) and s > 0:
+            plano = plano if plano is not None else ejes(cajas)
+            if gx is not None:
+                if not plano["x"]:
+                    return None          # sin numeros en el eje no se adivina
+                x = (plano["x"][0] * gx + plano["x"][1]) * s
+            if gy is not None:
+                if not plano["y"]:
+                    return None
+                y = (plano["y"][0] * gy + plano["y"][1]) * s
         if x is None or y is None or s <= 0:
             return None
         x, y = x / s, y / s
@@ -529,6 +605,10 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
     plan.seguro = str(datos.get("seguro") or "alto").strip().lower()
     W, H = region_img.size
     vistos = set()
+    plano = ejes(cajas)
+
+    def _res(obj):
+        return resolver(obj, cajas, campos, s, W, H, plano)
 
     def rechazar(a, motivo):
         plan.rechazadas.append((a, motivo))
@@ -546,7 +626,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
 
         if hacer == "clic":
             obj = a.get("en", a.get("id"))
-            r = resolver(obj, cajas, campos, s, W, H)
+            r = _res(obj)
             if r is None:
                 rechazar(a, "fuera de la pregunta o no existe")
                 continue
@@ -575,7 +655,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
             obj = a.get("en", a.get("campo", a.get("id")))
             if obj is None and a.get("x") is not None:
                 obj = {"x": a.get("x"), "y": a.get("y")}
-            r = resolver(obj, cajas, campos, s, W, H)
+            r = _res(obj)
             if r is None:
                 rechazar(a, "no hay un campo para escribir ahi")
                 continue
@@ -604,7 +684,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
 
         elif hacer == "elegir":
             opcion = str(a.get("opcion") or a.get("texto") or "").strip()
-            r = resolver(a.get("en", a.get("id")), cajas, campos, s, W, H)
+            r = _res(a.get("en", a.get("id")))
             if r is None or not opcion:
                 rechazar(a, "menu u opcion no validos")
                 continue
@@ -616,8 +696,8 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
                                "desc": cajas[i]["texto"] if i is not None else "menu"})
 
         elif hacer == "arrastrar":
-            r1 = resolver(a.get("desde"), cajas, campos, s, W, H)
-            r2 = resolver(a.get("hasta"), cajas, campos, s, W, H)
+            r1 = _res(a.get("desde"))
+            r2 = _res(a.get("hasta"))
             if r1 is None or r2 is None:
                 rechazar(a, "arrastre fuera de la pregunta")
                 continue
@@ -715,6 +795,12 @@ class Ejecutor:
     # ---- cada accion
     def _clic(self, paso, antes):
         X, Y = self.pantalla(*paso["p"])
+        if hasattr(self.a, "mover"):
+            # primero solo se pone encima: asi el "antes" ya trae el efecto de pasar el mouse y si despues del
+            # clic no cambia nada es que el clic de verdad no se registro
+            self.a.mover(X, Y)
+            time.sleep(0.15)
+            antes = self.foto() or antes
         self.a.clic(X, Y)
         time.sleep(self.pausa)
         despues = self.foto()
@@ -737,10 +823,35 @@ class Ejecutor:
         self.a.seleccionar_todo()
         time.sleep(0.06)
         _escribir_con_teclas(self.a, paso["texto"], self.cancelar)
-        time.sleep(0.2)
+        time.sleep(0.25)
         self.hecho["escribir"] += 1
         self.escritos.append(paso["texto"])
-        return self.foto()
+        foto = self.foto()
+        paso["ok_local"] = self._se_lee(foto, paso["p"], paso.get("caja"), paso["texto"])
+        return foto
+
+    def _se_lee(self, foto, punto, caja, esperado):
+        """True si con OCR se lee el texto esperado en ese lugar (asi no hace falta preguntarle a la IA)."""
+        if foto is None or self.ocr is None or not esperado or re.search(r"[{}^/√]", esperado):
+            return False
+        x, y = punto
+        if caja:
+            zona = (caja[0] - 6, caja[1] - 6, caja[2] + 6, caja[3] + 6)
+        else:
+            zona = (x - 320 * self.zoom, y - 30 * self.zoom, x + 320 * self.zoom, y + 30 * self.zoom)
+        zona = (int(max(0, zona[0])), int(max(0, zona[1])), int(min(foto.width, zona[2])), int(min(foto.height, zona[3])))
+        if zona[2] - zona[0] < 8 or zona[3] - zona[1] < 8:
+            return False
+        try:
+            trozo = foto.crop(zona)
+            cajas = motor.detectar_cajas(trozo, trozo.width / 2, trozo.height / 2, self.zoom, self.ocr)
+        except Exception:
+            return False
+        leido = motor._norm(" ".join(c["texto"] for c in cajas))
+        buscado = motor._norm(esperado)[:40]
+        if not buscado or not leido:
+            return False
+        return buscado in leido or motor.parecido(buscado, leido[:len(buscado) + 10]) >= 0.8
 
     def _elegir(self, paso, antes):
         X, Y = self.pantalla(*paso["p"])
@@ -780,10 +891,12 @@ class Ejecutor:
             return self.foto()
         c = cajas[puntajes[0][1]]
         self.a.clic(self.left + zx0 + c["cx"], self.top + zy0 + c["cy"])
-        time.sleep(self.pausa)
+        time.sleep(self.pausa + 0.1)
         self.hecho["elegir"] += 1
         self.marcados.append(paso["opcion"])
-        return self.foto()
+        foto = self.foto()
+        paso["ok_local"] = self._se_lee(foto, paso["p"], None, paso["opcion"])
+        return foto
 
     def _arrastrar(self, paso, antes):
         X0, Y0 = self.pantalla(*paso["p"])
@@ -875,6 +988,8 @@ def necesita_revision(plan, ejecutor):
     if ejecutor.fallas or plan.rechazadas:
         return True
     tipos = {p["hacer"] for p in plan.pasos}
+    if tipos and tipos <= {"escribir", "elegir"} and all(p.get("ok_local") for p in plan.pasos):
+        return False                     # todo se lee bien en su lugar: no hace falta gastar otra pregunta
     if tipos & {"elegir", "arrastrar", "ordenar", "escribir"}:
         return True
     clics = sum(1 for p in plan.pasos if p["hacer"] == "clic")
