@@ -1,0 +1,520 @@
+{
+  "ocr": {
+    "ok": true,
+    "seg": 0.21,
+    "detalle": {
+      "exe": "D:\\a\\NOT-LIMIT\\NOT-LIMIT\\dist\\NO LIMIT\\tesseract\\tesseract.exe",
+      "tessdata": "D:\\a\\NOT-LIMIT\\NOT-LIMIT\\dist\\NO LIMIT\\tesseract\\tessdata",
+      "idiomas": [
+        "eng",
+        "osd",
+        "spa"
+      ]
+    }
+  },
+  "motor": {
+    "ok": true,
+    "seg": 2.63,
+    "detalle": {
+      "quiz": [
+        [
+          "clic",
+          573,
+          168
+        ]
+      ],
+      "cajitas": [
+        [
+          "clic",
+          239,
+          122
+        ],
+        [
+          "escribe",
+          "13/12"
+        ],
+        [
+          "clic",
+          239,
+          242
+        ],
+        [
+          "escribe",
+          "5/13"
+        ],
+        [
+          "clic",
+          239,
+          362
+        ],
+        [
+          "escribe",
+          "√3/2"
+        ]
+      ]
+    }
+  },
+  "proveedores": {
+    "ok": true,
+    "seg": 0.35,
+    "detalle": {
+      "claude": "{\"tipo\":\"opcion\",\"ids\":[0]}",
+      "gemini": "{\"tipo\":\"opcion\",\"ids\":[0]}",
+      "openai": "{\"tipo\":\"opcion\",\"ids\":[0]}"
+    }
+  },
+  "cifrado": {
+    "ok": true,
+    "seg": 0.0,
+    "detalle": "dpapi:"
+  },
+  "interfaz": {
+    "ok": true,
+    "seg": 0.77,
+    "detalle": [
+      1.0,
+      1.5
+    ]
+  },
+  "ventana": {
+    "ok": true,
+    "detalle": {
+      "tam": [
+        380,
+        600
+      ],
+      "pixeles_claros": 6318,
+      "escala": 1.0,
+      "bandeja": true
+    }
+  },
+  "rendimiento": {
+    "ok": true,
+    "detalle": {
+      "escala": 1.0,
+      "ms": {
+        "mouse_principal": {
+          "prom": 3.0,
+          "p90": 3.75,
+          "max": 4.1,
+          "n": 48
+        },
+        "quieta_animada": {
+          "prom": 1.17,
+          "p90": 1.29,
+          "max": 1.58,
+          "n": 515
+        },
+        "transicion_ajustes": {
+          "prom": 0.01,
+          "p90": 0.0,
+          "max": 6.1,
+          "n": 30036
+        },
+        "mouse_ajustes": {
+          "prom": 3.5,
+          "p90": 3.81,
+          "max": 4.24,
+          "n": 42
+        },
+        "hoja_abriendo": {
+          "prom": 0.02,
+          "p90": 0.0,
+          "max": 6.18,
+          "n": 15816
+        },
+        "mouse_hoja": {
+          "prom": 1.23,
+          "p90": 5.1,
+          "max": 7.58,
+          "n": 39
+        }
+      }
+    }
+  },
+  "bandeja": {
+    "ok": true,
+    "detalle": {
+      "activo": true,
+      "visible": false,
+      "estado_tk": "withdrawn",
+      "bandeja": true
+    }
+  },
+  "juego": {
+    "ok": true,
+    "detalle": {
+      "al_frente": "TkTopLevel",
+      "detecta_juego": true,
+      "ignorados": 1,
+      "pedidos_ia": 0,
+      "ok_pantalla_completa": true,
+      "ignorados_ctrl": 1,
+      "pedidos_ia_ctrl": 0,
+      "ok_ctrl_sostenido": true
+    }
+  },
+  "reabrir": {
+    "ok": true,
+    "detalle": {
+      "evento": true,
+      "visible": true,
+      "estado_tk": "normal",
+      "activo": true
+    }
+  },
+  "e2e": {
+    "ok": true,
+    "detalle": {
+      "opcion": {
+        "ok": true,
+        "clics": [
+          [
+            200,
+            92
+          ],
+          [
+            573,
+            169
+          ],
+          [
+            573,
+            169
+          ]
+        ],
+        "esperado": [
+          490,
+          140,
+          850,
+          200
+        ],
+        "actividad": []
+      },
+      "escribir_tk": {
+        "ok": true,
+        "exacto": true,
+        "texto": "Cuatro, señor ¿sí?",
+        "diag": {
+          "teclas": [
+            [
+              "Control_L",
+              ""
+            ],
+            [
+              "a",
+              "\u0001"
+            ],
+            [
+              "??",
+              "C"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "u"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "a"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "t"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "r"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "o"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              ","
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              " "
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "s"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "e"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "ñ"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "o"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "r"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              " "
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "¿"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "s"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "í"
+            ],
+            [
+              "??",
+              ""
+            ],
+            [
+              "??",
+              "?"
+            ],
+            [
+              "??",
+              ""
+            ]
+          ],
+          "foco": [
+            "entry"
+          ],
+          "clics": [
+            [
+              300,
+              21
+            ]
+          ],
+          "entry_pantalla": [
+            48,
+            141,
+            600,
+            44
+          ],
+          "ia_campo": "C0"
+        },
+        "actividad": [
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Marcó 1 opción · revisa, algo no quedó",
+            "info"
+          ]
+        ]
+      },
+      "escribir_nativo": {
+        "ok": true,
+        "exacto": true,
+        "texto": "Cuatro, señor ¿sí?",
+        "diag": {
+          "hwnd": 590008,
+          "ia_campo": "C0"
+        },
+        "actividad": [
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ]
+        ]
+      },
+      "casillas": {
+        "ok": true,
+        "valores": {
+          "Rojo": 1,
+          "Verde": 0,
+          "Azul": 1,
+          "Gato": 0
+        },
+        "actividad": [
+          [
+            "20:35",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ]
+        ],
+        "seg": 4.9
+      },
+      "menu": {
+        "ok": true,
+        "valor": "Mitocondria",
+        "actividad": [
+          [
+            "20:35",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ]
+        ],
+        "seg": 5.4
+      },
+      "arrastrar": {
+        "ok": true,
+        "centro": [
+          584.0,
+          233.0
+        ],
+        "actividad": [
+          [
+            "20:35",
+            "Eligió 1 en menús",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ]
+        ],
+        "seg": 5.4
+      },
+      "candado": {
+        "ok": true,
+        "picados": [],
+        "teclas": [],
+        "antes": 4,
+        "actividad": [
+          [
+            "20:35",
+            "No la marqué para no picar algo mal. Respuesta: Cervantes",
+            "info"
+          ],
+          [
+            "20:35",
+            "Acomodó 1",
+            "ok"
+          ],
+          [
+            "20:35",
+            "Eligió 1 en menús",
+            "ok"
+          ]
+        ],
+        "seg": 2.6
+      }
+    }
+  },
+  "cpu": {
+    "ok": true,
+    "detalle": {
+      "ventana_al_frente": 4.69,
+      "escondida_y_activa": 0.52
+    }
+  },
+  "_version": "2.0.0",
+  "_obligatorias": [
+    "ocr",
+    "motor",
+    "proveedores",
+    "cifrado",
+    "interfaz",
+    "ventana"
+  ],
+  "_sistema": "win32"
+}
