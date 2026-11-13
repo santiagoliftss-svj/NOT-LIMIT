@@ -149,6 +149,7 @@ class _VistaArrastre(NSView):
                 NSMakeRect(self.pos[0], self.pos[1], self.tam[0], self.tam[1]), NSZeroRect,
                 NSCompositingOperationSourceOver, 1.0, True, None)
 
+    @objc.python_method
     def _p(self, evento):
         p = self.convertPoint_fromView_(evento.locationInWindow(), None)
         return p.x, p.y
