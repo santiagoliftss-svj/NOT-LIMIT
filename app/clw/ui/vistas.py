@@ -13,8 +13,8 @@ from datetime import datetime
 
 from PIL import Image, ImageDraw
 
-from .. import plataforma, version
-from ..proveedores import MODELOS, PROVEEDORES, buscar_modelo, clave_parece_de
+from .. import licencia, plataforma, version
+from ..proveedores import MODELOS, PROVEEDORES, Proveedor, buscar_modelo, clave_parece_de
 from . import estilo as E
 from .estilo import ALTO, ANCHO, BLANCO, ERROR, NEGRO, SUAVE, TENUE, TEXTO, Lienzo
 
@@ -48,6 +48,10 @@ VUELTA_GOTAS = 1.8
 # lo que se repinta cuando algo se mueve (coordenadas logicas)
 R_MARCA = (MARCA_X - 6, MARCA_Y - 6, MARCA_W + 12, MARCA_H + 12)
 R_BOTON = (BOTON[0] - 30, BOTON[1] - 30, BOTON[2] + 60, BOTON[3] + 60 + 30)
+
+
+LICENCIA_UI = Proveedor("licencia", "NO LIMIT", "NL-", version.PAGINA + "#precio", "¿No tienes código? Cómpralo aquí")
+PROV_UI = dict(PROVEEDORES, licencia=LICENCIA_UI)
 
 
 def _enmascarar(t):
@@ -230,6 +234,9 @@ class Interfaz:
             return {}
 
     def _encender(self):
+        if not licencia.activa(self.config):     # sin codigo pagado no arranca
+            self.abrir_clave("licencia", iniciar=True, msg="Pega tu código de NO LIMIT para empezar.", tipo="info")
+            return
         if self._faltan_permisos():          # Mac: sin los permisos no puede leer ni dar clic
             self.msg_permisos = ""
             self._ir("permisos", 1)
@@ -252,10 +259,14 @@ class Interfaz:
                 self._esconder_en = None
             else:
                 prov = self.modelo_actual().proveedor
-                if c.tiene_clave(prov):
+                if not licencia.activa(c):
+                    self._encender()             # (pide el codigo de NO LIMIT)
+                elif c.tiene_clave(prov):
                     self._encender()
                 else:
                     self.abrir_clave(prov, iniciar=True, msg="Agrega tu clave para empezar.", tipo="info")
+        elif zid == "licencia":
+            self.abrir_clave("licencia", volver="ajustes")
         elif zid == "modelo":
             self.capa = "modelos"
             self._capa_t0 = self.reloj()
@@ -295,7 +306,7 @@ class Interfaz:
                 self.clave["texto"] = "".join(texto.split())
                 self.clave["msg"], self.clave["tipo"] = "", ""
         elif zid == "sacar_clave":
-            self.app.abrir_url(PROVEEDORES[self.clave["prov"]].url_clave)
+            self.app.abrir_url(PROV_UI[self.clave["prov"]].url_clave)
         elif zid == "usar_gemini":
             c["modelo"] = "gemini-flash-latest"
             k = self.clave
@@ -333,7 +344,25 @@ class Interfaz:
             return
         texto = k["texto"].strip()
         if not texto:
-            k["msg"], k["tipo"] = "Pega tu clave primero.", "error"
+            k["msg"], k["tipo"] = ("Pega tu código primero." if k["prov"] == "licencia" else "Pega tu clave primero."), "error"
+            return
+        if k["prov"] == "licencia":
+            if licencia.valido(texto):
+                self.config["licencia"] = licencia.formatear(texto)
+                self.agregar_actividad("NO LIMIT activada", "ok")
+                self._ir(k["volver"], -1)
+                if k["iniciar"]:
+                    prov = self.modelo_actual().proveedor
+                    if self.config.tiene_clave(prov):
+                        self._encender()
+                    else:
+                        self.abrir_clave(prov, iniciar=True, msg="Ahora agrega tu clave de IA.", tipo="info")
+            else:
+                k["msg"], k["tipo"] = ("Ese código no sirve. Revisa que esté completo (NL-XXXX-XXXX-XXXX) "
+                                       "o pídele uno a quien te vendió NO LIMIT."), "error"
+            return
+        if licencia.parece_licencia(texto):
+            k["msg"], k["tipo"] = "Ese es tu código de NO LIMIT, no la clave de la IA.", "error"
             return
         parece = clave_parece_de(texto)
         if parece and parece != k["prov"]:
@@ -979,6 +1008,14 @@ class Interfaz:
         l.linea_h(40, 491, ancho, (255, 255, 255, 150 if hov else 70))
         l.zona("carpeta", 36, 470, ancho + 8, 28)
 
+        hov = self.hover == "licencia"
+        cod = str(c.get("licencia") or "")
+        txt = (f"NO LIMIT activada · {cod[:3]}…{cod[-4:]}" if licencia.activa(c) and cod
+               else "Activar NO LIMIT con tu código")
+        ancho = l.texto(26, 522, txt, "chico", TEXTO if hov else SUAVE)
+        l.linea_h(26, 537, ancho, (255, 255, 255, 150 if hov else 50))
+        l.zona("licencia", 22, 514, ancho + 8, 28)
+
         hov = self.hover == "pagina"
         ancho = l.texto_centrado_v(24, PIE_Y, "Página de NO LIMIT", "chico", TEXTO if hov else SUAVE)
         l.icono("afuera", 28 + ancho, PIE_Y - 6, 12, TEXTO if hov else SUAVE)
@@ -1039,12 +1076,14 @@ class Interfaz:
 
     def _pantalla_clave(self, l, t, k=None):
         k = k or self.clave
-        p = PROVEEDORES[k["prov"]]
+        p = PROV_UI[k["prov"]]
+        es_lic = k["prov"] == "licencia"
         self._volver(l, "volver_clave")
-        titulo = f"Tu clave de {p.nombre}"
+        titulo = "Tu código de NO LIMIT" if es_lic else f"Tu clave de {p.nombre}"
         rol = "titulo" if E.medir(titulo, "titulo", self.e) <= 332 * self.e else "titulo_m"
         l.texto_plata(24, 56, titulo, rol)
-        desc = "Pégala aquí. Se guarda cifrada y solo en esta computadora."
+        desc = ("Te lo dan al pagar NO LIMIT. Pégalo aquí y se queda guardado en esta computadora." if es_lic
+                else "Pégala aquí. Se guarda cifrada y solo en esta computadora.")
         for j, linea in enumerate(E.partir(desc, "cuerpo", self.e, 330 * self.e)):
             l.texto(24, 100 + j * 19, linea, "cuerpo", SUAVE)
 
@@ -1054,7 +1093,7 @@ class Interfaz:
         l.vidrio(24, 150, 332, 58, 18, borde=(255, 140) if not error else (255, 220), relleno=(14, 5), grosor=1.2)
         l.zona("campo", 24, 150, 226, 58, cursor="xterm")
         if k["texto"]:
-            visible = E.recortar(_enmascarar(k["texto"]), "cuerpo", self.e, 196 * self.e)
+            visible = E.recortar(k["texto"].upper() if es_lic else _enmascarar(k["texto"]), "cuerpo", self.e, 196 * self.e)
             ancho = l.texto_centrado_v(42, 179, visible, "cuerpo", TEXTO)
         else:
             ancho = -2.5
@@ -1077,7 +1116,7 @@ class Interfaz:
             for j, linea in enumerate(E.partir(k["msg"], "cuerpo", self.e, 328 * self.e)[:4]):
                 l.texto(24, 268 + j * 19, linea, "cuerpo", col)
 
-        if k["prov"] != "gemini" and not self.config.tiene_clave(k["prov"]):
+        if not es_lic and k["prov"] != "gemini" and not self.config.tiene_clave(k["prov"]):
             hov = self.hover == "usar_gemini"
             l.linea_h(24, 446, 332, (255, 255, 255, 28))
             l.texto(24, 460, "¿Sin saldo?", "chico", TENUE)

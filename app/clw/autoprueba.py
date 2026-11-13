@@ -715,6 +715,8 @@ def _ctrl_clic(x, y):
 
 
 def main(salida):
+    from . import licencia
+    licencia.PRUEBA = True           # (la prueba automatica no tiene codigo)
     os.makedirs(salida, exist_ok=True)
     import logging
     h = logging.FileHandler(os.path.join(salida, "registro.txt"), encoding="utf-8")

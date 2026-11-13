@@ -7,6 +7,9 @@ import time
 import traceback
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(AQUI, "..", "app"))
+from clw import licencia  # noqa: E402
+licencia.PRUEBA = True          # (test_licencia lo apaga para probarla)
 
 
 def main():

@@ -42,10 +42,10 @@ def carpeta():
     return os.path.join(rutas.carpeta_datos(), "actualizacion")
 
 
-def descargar(v, url, tam=0, al_avance=None, cancelar=None):
+def descargar(v, url, tam=0, al_avance=None, cancelar=None, nombre=None):
     """Baja el instalador. Devuelve la ruta, o None si no se pudo (o si quedo incompleto)."""
     os.makedirs(carpeta(), exist_ok=True)
-    destino = os.path.join(carpeta(), f"NO-LIMIT-Setup-{v}.exe")
+    destino = os.path.join(carpeta(), nombre or f"NO-LIMIT-Setup-{v}.exe")
     if os.path.exists(destino) and (not tam or os.path.getsize(destino) == tam):
         return destino
     parcial = destino + ".parcial"
@@ -75,7 +75,7 @@ def descargar(v, url, tam=0, al_avance=None, cancelar=None):
         log.warning("actualizacion incompleta (%s de %s bytes)", hecho, tam)
         return None
     os.replace(parcial, destino)
-    for viejo in glob.glob(os.path.join(carpeta(), "NO-LIMIT-Setup-*")):
+    for viejo in glob.glob(os.path.join(carpeta(), "NO-LIMIT-Mac-*" if nombre else "NO-LIMIT-Setup-*")):
         if os.path.abspath(viejo) != os.path.abspath(destino):
             _borrar(viejo)
     return destino

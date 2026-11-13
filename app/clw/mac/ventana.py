@@ -28,11 +28,11 @@ from Foundation import (NSActivityLatencyCritical, NSActivityUserInitiatedAllowi
                         NSTimer, NSZeroRect)
 import Quartz as Q
 
-from .. import rutas
+from .. import licencia, rutas, version
 from ..ui.estilo import ALTO, ANCHO
 from ..ui.ventana import Ventana
 from ..ui.vistas import Interfaz
-from . import permisos
+from . import actualizar_mac, permisos
 
 log = logging.getLogger("clw")
 
@@ -419,6 +419,8 @@ class VentanaMac(Ventana):
         self.bot.hwnd_propio = self._hwnd
         self._pintar()
         self.root.after(30, self._tick)
+        licencia.refrescar_en_fondo()
+        self.root.after(4000, self._revisar_version)
 
     # ---------------------------------------------------------------- lo que cambia en Mac
     def hwnd(self):
@@ -531,8 +533,49 @@ class VentanaMac(Ventana):
         os.makedirs(carpeta, exist_ok=True)
         self.abrir_url(carpeta)
 
-    def _revisar_version(self):
-        pass                             # (beta de Mac: las versiones nuevas se bajan a mano)
+    # version nueva: se baja sola el DMG y se cambia la app al cerrar (o al tocar Actualizar)
+    def _buscar_actualizacion(self):
+        eventos = self.bot.eventos
+        try:
+            info = actualizar_mac.buscar()
+        except Exception:
+            return
+        if not info:
+            return
+        v, url, tam = info
+        eventos.put(("nueva_version", v))
+        if not url or not actualizar_mac.app_actual():
+            return
+        try:
+            ruta = actualizar_mac.descargar(v, url, tam, al_avance=lambda p: eventos.put(("descarga", p)),
+                                            cancelar=lambda: self._cerrado)
+        except Exception as ex:
+            log.warning("no se pudo bajar la actualizacion: %s", ex)
+            eventos.put(("actualizacion_error", str(ex)))
+            return
+        if ruta:
+            self._instalador = ruta
+            eventos.put(("actualizacion_lista", v))
+        else:
+            eventos.put(("actualizacion_error", "incompleta"))
+
+    def actualizar(self):
+        if not self._instalador:
+            self.abrir_url(version.PAGINA)
+            return
+        if actualizar_mac.instalar(self._instalador, relanzar=True):
+            self._actualizando = True
+            self._instalador = None
+            self.salir()
+
+    def salir(self):
+        if not self._cerrado and self._instalador and not self._actualizando:
+            # ya estaba bajada: se cambia callada al cerrar (la proxima vez abre la nueva)
+            self._actualizando = actualizar_mac.instalar(self._instalador, relanzar=False)
+        self._instalador = None          # (que no corra el instalador de Windows)
+        Ventana.salir(self)
+
+    cerrar = salir
 
     # permisos de macOS (los pide la Interfaz antes de INYECTAR)
     def faltan_permisos(self):

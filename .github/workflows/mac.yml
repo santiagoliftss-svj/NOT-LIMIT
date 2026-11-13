@@ -84,6 +84,9 @@ jobs:
       - name: DMG
         run: bash build/dmg_mac.sh
 
+      - name: Probar la actualizacion sola (cambia una app vieja por la del DMG)
+        run: python build/probar_actualizar_mac.py "salida/$DMG"
+
       - name: Subir autoprueba a la rama ci-autoprueba-(runner) (para revisarla)
         if: always()
         continue-on-error: true

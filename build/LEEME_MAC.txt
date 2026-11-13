@@ -10,12 +10,15 @@ NO LIMIT para Mac (beta) - macOS 15 o mas nuevo (chip M1 a M4, o Intel)
    (O abrela, dale "Listo" al aviso y ve a Ajustes del Sistema > Privacidad y seguridad >
    "Abrir de todos modos".)
 
-3. Abre NO LIMIT, elige tu IA, pega tu clave y toca INYECTAR.
+3. Abre NO LIMIT y toca INYECTAR: pega tu codigo de NO LIMIT (NL-XXXX-XXXX-XXXX), elige tu IA y pega tu clave.
    La primera vez te pide dos permisos (Accesibilidad y Grabacion de pantalla): toca ABRIR en
    cada uno y activa NO LIMIT. Si macOS te pide salir y volver a abrir, dale que si.
 
 4. Pon el puntero sobre una pregunta y haz Option + clic. Esc cancela.
    NO LIMIT se queda en la barra de arriba: desde su icono se abre, se detiene o se cierra.
+
+Se actualiza sola: cuando sale una version nueva la baja y la cambia al cerrar NO LIMIT
+(o al tocar Actualizar). Despues te vuelve a pedir los dos permisos: es normal.
 
 Si algo falla: en Ajustes de NO LIMIT > "Abrir carpeta" estan las capturas, y el registro
 esta en ~/Library/Application Support/NO LIMIT/registro.txt

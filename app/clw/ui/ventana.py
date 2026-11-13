@@ -25,7 +25,7 @@ except ImportError:                      # (en Mac la ventana es de AppKit: clw.
     class TclError(Exception):
         pass
 
-from .. import actualizar, entrada, plataforma, rutas, version
+from .. import actualizar, entrada, licencia, plataforma, rutas, version
 from ..bandeja import Bandeja
 from ..proveedores import validar_clave
 from .estilo import ALTO
@@ -138,6 +138,7 @@ class Ventana:
         self.bot.hwnd_propio = self._hwnd
         self._pintar()
         self.root.after(30, self._tick)
+        licencia.refrescar_en_fondo()
         self._revisar_version()
 
     # ---------------------------------------------------------------- ventana

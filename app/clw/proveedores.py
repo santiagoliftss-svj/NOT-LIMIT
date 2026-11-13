@@ -48,7 +48,7 @@ MODELOS = [
     Modelo("claude", "claude-sonnet-5-5", "Claude Sonnet 5.5", "Equilibrado", "Sonnet 5.5"),
     Modelo("claude", "claude-opus-5-5", "Claude Opus 5.5", "El más listo", "Opus 5.5"),
     Modelo("gemini", "gemini-flash-latest", "Gemini Flash", "Clave gratis", "Flash"),
-    Modelo("gemini", "gemini-pro-latest", "Gemini Pro", "Preciso", "Pro"),
+    Modelo("gemini", "gemini-pro-latest", "Gemini Pro", "Con saldo", "Pro"),
     Modelo("openai", "gpt-6-luna", "GPT-6 Luna", "Rápido", "GPT-6 Luna"),
     Modelo("openai", "gpt-6.1-terra", "GPT-6.1 Terra", "Visión", "GPT-6.1 Terra"),
 ]

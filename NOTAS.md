@@ -2,7 +2,13 @@
 
 Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más información** y luego a **Ejecutar de todas formas**.
 
-Al abrir la app, elige el modelo, pega tu API key y toca **INYECTAR**. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
+Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
+
+**Nuevo en 1.5**
+
+- Ahora necesita tu código de NO LIMIT (se compra, un código por persona). Se pega una sola vez.
+- En Mac se actualiza sola, como en Windows: baja la versión nueva y la cambia al cerrar o al tocar **Actualizar**. Después de actualizar te vuelve a pedir los dos permisos de macOS.
+- Gemini Pro ya dice que necesita saldo (con la clave gratis solo jala Gemini Flash).
 
 **Nuevo en 1.4**
 
