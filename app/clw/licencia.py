@@ -1,6 +1,6 @@
 """Licencia de NO LIMIT: sin un codigo pagado la app no arranca.
 
-Cada cliente recibe un codigo (NL-XXXX-XXXX-XXXX). La app NO trae los codigos: solo su huella (sha256 con sal),
+Cada cliente recibe un codigo (NL-XXXX-XXXX-XXXX). La app NO trae los codigos: solo su huella (PBKDF2 lenta, con sal),
 asi que leyendo la app no se puede sacar ninguno. Desde la pagina (licencias.json) se pueden agregar huellas
 nuevas o bloquear un codigo que se compartio, sin sacar otra version."""
 
@@ -16,7 +16,8 @@ from .licencias_validas import HUELLAS
 
 log = logging.getLogger("clw.licencia")
 
-SAL = "NO-LIMIT-LIC-1:"
+SAL = b"NO-LIMIT-LIC-2"
+VUELTAS = 120_000                                   # huella lenta: probar codigos a lo loco no sirve
 ALFABETO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"      # sin I, L, O ni U (no se confunden al escribirlo)
 LARGO = 12
 URL = version.PAGINA + "licencias.json"
@@ -39,8 +40,17 @@ def formatear(texto):
     return "NL-" + "-".join(n[i:i + 4] for i in range(0, len(n), 4))
 
 
+_memo = {}
+
+
 def huella(texto):
-    return hashlib.sha256((SAL + normalizar(texto)).encode("ascii", "ignore")).hexdigest()
+    n = normalizar(texto)
+    h = _memo.get(n)
+    if h is None:
+        h = hashlib.pbkdf2_hmac("sha256", n.encode("ascii", "ignore"), SAL, VUELTAS).hex()
+        if len(_memo) < 64:
+            _memo[n] = h
+    return h
 
 
 def parece_licencia(texto):
