@@ -1,0 +1,19 @@
+2026-11-13 20:36:17,528 INFO activado con claude-haiku-5-5
+2026-11-13 20:36:18,650 INFO ventana escondida junto al reloj
+2026-11-13 20:36:26,873 INFO modelo=claude-haiku-5-5 ubicar=2.8s ia=0.1s region=(0, 0, 1920, 1080) tipo=opcion/opcion cajas=34 campos=1 pasos=1 rechazadas=[] salida={"tipo": "opcion", "ids": [12]}
+2026-11-13 20:36:32,258 INFO revisar: {"tipo": "opcion", "ids": [11]}
+2026-11-13 20:36:32,258 INFO hecho={'clic': 1, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=['el clic no cambio nada'] total=8.3s
+2026-11-13 20:36:35,791 INFO modelo=claude-haiku-5-5 ubicar=1.6s ia=0.1s region=(0, 0, 1920, 1080) tipo=abierta/abierta cajas=30 campos=3 pasos=1 rechazadas=[] salida={"tipo": "abierta", "respuestas": [{"campo": "C0", "texto": "Cuatro, se\u00f1or \u00bfs\u00ed?"}]}
+2026-11-13 20:36:40,226 INFO revisar: {"tipo": "abierta", "respuestas": [{"campo": "C0", "texto": "Cuatro, se\u00f1or \u00bfs\u00ed?"}]}
+2026-11-13 20:36:40,226 INFO hecho={'clic': 0, 'escribir': 1, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=6.1s
+2026-11-13 20:36:43,795 INFO modelo=claude-haiku-5-5 ubicar=1.8s ia=0.1s region=(0, 0, 1527, 868) tipo=opcion_multiple/opcion_multiple cajas=22 campos=1 pasos=2 rechazadas=[] salida={"tipo": "opcion_multiple", "respuesta": "Rojo | Azul", "acciones": [{"hacer": "clic", "en": 10, "texto": "Rojo"}, {"hacer": "clic", "en": 13, "texto": "Azul"}]}
+2026-11-13 20:36:50,348 INFO revisar: {"ok": true}
+2026-11-13 20:36:50,352 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=8.4s
+2026-11-13 20:36:53,573 INFO modelo=claude-haiku-5-5 ubicar=1.7s ia=0.0s region=(0, 0, 1527, 868) tipo=desplegable/desplegable cajas=20 campos=1 pasos=1 rechazadas=[] salida={"tipo": "desplegable", "respuesta": "Mitocondria", "acciones": [{"hacer": "elegir", "en": 10, "opcion": "Mitocondria"}]}
+2026-11-13 20:36:57,533 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 1, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=5.7s
+2026-11-13 20:37:00,650 INFO modelo=claude-haiku-5-5 ubicar=1.5s ia=0.1s region=(0, 0, 1527, 866) tipo=arrastrar/arrastrar cajas=20 campos=3 pasos=1 rechazadas=[] salida={"tipo": "arrastrar", "acciones": [{"hacer": "arrastrar", "desde": 10, "hasta": 12}]}
+2026-11-13 20:37:06,573 INFO revisar: {"ok": true}
+2026-11-13 20:37:06,574 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 1, 'ordenar': 0} fallas=[] total=7.5s
+2026-11-13 20:37:09,679 INFO modelo=claude-haiku-5-5 ubicar=1.4s ia=0.1s region=(0, 0, 1527, 868) tipo=abierta/abierta cajas=19 campos=2 pasos=0 rechazadas=['es un boton para avanzar o mandar (Siguiente)', 'no se ve un campo para escribir ahi'] salida={"tipo": "abierta", "respuesta": "Cervantes", "acciones": [{"hacer": "clic", "en": 14}, {"hacer": "escribir", "en": {"x": 198, "y": 217}, "texto": "zzz"}]}
+2026-11-13 20:37:09,757 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=1.7s
+2026-11-13 20:37:12,711 INFO detenido
