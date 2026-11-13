@@ -193,9 +193,9 @@
   .solo-mac { display: none; }
   html.es-mac .solo-mac { display: inline; }
   html.es-mac .solo-win { display: none; }
-  .otras-descargas { margin-top: 8px; color: var(--tenue); font-size: 13px; }
-  .otras-descargas a { color: var(--suave, #a1a1a6); text-decoration: underline; text-underline-offset: 3px; }
-  .otras-descargas a:hover { color: #f5f5f7; }
+  .boton-mac { display: inline-flex; align-items: center; justify-content: center; }
+  .boton-mac svg { width: 18px; height: 18px; margin-right: 10px; flex: none; }
+  html.es-mac .boton-mac { order: -1; }
 
   /* entrada de la portada */
   .portada .entra { opacity: 0; transform: translateY(18px); filter: blur(8px); }
@@ -776,10 +776,10 @@
         <span class="liquido-brillo" aria-hidden="true"></span>
         <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
       </a>
+      <a class="vidrio-btn boton-mac js-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
       <a class="vidrio-btn" href="#demo">Pruébalo aquí</a>
     </div>
     <p class="meta entra js-meta" style="--retraso:.65s">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
-    <p class="otras-descargas entra" style="--retraso:.7s">También para <a class="js-otra" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg">Mac</a> · <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg">Mac con Intel</a></p>
   </section>
 
   <!-- ============================================================ demo -->
@@ -1015,6 +1015,7 @@
             <span class="liquido-brillo" aria-hidden="true"></span>
             <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
           </a>
+          <a class="vidrio-btn boton-mac js-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
         </div>
         <p class="nota-clave js-meta">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
       </div>
@@ -1071,9 +1072,9 @@
           <span class="liquido-brillo" aria-hidden="true"></span>
           <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
         </a>
+        <a class="vidrio-btn boton-mac js-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
       </div>
       <p class="meta js-meta" data-revela>Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
-      <p class="otras-descargas" data-revela>También para <a class="js-otra" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg">Mac</a> · <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg">Mac con Intel</a></p>
     </div>
   </section>
 </main>
@@ -1138,19 +1139,8 @@
   var MAC_LINK = MAC_INTEL;
   if (ES_MAC) document.documentElement.classList.add("es-mac");
   function ponerMac() {
-    $$(".js-otra").forEach(function (e) { e.href = MAC_LINK; });
-    if (!ES_MAC) return;
-    $$(".js-atajo").forEach(function (e) { e.textContent = "Option"; });
-    $$("a.descarga").forEach(function (e) {
-      e.href = MAC_LINK;
-      Array.prototype.forEach.call(e.childNodes, function (n) {
-        if (n.nodeType === 3 && /Windows/.test(n.textContent)) n.textContent = n.textContent.replace("Windows", "Mac");
-      });
-    });
-    $$(".js-otra").forEach(function (e) {
-      e.textContent = "Windows";
-      e.href = "https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe";
-    });
+    $$(".js-mac").forEach(function (e) { e.href = MAC_LINK; });
+    if (ES_MAC) $$(".js-atajo").forEach(function (e) { e.textContent = "Option"; });
   }
   ponerMac();
   fetch("https://api.github.com/repos/santiagoliftss-svj/NOT-LIMIT/releases/tags/mac-beta")
@@ -1173,7 +1163,7 @@
       $$(".js-version-corta").forEach(function (e) { e.textContent = "v" + v; });
       $$(".js-meta").forEach(function (e) { e.textContent = "Versión " + v + " · Windows 10 y 11 · Mac con macOS 15 o más nuevo"; });
       $$(".js-tam").forEach(function (e) { e.textContent = mb ? "(" + mb + " MB) para Windows 10 y 11" : "para Windows 10 y 11"; });
-      if (a && !ES_MAC) $$("a.descarga").forEach(function (e) { e.href = a.browser_download_url; });
+      if (a) $$("a.descarga").forEach(function (e) { e.href = a.browser_download_url; });
     })
     .catch(function () {});
 
