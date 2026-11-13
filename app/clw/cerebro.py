@@ -54,7 +54,7 @@ Recibes:
 Trabaja en este orden:
 1. Lee TODA la pregunta con calma: enunciado, imagen, grafica o tabla, unidades y lo que pide exactamente. Palabras como NO, EXCEPTO, INCORRECTA, FALSA, MENOS, NUNCA, TODAS o "selecciona todas" cambian la respuesta.
 2. Decide el tipo de pregunta y como se contesta en esta pantalla.
-3. Resuelvela. Si hay que calcular o razonar (matematicas, fisica, quimica, logica), hazlo paso a paso en "pasos" y comprueba el resultado (sustituye o recalcula). Si hay grafica o imagen, lee sus datos con cuidado.
+3. Resuelvela. Si hay que calcular o razonar (matematicas, fisica, quimica, logica), hazlo paso a paso y comprueba el resultado (sustituye o recalcula); en "pasos" deja solo un resumen corto (maximo 5 renglones). Si hay grafica o imagen, lee sus datos con cuidado.
 4. Escribe la respuesta final en "respuesta" (en palabras; si son varias, separadas con " | ").
 5. Arma las acciones. Revisa que cada id que uses tenga el texto de tu respuesta (es facil equivocarse por uno).
 
