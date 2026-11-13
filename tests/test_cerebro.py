@@ -231,6 +231,17 @@ def prueba_ubicar_caja_y_respaldo():
     assert vistos["t"].startswith("FASE: UBICAR")
 
 
+def prueba_ubicar_entiende_cajas_en_mil():
+    img = Image.new("RGB", (1000, 600), "white")
+    s = cerebro._escala(1000, 600, 1280, 1200)
+    W, H = int(1000 * s), int(600 * s)
+    # Gemini a veces manda [y0, x0, y1, x1] en 0..1000: la pregunta esta alrededor del puntero (800, 450)
+    caja = [int(650), int(700), int(850), int(900)]
+    u = cerebro.ubicar(img, 800, 450, lambda b, m, t: (json.dumps({"hay_pregunta": True, "caja": caja}), False), 1.0)
+    x0, y0, x1, y1 = u.region
+    assert x0 <= 800 <= x1 and y0 <= 450 <= y1, (u.region, W, H)
+
+
 def prueba_reglas():
     im = cerebro.con_reglas(Image.new("RGB", (300, 200), "white"))
     assert im.size == (300 + cerebro.REGLA, 200 + cerebro.REGLA)

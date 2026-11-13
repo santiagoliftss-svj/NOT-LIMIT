@@ -139,6 +139,7 @@ class Ventana:
         self._pintar()
         self.root.after(30, self._tick)
         licencia.refrescar_en_fondo()
+        self.root.after(licencia.REVISAR_CADA * 1000, self._revisar_licencia)
         self._revisar_version()
 
     # ---------------------------------------------------------------- ventana
@@ -485,6 +486,23 @@ class Ventana:
             error = validar_clave(prov, texto)
             self.cola.put(lambda: self.ui.clave_verificada(prov, texto, error))
         threading.Thread(target=trabajo, name="clave", daemon=True).start()
+
+    def verificar_licencia(self, texto):
+        """Revisa en la pagina si el codigo esta pagado (en otro hilo) y avisa a la interfaz."""
+        def trabajo():
+            try:
+                licencia.refrescar()
+            except Exception as ex:
+                log.info("no se pudo revisar la lista de licencias: %s", ex)
+            est = licencia.estado_codigo(texto)
+            self.cola.put(lambda: self.ui.licencia_verificada(texto, est))
+        threading.Thread(target=trabajo, name="licencia", daemon=True).start()
+
+    def _revisar_licencia(self):
+        if self._cerrado:
+            return
+        licencia.refrescar_en_fondo()
+        self.root.after(licencia.REVISAR_CADA * 1000, self._revisar_licencia)
 
     def leer_portapapeles(self):
         try:

@@ -9,7 +9,7 @@ import time
 import traceback
 from datetime import datetime
 
-from . import cerebro, entrada, motor, rutas
+from . import cerebro, entrada, licencia, motor, rutas
 from .escucha import EscuchaCtrlClic
 from .ocr import OCR
 from .proveedores import ClienteIA, ErrorIA, PROVEEDORES, buscar_modelo
@@ -102,6 +102,11 @@ class Bot:
 
     def _disparo(self, x, y):
         if not self.activo:
+            return
+        est = licencia.estado(self.config)
+        if not est.activa:                         # se vencio el mes (o lo bloquearon) mientras estaba prendida
+            self._emitir("actividad", est.mensaje, "error")
+            self.detener()
             return
         if not self._ocupado.acquire(blocking=False):
             self._emitir("actividad", "Espera, sigo con la anterior", "info")

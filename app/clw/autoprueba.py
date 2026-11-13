@@ -448,7 +448,7 @@ def _ventana_y_e2e(salida):
             def revisar():
                 c = tarjetas["París"]
                 buenos = [p for p in clics if c[0] <= p[0] <= c[2] and c[1] <= p[1] <= c[3]]
-                if buenos or time.time() - inicio > 25:
+                if (buenos and not bot._ocupado.locked()) or time.time() - inicio > 40:
                     pruebas["opcion"] = {"ok": bool(buenos), "clics": clics, "esperado": c,
                                          "actividad": list(v.ui.actividad)}
                     copiar_revision("opcion")
@@ -495,7 +495,8 @@ def _ventana_y_e2e(salida):
             inicio = time.time()
 
             def revisar():
-                if ESPERADO in ent.get() or time.time() - inicio > 25:
+                # (NO LIMIT 2.0 revisa despues de escribir: se espera a que termine antes de la siguiente prueba)
+                if (ESPERADO in ent.get() and not bot._ocupado.locked()) or time.time() - inicio > 40:
                     time.sleep(0.3)
                     pruebas["escribir_tk"] = {"ok": ESPERADO in ent.get(), "exacto": ent.get() == ESPERADO,
                                               "texto": ent.get(), "diag": diag, "actividad": list(v.ui.actividad)[:2]}
@@ -539,7 +540,7 @@ def _ventana_y_e2e(salida):
 
             def revisar():
                 texto = _texto_nativo(hwnd)
-                if ESPERADO in texto or time.time() - inicio > 25:
+                if (ESPERADO in texto and not bot._ocupado.locked()) or time.time() - inicio > 40:
                     pruebas["escribir_nativo"] = {"ok": ESPERADO in texto, "exacto": texto == ESPERADO, "texto": texto,
                                                   "diag": diag, "actividad": list(v.ui.actividad)[:2]}
                     copiar_revision("escribir_nativo")

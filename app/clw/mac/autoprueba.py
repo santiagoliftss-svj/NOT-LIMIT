@@ -400,7 +400,7 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
             def revisar():
                 c_ = tarjetas["París"]
                 buenos = [p for p in vista.clics if c_[0] <= p[0] <= c_[2] and c_[1] <= p[1] <= c_[3]]
-                if buenos or time.time() - inicio > 25:
+                if (buenos and not bot._ocupado.locked()) or time.time() - inicio > 40:
                     pruebas["opcion"] = {"ok": bool(buenos), "clics": list(vista.clics), "esperado": c_,
                                          "actividad": list(v.ui.actividad)[:3], "pedidos_ia": IA.pedidos,
                                          "escala": motor.factor_zoom()}
@@ -449,7 +449,7 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
 
             def revisar():
                 texto = str(campo.stringValue() or "")
-                if ESPERADO in texto or time.time() - inicio > 25:
+                if (ESPERADO in texto and not bot._ocupado.locked()) or time.time() - inicio > 40:
                     pruebas["escribir"] = {"ok": ESPERADO in texto, "exacto": texto == ESPERADO, "texto": texto,
                                            "diag": diag, "actividad": list(v.ui.actividad)[:2]}
                     copiar_revision("escribir")

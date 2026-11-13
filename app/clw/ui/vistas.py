@@ -236,8 +236,12 @@ class Interfaz:
             return {}
 
     def _encender(self):
-        if not licencia.activa(self.config):     # sin codigo pagado no arranca
-            self.abrir_clave("licencia", iniciar=True, msg="Pega tu código de NO LIMIT para empezar.", tipo="info")
+        est = licencia.estado(self.config)
+        if not est.activa:                        # sin codigo pagado y al corriente no arranca
+            self.abrir_clave("licencia", iniciar=True, msg=est.mensaje,
+                             tipo="info" if est.motivo == "sin_codigo" else "error")
+            if self.config.get("licencia"):
+                self.clave["texto"] = str(self.config.get("licencia"))
             return
         if self._faltan_permisos():          # Mac: sin los permisos no puede leer ni dar clic
             self.msg_permisos = ""
@@ -349,19 +353,16 @@ class Interfaz:
             k["msg"], k["tipo"] = ("Pega tu código primero." if k["prov"] == "licencia" else "Pega tu clave primero."), "error"
             return
         if k["prov"] == "licencia":
-            if licencia.valido(texto):
-                self.config["licencia"] = licencia.formatear(texto)
-                self.agregar_actividad("NO LIMIT activada", "ok")
-                self._ir(k["volver"], -1)
-                if k["iniciar"]:
-                    prov = self.modelo_actual().proveedor
-                    if self.config.tiene_clave(prov):
-                        self._encender()
-                    else:
-                        self.abrir_clave(prov, iniciar=True, msg="Ahora agrega tu clave de IA.", tipo="info")
+            if not licencia.valido(texto):
+                k["msg"], k["tipo"] = licencia.Estado(False, "codigo").mensaje, "error"
+                return
+            k["verificando"] = True                # revisa en la pagina si esta pagado (en otro hilo)
+            k["msg"], k["tipo"] = "", ""
+            f = getattr(self.app, "verificar_licencia", None)
+            if f:
+                f(texto)
             else:
-                k["msg"], k["tipo"] = ("Ese código no sirve. Revisa que esté completo (NL-XXXX-XXXX-XXXX) "
-                                       "o pídele uno a quien te vendió NO LIMIT."), "error"
+                self.licencia_verificada(texto, licencia.estado_codigo(texto))
             return
         if licencia.parece_licencia(texto):
             k["msg"], k["tipo"] = "Ese es tu código de NO LIMIT, no la clave de la IA.", "error"
@@ -376,6 +377,26 @@ class Interfaz:
         k["verificando"] = True
         k["msg"], k["tipo"] = "", ""
         self.app.verificar_clave(k["prov"], texto)
+
+    def licencia_verificada(self, texto, est):
+        k = self.clave
+        if self.pantalla != "clave" or k.get("prov") != "licencia":
+            return
+        k["verificando"] = False
+        if est.motivo != "codigo":
+            self.config["licencia"] = licencia.formatear(texto)
+        if not est.activa:
+            k["msg"], k["tipo"] = est.mensaje, "error"
+            return
+        self.agregar_actividad(f"NO LIMIT activa hasta el {licencia.fecha_corta(est.vence)}" if est.vence
+                               else "NO LIMIT activa", "ok")
+        self._ir(k["volver"], -1)
+        if k["iniciar"]:
+            prov = self.modelo_actual().proveedor
+            if self.config.tiene_clave(prov):
+                self._encender()
+            else:
+                self.abrir_clave(prov, iniciar=True, msg="Ahora agrega tu clave de IA.", tipo="info")
 
     def clave_verificada(self, prov, texto, error):
         k = self.clave
@@ -1014,8 +1035,16 @@ class Interfaz:
 
         hov = self.hover == "licencia"
         cod = str(c.get("licencia") or "")
-        txt = (f"NO LIMIT activada · {cod[:3]}…{cod[-4:]}" if licencia.activa(c) and cod
-               else "Activar NO LIMIT con tu código")
+        est = licencia.estado(c)
+        if est.activa and cod:
+            txt = (f"Activa hasta el {licencia.fecha_corta(est.vence)} · {cod[:3]}…{cod[-4:]}" if est.vence
+                   else f"NO LIMIT activa · {cod[:3]}…{cod[-4:]}")
+        elif cod and est.motivo == "vencido":
+            txt = f"Tu mes venció el {licencia.fecha_corta(est.vence)} · Renovar"
+        elif cod:
+            txt = "Revisar mi código de NO LIMIT"
+        else:
+            txt = "Activar NO LIMIT con tu código"
         ancho = l.texto(26, 522, txt, "chico", TEXTO if hov else SUAVE)
         l.linea_h(26, 537, ancho, (255, 255, 255, 150 if hov else 50))
         l.zona("licencia", 22, 514, ancho + 8, 28)

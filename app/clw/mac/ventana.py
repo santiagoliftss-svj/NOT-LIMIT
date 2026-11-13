@@ -420,6 +420,7 @@ class VentanaMac(Ventana):
         self._pintar()
         self.root.after(30, self._tick)
         licencia.refrescar_en_fondo()
+        self.root.after(licencia.REVISAR_CADA * 1000, self._revisar_licencia)
         self.root.after(4000, self._revisar_version)
 
     # ---------------------------------------------------------------- lo que cambia en Mac

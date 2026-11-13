@@ -305,6 +305,23 @@ def expandir(caja, W, H, zoom=1.0, rel=0.05, px=28):
     return x0, y0, x1, y1
 
 
+def _elegir_caja(caja, tam, puntero, margen=60):
+    """Algunas IA mandan la caja en 0..1000 y al reves ([y0, x0, y1, x1]). Si asi como vino no queda cerca del
+    puntero pero leida de otra forma si, se usa esa."""
+    W, H = tam
+    px, py = puntero
+    a, b, c, d = caja
+    opciones = [(a, b, c, d)]
+    if max(caja) <= 1000:
+        opciones.append((b * W / 1000, a * H / 1000, d * W / 1000, c * H / 1000))     # [y0, x0, y1, x1] / 1000
+        opciones.append((a * W / 1000, b * H / 1000, c * W / 1000, d * H / 1000))     # [x0, y0, x1, y1] / 1000
+    for o in opciones:
+        x0, y0, x1, y1 = min(o[0], o[2]), min(o[1], o[3]), max(o[0], o[2]), max(o[1], o[3])
+        if x0 - margen <= px <= x1 + margen and y0 - margen <= py <= y1 + margen:
+            return x0, y0, x1, y1
+    return opciones[0]
+
+
 class Ubicacion:
     def __init__(self, region, tipo="", controles="", hay=True, salida="", respaldo=False):
         self.region = region            # (x0, y0, x1, y1) en pixeles de la captura
@@ -332,6 +349,7 @@ def ubicar(img, px, py, preguntar, zoom=1.0):
     controles = str(datos.get("controles") or "")[:200]
     if caja is None or s <= 0:
         return Ubicacion(todo, tipo, controles, salida=salida, respaldo=True)
+    caja = _elegir_caja(caja, tam, (px * s, py * s))
     caja = tuple(v / s for v in caja)
     if caja[2] - caja[0] < 8 or caja[3] - caja[1] < 8:
         return Ubicacion(todo, tipo, controles, salida=salida, respaldo=True)

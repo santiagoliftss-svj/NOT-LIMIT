@@ -123,6 +123,48 @@
   }
   .barra.compacta .barra-descargar { height: 38px; }
   .barra-descargar:hover { background: #e8e8ed; }
+  .barra-cuenta {
+    height: 40px; padding: 0 16px; margin-right: 8px; border-radius: 999px; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); color: var(--tinta);
+    font: inherit; font-weight: 600; font-size: 14px; white-space: nowrap; transition: background .2s ease;
+  }
+  .barra-cuenta:hover { background: rgba(255,255,255,.12); }
+  .barra.compacta .barra-cuenta { height: 38px; }
+  /* ------------------------------------------------ mi cuenta (entrar con el codigo) */
+  .cuenta-fondo { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px;
+    background: rgba(0,0,0,.62); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  .cuenta-fondo[hidden] { display: none; }
+  .cuenta-caja { position: relative; width: min(460px, 100%); padding: 30px 28px 26px; border-radius: 26px;
+    background: rgba(22,22,24,.92); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 30px 80px rgba(0,0,0,.6); }
+  .cuenta-caja h3 { font-size: 24px; font-weight: 750; letter-spacing: -.02em; margin: 0 0 8px; }
+  .cuenta-sub { color: var(--gris); font-size: 14.5px; line-height: 1.5; margin: 0 0 18px; }
+  .cuenta-cerrar { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: 0;
+    background: rgba(255,255,255,.08); color: var(--tinta); font-size: 20px; line-height: 1; cursor: pointer; }
+  .cuenta-form { display: flex; gap: 10px; }
+  .cuenta-form input { flex: 1; min-width: 0; height: 50px; padding: 0 16px; border-radius: 14px; border: 0;
+    background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); color: #fff;
+    font: 600 16px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
+  .cuenta-form input:focus { outline: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.55); }
+  .cuenta-form button { height: 50px; padding: 0 20px; border-radius: 14px; border: 0; background: #fff; color: #000;
+    font: inherit; font-weight: 750; font-size: 14px; letter-spacing: .06em; cursor: pointer; }
+  .cuenta-form button[disabled] { opacity: .55; cursor: default; }
+  .cuenta-msg { min-height: 20px; margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--gris); }
+  .cuenta-msg.mal { color: #ff8a80; }
+  .cuenta-ok[hidden] { display: none; }
+  .cuenta-estado { margin: 4px 0 16px; font-size: 15px; line-height: 1.5; }
+  .cuenta-estado b { color: #fff; }
+  .cuenta-descargas { display: grid; gap: 10px; }
+  .cuenta-descargas a { display: flex; align-items: center; justify-content: center; gap: 10px; height: 50px; border-radius: 14px;
+    text-decoration: none; font-weight: 650; font-size: 15px; color: #000; background: #fff; }
+  .cuenta-descargas a + a { color: var(--tinta); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  .cuenta-descargas svg { width: 16px; height: 16px; }
+  .cuenta-salir { margin-top: 14px; border: 0; background: none; color: var(--tenue); font: inherit; font-size: 13.5px;
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .pagar { margin: 26px auto 0; max-width: 520px; padding: 20px 22px; border-radius: 20px; text-align: left;
+    background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  .pagar h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
+  .pagar p { margin: 0; color: var(--gris); font-size: 14.5px; line-height: 1.55; }
+  .pagar .js-comprar { margin-top: 14px; height: 48px; font-size: 15px; }
   .barra-descargar:active { transform: scale(.96); }
   .barra-descargar svg { width: 15px; height: 15px; }
 
@@ -733,8 +775,10 @@
     <a href="#como">Cómo funciona</a>
     <a href="#funciones">Funciones</a>
     <a href="#modelos">Modelos</a>
+    <a href="#precio">Precio</a>
     <a href="#preguntas">Preguntas</a>
   </div>
+  <button class="barra-cuenta" id="btnCuenta" type="button">Entrar</button>
   <a class="barra-descargar descarga" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe">
     <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar
   </a>
@@ -748,7 +792,7 @@
 
     <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
       <span class="vivo" aria-hidden="true"></span>
-      <span>Nuevo: <span class="js-version">v1.4</span> para Windows y Mac</span>
+      <span>Nuevo: <span class="js-version">v2.0</span> · contesta casi cualquier pregunta</span>
       <span class="flecha" aria-hidden="true">→</span>
     </a>
 
@@ -768,7 +812,7 @@
     </div>
 
     <h1 class="lema destello entra" style="--retraso:.35s">La pregunta se contesta sola.</h1>
-    <p class="sub entra" style="--retraso:.45s">Pon el puntero sobre la pregunta y haz <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. NO LIMIT lee la pantalla, piensa y marca la respuesta por ti.</p>
+    <p class="sub entra" style="--retraso:.45s">Pon el puntero sobre la pregunta y haz <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. NO LIMIT ubica la pregunta, la lee, la resuelve, la contesta y revisa que haya quedado bien.</p>
 
     <div class="acciones entra" style="--retraso:.55s">
       <div class="par-descargas">
@@ -991,8 +1035,8 @@
     <div class="envoltura">
       <header class="cabeza" data-revela>
         <span class="ojo">Precio</span>
-        <h2 class="titulo plata">Un pago.<br>Sin trucos.</h2>
-        <p class="sub">Pagas una vez, te damos tu código y la usas sin límite. Sin cuenta y sin tarjeta dentro de la app.</p>
+        <h2 class="titulo plata">Un mes.<br>Sin límite.</h2>
+        <p class="sub">Pagas el mes, te damos tu código y la usas sin límite. Tu código es tu cuenta: con él entras a la app y a esta página.</p>
       </header>
 
       <div class="numeros" data-revela>
@@ -1003,11 +1047,13 @@
       </div>
 
       <div class="precio" data-revela>
-        <div class="cero plata"><small>$</small>100</div>
-        <p class="nunca">MXN · pago único · preguntas sin límite</p>
+        <div class="cero plata"><small>$</small>150</div>
+        <p class="nunca">MXN al mes · preguntas sin límite</p>
         <ul class="lista-chulos">
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Al pagar te damos tu código (NL-XXXX-XXXX-XXXX). Lo pegas en la app una vez y listo.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se actualiza sola cuando sale una versión nueva.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tu código (NL-XXXX-XXXX-XXXX) es tu cuenta: lo pegas en la app una vez y con él entras aquí.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se renueva cada mes. Si no pagas, la app se pausa sola hasta que pagues.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Contesta opción múltiple, casillas, completar, menús, relacionar, abiertas, problemas, gráficas, ordenar y arrastrar.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se actualiza sola en Windows y en Mac.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Gemini Flash funciona con una clave gratis de Google.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Con Claude o ChatGPT pagas solo lo que usas, directo a ellos.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tus preguntas no pasan por ningún servidor nuestro.</span></li>
@@ -1023,6 +1069,11 @@
           </div>
         </div>
         <p class="nota-clave js-meta">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
+        <div class="pagar" id="pagar">
+          <h3>Cómo pagar</h3>
+          <p>Por transferencia, depósito en OXXO o en efectivo con tu vendedor. Al pagar te da tu código (o te renueva el mes) y entras con él aquí arriba en <b>Entrar</b>. Pronto también con tarjeta aquí mismo.</p>
+          <a class="vidrio-btn js-comprar" href="#pagar">Comprar o renovar</a>
+        </div>
       </div>
     </div>
   </section>
@@ -1036,7 +1087,7 @@
       </header>
       <div class="linea-tiempo" id="lineaTiempo">
         <span class="avance" aria-hidden="true"></span>
-        <div class="hito" data-revela><span class="bola">1</span><h3>Descárgala</h3><p><span class="solo-win">Baja el instalador <span class="js-tam">para Windows 10 y 11</span>.</span><span class="solo-mac">Baja el DMG para Mac (macOS 15 o más nuevo) y arrastra NO LIMIT a <b>Aplicaciones</b>.</span></p></div>
+        <div class="hito" data-revela><span class="bola">1</span><h3>Entra y descárgala</h3><p>Toca <b>Entrar</b>, pon tu código y luego: <span class="solo-win">baja el instalador <span class="js-tam">para Windows 10 y 11</span>.</span><span class="solo-mac">baja el DMG para Mac (macOS 15 o más nuevo) y arrastra NO LIMIT a <b>Aplicaciones</b>.</span></p></div>
         <div class="hito" data-revela style="--retraso:.08s"><span class="bola">2</span><h3>Instálala</h3><p><span class="solo-win">Si sale <em>“Windows protegió tu PC”</em>, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.</span><span class="solo-mac">Abre Terminal y pega <code>xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"</code>. Ábrela y dale los permisos de <b>Accesibilidad</b> y <b>Grabación de pantalla</b>.</span></p></div>
         <div class="hito" data-revela style="--retraso:.16s"><span class="bola">3</span><h3>Tu código y tu clave</h3><p>Primero pega tu código de NO LIMIT. Luego tu clave de IA: gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. O con saldo en <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude</a> o <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">ChatGPT</a>.</p></div>
         <div class="hito" data-revela style="--retraso:.24s"><span class="bola">4</span><h3>INYECTAR</h3><p><span class="solo-win">Se va junto al reloj. Ahora Ctrl + clic sobre cualquier pregunta.</span><span class="solo-mac">Se queda en la barra de arriba. Ahora Option + clic sobre cualquier pregunta.</span></p></div>
@@ -1052,7 +1103,10 @@
         <h2 class="titulo plata">Lo que todos preguntan.</h2>
       </header>
       <div class="faq" id="faq" data-revela>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Cuesta <b>100 pesos, pago único</b>. Al pagar te damos tu código de NO LIMIT (NL-XXXX-XXXX-XXXX): la primera vez la app te lo pide, lo pegas y ya. Es un código por persona; si se comparte, se bloquea.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Cuesta <b>150 pesos al mes</b>. Le pagas a tu vendedor (transferencia, OXXO o efectivo) y te da tu código NL-XXXX-XXXX-XXXX. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué tipos de preguntas contesta?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Opción múltiple, varias casillas, verdadero o falso, completar espacios, menús desplegables (también dentro de un párrafo), relacionar columnas, respuesta corta y ensayo, problemas con números (aunque cambien), editores de ecuaciones con fracciones y exponentes, dar clic en una parte de una imagen o diagrama, graficar puntos, leer gráficas y tablas, matrices, ordenar arrastrando y arrastrar etiquetas a un esquema. Lo que no puede: escuchar audio o ver un video completo, ni dibujar a mano.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué tarda unos segundos?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque lo hace con calma, como tú: primero ubica la pregunta, la lee de cerca, la resuelve, la contesta y al final revisa que haya quedado bien marcada. Tarda de 10 a 30 segundos según la pregunta. Así no se equivoca de casilla.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Le da clic a Siguiente o Enviar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. NO LIMIT marca, escribe, elige o acomoda la respuesta, pero los botones de Siguiente, Enviar o Terminar los tocas tú. Así nunca se cambia de página sola. Si no está segura de dónde contestar, no toca nada y te dice la respuesta.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué necesito para usarla?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Tu código de NO LIMIT y una clave de IA: <b>la de Gemini es gratis</b>; las de Claude y ChatGPT cobran por uso, directo a ellos. Si una IA está saturada, NO LIMIT prueba sola otro modelo.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿“Inyectar” mete algo en mi compu o en la página?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. Es solo el nombre del botón. Cuando haces Ctrl + clic toma una captura cerca del puntero y da el clic o escribe como si fueras tú. <b>No se mete en otros programas ni en la memoria.</b></p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué Windows dice “Windows protegió tu PC”?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque la app es nueva y no tiene un certificado de paga. Toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>. El código está abierto en GitHub.</p></div></div></div>
@@ -1087,13 +1141,34 @@
   </section>
 </main>
 
+<div class="cuenta-fondo" id="cuenta" hidden>
+  <div class="cuenta-caja" role="dialog" aria-modal="true" aria-labelledby="cuentaTitulo">
+    <button class="cuenta-cerrar" id="cuentaCerrar" type="button" aria-label="Cerrar">×</button>
+    <h3 id="cuentaTitulo">Entra con tu código</h3>
+    <p class="cuenta-sub" id="cuentaSub">Tu código de NO LIMIT es tu cuenta. Con él descargas la app y ves hasta cuándo está pagada.</p>
+    <form class="cuenta-form" id="cuentaForm" autocomplete="off">
+      <input id="cuentaCodigo" name="codigo" placeholder="NL-XXXX-XXXX-XXXX" maxlength="24" spellcheck="false" autocapitalize="characters" aria-label="Tu código">
+      <button type="submit" id="cuentaEntrar">ENTRAR</button>
+    </form>
+    <p class="cuenta-msg" id="cuentaMsg" role="status"></p>
+    <div class="cuenta-ok" id="cuentaOk" hidden>
+      <p class="cuenta-estado" id="cuentaEstado"></p>
+      <div class="cuenta-descargas" id="cuentaDescargas">
+        <a class="js-bajar-win" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows</a>
+        <a class="js-bajar-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
+      </div>
+      <button class="cuenta-salir" id="cuentaSalir" type="button">Salir</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="envoltura pie">
     <img src="assets/marca.webp" alt="NO LIMIT" width="1400" height="592" loading="lazy">
     <nav aria-label="Pie">
       <a href="#demo">Pruébalo</a>
       <a href="#preguntas">Preguntas</a>
-      <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT">Código en GitHub</a>
+      <a href="#precio">Precio</a>
       <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT/blob/main/LICENCIAS.txt">Licencias</a>
     </nav>
     <span>© 2026 NO LIMIT · <span class="js-version-corta">v1.3.1</span></span>
@@ -1147,7 +1222,7 @@
   var MAC_LINK = MAC_INTEL;
   if (ES_MAC) document.documentElement.classList.add("es-mac");
   function ponerMac() {
-    $$(".js-mac").forEach(function (e) { e.href = MAC_LINK; });
+    $$(".js-mac, .js-bajar-mac").forEach(function (e) { e.href = MAC_LINK; });
     if (ES_MAC) $$(".js-atajo").forEach(function (e) { e.textContent = "Option"; });
   }
   ponerMac();
@@ -1694,6 +1769,145 @@
       it.classList.toggle("abierto", abrir);
       b.setAttribute("aria-expanded", abrir ? "true" : "false");
     });
+  });
+
+  /* ---------------------------------------------------------------- Mi cuenta: entrar con el codigo
+     El codigo es la cuenta. La pagina calcula su huella (PBKDF2, igual que la app) y la busca en licencias.json,
+     donde dice hasta cuando esta pagado cada codigo. Para descargar hay que entrar con un codigo al corriente. */
+  var CONTACTO = { whatsapp: "", instagram: "" };      // <- numero (52...) o usuario para el boton "Comprar o renovar"
+  var CUENTA = { estado: null, pendiente: null };
+  var ALFA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  var MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  var cuenta = $("#cuenta"), cMsg = $("#cuentaMsg"), cOk = $("#cuentaOk"), cForm = $("#cuentaForm"),
+      cCodigo = $("#cuentaCodigo"), cEntrar = $("#cuentaEntrar"), cEstado = $("#cuentaEstado");
+
+  function guardado(k, v) {
+    try {
+      if (v === undefined) return localStorage.getItem(k);
+      if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v);
+    } catch (e) { return null; }
+    return null;
+  }
+  function normalizar(t) {
+    t = String(t || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+    if (t.indexOf("NL") === 0 && t.length === 14) t = t.slice(2);
+    return t.replace(/O/g, "0").replace(/I/g, "1").replace(/L/g, "1");
+  }
+  function formatear(n) { return "NL-" + n.slice(0, 4) + "-" + n.slice(4, 8) + "-" + n.slice(8, 12); }
+  function fechaCorta(iso) {
+    var p = String(iso || "").split("-");
+    return p.length === 3 ? (+p[2]) + " de " + MESES[+p[1] - 1] : iso;
+  }
+  async function huella(n) {
+    var enc = new TextEncoder();
+    var llave = await crypto.subtle.importKey("raw", enc.encode(n), "PBKDF2", false, ["deriveBits"]);
+    var bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc.encode("NO-LIMIT-LIC-2"), iterations: 120000,
+                                                hash: "SHA-256" }, llave, 256);
+    return Array.prototype.map.call(new Uint8Array(bits), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+  }
+  async function revisarCodigo(texto) {
+    var n = normalizar(texto);
+    if (n.length !== 12 || n.split("").some(function (c) { return ALFA.indexOf(c) < 0; })) return { motivo: "codigo" };
+    var r = await fetch("licencias.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("lista");
+    var datos = await r.json();
+    var hoyLocal = new Date().toISOString().slice(0, 10), hoy = hoyLocal;
+    var fecha = r.headers.get("date");
+    if (fecha) { var d = new Date(fecha); if (!isNaN(d)) hoy = d.toISOString().slice(0, 10); }
+    if (hoyLocal > hoy) hoy = hoyLocal;
+    var h = await huella(n);
+    var num = (datos.codigos || {})[h];
+    if (num === undefined && datos.extra && !Array.isArray(datos.extra)) num = datos.extra[h];
+    if (num === undefined) return { motivo: "codigo" };
+    if ((datos.bloqueadas || []).indexOf(h) >= 0) return { motivo: "bloqueado", codigo: formatear(n) };
+    var vence = (datos.vencen || {})[String(num)];
+    if (!vence) return { motivo: "sin_activar", codigo: formatear(n), numero: num };
+    if (vence < hoy) return { motivo: "vencido", codigo: formatear(n), numero: num, vence: vence };
+    return { motivo: "ok", codigo: formatear(n), numero: num, vence: vence };
+  }
+  var TEXTOS = {
+    codigo: "Ese código no existe. Revisa que esté completo (NL-XXXX-XXXX-XXXX).",
+    bloqueado: "Ese código está bloqueado. Pídele uno nuevo a quien te vendió NO LIMIT.",
+    sin_activar: "Tu código todavía no está activado. Paga tu mes y pídele a tu vendedor que lo active.",
+    red: "No se pudo revisar ahorita. Revisa tu internet y vuelve a intentar."
+  };
+  function pintarCuenta() {
+    var e = CUENTA.estado;
+    var ok = !!(e && e.motivo === "ok");
+    cOk.hidden = !ok;
+    cForm.hidden = ok;
+    $("#btnCuenta").textContent = ok ? "Mi cuenta" : "Entrar";
+    $("#cuentaTitulo").textContent = ok ? "Tu cuenta" : "Entra con tu código";
+    $("#cuentaSub").hidden = ok;
+    if (ok) {
+      cEstado.innerHTML = "Código <b>" + e.codigo + "</b><br>Activa hasta el <b>" + fechaCorta(e.vence) + "</b>.";
+      cMsg.textContent = "";
+    }
+  }
+  function abrirCuenta(pendiente) {
+    CUENTA.pendiente = pendiente || null;
+    cuenta.hidden = false;
+    pintarCuenta();
+    if (!cForm.hidden) setTimeout(function () { try { cCodigo.focus(); } catch (e) {} }, 60);
+  }
+  function cerrarCuenta() { cuenta.hidden = true; CUENTA.pendiente = null; }
+  async function entrar(texto, callado) {
+    cMsg.className = "cuenta-msg";
+    if (!callado) { cMsg.textContent = "Revisando tu código…"; cEntrar.disabled = true; }
+    try {
+      var e = await revisarCodigo(texto);
+      if (e.motivo === "ok") {
+        CUENTA.estado = e;
+        guardado("nolimit_codigo", e.codigo);
+        pintarCuenta();
+        if (CUENTA.pendiente) { var a = CUENTA.pendiente; CUENTA.pendiente = null; location.href = a; }
+      } else if (!callado) {
+        CUENTA.estado = null;
+        cMsg.className = "cuenta-msg mal";
+        cMsg.textContent = e.motivo === "vencido"
+          ? "Tu mes venció el " + fechaCorta(e.vence) + ". Paga tu renovación (150 pesos) y vuelve a entrar."
+          : TEXTOS[e.motivo] || TEXTOS.codigo;
+        if (e.motivo === "vencido") guardado("nolimit_codigo", e.codigo);
+      }
+    } catch (err) {
+      if (!callado) { cMsg.className = "cuenta-msg mal"; cMsg.textContent = TEXTOS.red; }
+    }
+    cEntrar.disabled = false;
+  }
+  if (cuenta && window.crypto && crypto.subtle) {
+    $("#btnCuenta").addEventListener("click", function () { abrirCuenta(null); });
+    $("#cuentaCerrar").addEventListener("click", cerrarCuenta);
+    cuenta.addEventListener("click", function (e) { if (e.target === cuenta) cerrarCuenta(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !cuenta.hidden) cerrarCuenta(); });
+    cForm.addEventListener("submit", function (e) { e.preventDefault(); entrar(cCodigo.value, false); });
+    $("#cuentaSalir").addEventListener("click", function () {
+      CUENTA.estado = null; guardado("nolimit_codigo", null); cCodigo.value = ""; pintarCuenta();
+    });
+    // para descargar hay que entrar con un codigo al corriente
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("a.descarga, a.js-mac");
+      if (!a || (CUENTA.estado && CUENTA.estado.motivo === "ok")) return;
+      e.preventDefault();
+      abrirCuenta(a.href);
+    }, true);
+    var antes = guardado("nolimit_codigo");
+    if (antes) { cCodigo.value = antes; entrar(antes, true); }
+  } else if (cuenta) {
+    $("#btnCuenta").hidden = true;          // navegador muy viejo: las descargas quedan directas
+  }
+  // boton de comprar o renovar
+  $$(".js-comprar").forEach(function (b) {
+    if (CONTACTO.whatsapp) {
+      b.href = "https://wa.me/" + CONTACTO.whatsapp + "?text=" + encodeURIComponent("Hola, quiero comprar o renovar NO LIMIT");
+      b.target = "_blank"; b.rel = "noopener";
+    } else if (CONTACTO.instagram) {
+      b.href = "https://instagram.com/" + CONTACTO.instagram; b.target = "_blank"; b.rel = "noopener";
+    } else {
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        b.textContent = "Pídeselo a quien te pasó NO LIMIT";
+      });
+    }
   });
 
   pedirCuadro();
