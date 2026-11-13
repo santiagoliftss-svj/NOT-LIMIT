@@ -2,7 +2,8 @@
  "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). bloqueadas: huellas bloqueadas.",
  "precio": "150 MXN al mes",
  "vencen": {
-  "1": "2026-12-13"
+  "1": "2026-12-13",
+  "300": "2099-12-31"
  },
  "bloqueadas": [],
  "extra": {},
