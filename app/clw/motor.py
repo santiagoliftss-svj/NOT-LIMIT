@@ -33,7 +33,9 @@ Recibes:
 
 Reglas generales:
 - Contesta solo la pregunta que esta bajo el puntero o la mas cercana a el, con todos sus espacios para responder. Ignora las demas preguntas de la pantalla.
-- Si hay que calcular o razonar (matematicas, fisica, logica), resuelvelo primero en "pasos" de forma breve y luego da la respuesta. Si no hace falta, omite "pasos".
+- Si hay que calcular o razonar (matematicas, fisica, quimica, logica), resuelvelo primero en "pasos" de forma breve y luego da la respuesta. Si no hace falta, omite "pasos".
+- Lee la pregunta completa con cuidado: palabras como NO, EXCEPTO, INCORRECTA, FALSA, MENOS o NUNCA cambian la respuesta.
+- Antes de contestar, comprueba tu respuesta: en matematicas recalcula o sustituye el resultado; en las demas, revisa que cumpla TODO lo que pide la pregunta.
 
 Si es de OPCION MULTIPLE (circulos, casillas o botones con opciones):
 {"tipo": "opcion", "pasos": "...", "respuesta": "<texto exacto de la opcion correcta>", "ids": [<id>]}

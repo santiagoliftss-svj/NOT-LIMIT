@@ -1,4 +1,4 @@
-NO LIMIT para Mac (beta) - Apple Silicon (M1, M2, M3, M4) con macOS reciente
+NO LIMIT para Mac (beta) - macOS 15 o mas nuevo (chip M1 a M4, o Intel)
 
 1. Arrastra "NO LIMIT" a la carpeta Aplicaciones.
 

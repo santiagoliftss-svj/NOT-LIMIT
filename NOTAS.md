@@ -1,8 +1,14 @@
-**Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*).
+**Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*). ¿Tienes Mac? Bájala en la página: https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
 Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más información** y luego a **Ejecutar de todas formas**.
 
 Al abrir la app, elige el modelo, pega tu API key y toca **INYECTAR**. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
+
+**Nuevo en 1.4**
+
+- Si la IA está saturada (pasa seguido con la clave gratis de Gemini), NO LIMIT reintenta y se pasa sola a otro modelo. Ya no se queda en "saturada".
+- Más precisa: piensa más antes de contestar, lee con cuidado los NO / EXCEPTO / INCORRECTA y comprueba la respuesta antes de marcarla.
+- Ya hay versión para Mac (macOS 15 o más nuevo). Ahí el atajo es **Option + clic**.
 
 **Nuevo en 1.3**
 

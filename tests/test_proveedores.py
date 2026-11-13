@@ -187,3 +187,62 @@ def prueba_clave_parece_de():
     assert P.clave_parece_de("AIzaSyX") == "gemini"
     assert P.clave_parece_de("sk-proj-x") == "openai"
     assert P.clave_parece_de("hola") is None
+
+
+def prueba_gemini_saturado_usa_otro_modelo():
+    """Gemini gratis: si Flash esta saturado (503) o sin cupo (429), contesta Flash-Lite y se queda con ese un rato."""
+    PEDIDOS.clear()
+    ok = {"candidates": [{"content": {"parts": [{"text": '{"id": 5}'}]}, "finishReason": "STOP"}]}
+
+    def f(m, path, h, body):
+        if "gemini-flash-latest" in path:
+            return 503, {"error": {"code": 503, "message": "The model is overloaded. Please try again later.",
+                                   "status": "UNAVAILABLE"}}
+        if "gemini-flash-lite-latest" in path:
+            return 200, ok
+        return 404, {"error": {"code": 404, "message": "model not found", "status": "NOT_FOUND"}}
+
+    GUION["f"] = f
+    cli = P.ClienteIA()
+    cli.pausa = 0.01
+    assert cli.preguntar("gemini", "gemini-flash-latest", "AIzaX", "s", "QUJD", "image/png", "t")[0] == '{"id": 5}'
+    rutas = [p for _, p, _, _ in PEDIDOS]
+    assert sum("gemini-flash-latest" in p for p in rutas) == 2, rutas          # se reintento una vez
+    PEDIDOS.clear()
+    assert cli.preguntar("gemini", "gemini-flash-latest", "AIzaX", "s", "QUJD", "image/png", "t")[0] == '{"id": 5}'
+    assert ["gemini-flash-lite-latest" in p for _, p, _, _ in PEDIDOS] == [True], "ya se va directo al que si sirve"
+
+    # sin cupo en todos: se avisa claro (y no se queda pegado)
+    GUION["f"] = lambda m, p, h, b: (429, {"error": {"code": 429, "message": "Resource has been exhausted",
+                                                     "status": "RESOURCE_EXHAUSTED"}})
+    cli = P.ClienteIA()
+    cli.pausa = 0.01
+    try:
+        cli.preguntar("gemini", "gemini-flash-latest", "AIzaX", "s", "QUJD", "image/png", "t")
+        raise AssertionError("debio fallar")
+    except P.ErrorIA as e:
+        assert e.tipo == "limite" and "cupo" in e.mensaje, e.mensaje
+
+    # la clave mala no se reintenta con otros modelos
+    PEDIDOS.clear()
+    GUION["f"] = lambda m, p, h, b: (400, {"error": {"code": 400, "message": "API key not valid.", "status": "INVALID_ARGUMENT"}})
+    try:
+        P.ClienteIA().preguntar("gemini", "gemini-flash-latest", "AIzaX", "s", "QUJD", "image/png", "t")
+        raise AssertionError("debio fallar")
+    except P.ErrorIA as e:
+        assert e.tipo == "clave" and len(PEDIDOS) == 1
+
+
+def prueba_preciso_piensa_mas():
+    PEDIDOS.clear()
+
+    def f(m, path, h, body):
+        nivel = body.get("generationConfig", {}).get("thinkingConfig", {}).get("thinkingLevel")
+        if nivel == "medium":
+            return 400, {"error": {"code": 400, "message": "thinking level not supported", "status": "INVALID_ARGUMENT"}}
+        return 200, {"candidates": [{"content": {"parts": [{"text": "ok"}]}, "finishReason": "STOP"}]}
+
+    GUION["f"] = f
+    assert P.ClienteIA().preguntar("gemini", "gemini-flash-latest", "k", "s", "QUJD", "image/png", "t", preciso=True)[0] == "ok"
+    niveles = [b["generationConfig"]["thinkingConfig"]["thinkingLevel"] for _, _, _, b in PEDIDOS]
+    assert niveles == ["medium", "low"], niveles

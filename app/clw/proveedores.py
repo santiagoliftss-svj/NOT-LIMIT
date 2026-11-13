@@ -97,13 +97,14 @@ def _traducir(proveedor, estado, cuerpo):
             or "billing" in bajo or "insufficient balance" in bajo:
         return ErrorIA(f"Tu cuenta de {nombre} no tiene saldo.", "saldo", msg)
     if estado == 429 or "resource_exhausted" in bajo or "rate limit" in bajo:
-        return ErrorIA("Muchas preguntas seguidas. Espera unos segundos.", "limite", msg)
+        return ErrorIA(f"Se acabó el cupo de {nombre} por ahora (muchas preguntas seguidas). Espera un minuto.",
+                       "limite", msg)
     if estado == 404 or "not found" in bajo and "model" in bajo:
         return ErrorIA("Ese modelo no está disponible para tu cuenta. Elige otro.", "modelo", msg)
     if estado == 403:
         return ErrorIA(f"{nombre} no deja usar esa clave aquí. Revisa los permisos de tu cuenta.", "clave", msg)
     if estado >= 500 or estado == 529:
-        return ErrorIA(f"{nombre} está saturado. Intenta otra vez.", "servidor", msg)
+        return ErrorIA(f"{nombre} está saturado ahorita. Intenta en un momento o elige otro modelo.", "servidor", msg)
     return ErrorIA(f"{nombre} rechazó la pregunta: {msg[:140]}", "peticion", msg)
 
 
@@ -155,21 +156,21 @@ def _base(proveedor, predeterminada):
 def _variantes(proveedor, preciso):
     if proveedor == "claude":
         if preciso:
-            return [{"output_config": {"effort": "low"}}, {}]
+            return [{"output_config": {"effort": "medium"}}, {"output_config": {"effort": "low"}}, {}]
         return [{"thinking": {"type": "disabled"}},
                 {"thinking": {"type": "between_tools"}},
                 {"output_config": {"effort": "low"}},
                 {}]
     if proveedor == "gemini":
         if preciso:
-            return [{"thinkingConfig": {"thinkingLevel": "low"}}, {}]
+            return [{"thinkingConfig": {"thinkingLevel": "medium"}}, {"thinkingConfig": {"thinkingLevel": "low"}}, {}]
         return [{"thinkingConfig": {"thinkingLevel": "minimal"}},
                 {"thinkingConfig": {"thinkingLevel": "low"}},
                 {"thinkingConfig": {"thinkingBudget": 0}},
                 {}]
     if proveedor == "openai":
         if preciso:
-            return [{"reasoning_effort": "low"}, {}]
+            return [{"reasoning_effort": "medium"}, {"reasoning_effort": "low"}, {}]
         return [{"reasoning_effort": "none"}, {"reasoning_effort": "minimal"}, {"reasoning_effort": "low"}, {}]
     return [{}]
 
@@ -251,19 +252,67 @@ def _extraer(proveedor, cuerpo_txt):
 
 # ---------------------------------------------------------------- cliente
 
+# Si un modelo esta saturado (o sin cupo, como Gemini gratis), se prueba otro del mismo proveedor con la misma clave
+ALTERNOS = {
+    "gemini": ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
+    "claude": ["claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5"],
+    "openai": ["gpt-6-luna", "gpt-6.1-terra"],
+}
+TIEMPO_MAX = 45          # segundos maximos intentando antes de rendirse
+RECORDAR_ALTERNO = 180   # si el elegido estaba saturado, se usa el que si contesto por 3 minutos
+
+
 class ClienteIA:
     def __init__(self):
         self._recordado = {}           # (proveedor, modelo, preciso) -> indice de variante
+        self._alterno = {}             # (proveedor, modelo) -> (modelo que si contesto, hasta cuando)
         self._candado = threading.Lock()
+        self.pausa = 1.0               # (las pruebas la bajan)
+
+    def modelos_a_probar(self, proveedor, modelo):
+        orden = [modelo] + [m for m in ALTERNOS.get(proveedor, []) if m != modelo]
+        alterno = self._alterno.get((proveedor, modelo))
+        if alterno and alterno[1] > time.time() and alterno[0] in orden:
+            orden.remove(alterno[0])
+            orden.insert(0, alterno[0])
+        return orden
 
     def preguntar(self, proveedor, modelo, clave, sistema, b64, mime, texto, preciso=False, reintentos=1):
         if not clave:
             raise ErrorIA(f"Falta tu clave de {PROVEEDORES[proveedor].nombre}.", "clave")
+        inicio = time.time()
+        primero = None
+        for m in self.modelos_a_probar(proveedor, modelo):
+            for intento in range(2):
+                try:
+                    res = self._una(proveedor, m, clave, sistema, b64, mime, texto, preciso)
+                except ErrorIA as e:
+                    if e.tipo in ("clave", "saldo", "peticion"):
+                        raise
+                    primero = primero or e
+                    if e.tipo == "modelo":
+                        break                   # ese modelo no esta para esta cuenta: el siguiente
+                    if time.time() - inicio > TIEMPO_MAX or (e.tipo == "red" and intento):
+                        raise primero
+                    if intento == 0:
+                        time.sleep(self.pausa * (1.5 if e.tipo == "limite" else 1.0))
+                    continue
+                with self._candado:
+                    if m != modelo:
+                        self._alterno[(proveedor, modelo)] = (m, time.time() + RECORDAR_ALTERNO)
+                    else:
+                        self._alterno.pop((proveedor, modelo), None)
+                return res
+            if primero is not None and primero.tipo == "red":
+                raise primero
+        raise primero or ErrorIA("No se pudo hablar con la IA.", "otro")
+
+    def _una(self, proveedor, modelo, clave, sistema, b64, mime, texto, preciso):
+        """Una pregunta a un modelo (probando las variantes que acepte). Lanza ErrorIA."""
         variantes = _variantes(proveedor, preciso)
         llave = (proveedor, modelo, preciso)
-        inicio = self._recordado.get(llave, 0)
+        i = self._recordado.get(llave, 0)
         ultimo = None
-        i = inicio
         while i < len(variantes):
             url, cab, cuerpo = _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variantes[i])
             estado, resp = _http("POST", url, cab, cuerpo, timeout=90 if preciso else 60)
@@ -275,10 +324,6 @@ class ClienteIA:
             if estado == 400 and error.tipo == "peticion" and i + 1 < len(variantes):
                 ultimo = error
                 i += 1          # este modelo no acepta esta variante: se prueba la siguiente
-                continue
-            if error.tipo in ("limite", "servidor") and reintentos > 0:
-                reintentos -= 1
-                time.sleep(1.5)
                 continue
             raise error
         raise ultimo or ErrorIA("No se pudo hablar con la IA.", "otro")

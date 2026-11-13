@@ -23,11 +23,8 @@ jobs:
           - runner: macos-15-intel
             arch: x86_64
             dmg: NO-LIMIT-Mac-Intel.dmg
-          # (las Macs M1 de GitHub a veces no estan libres: se pide en dos versiones de macOS, la que salga)
+          # (solo macos-15: si se arma en macos-26, la minima sube a macOS 26 y deja fuera a macOS 15)
           - runner: macos-15
-            arch: arm64
-            dmg: NO-LIMIT-Mac.dmg
-          - runner: macos-26
             arch: arm64
             dmg: NO-LIMIT-Mac.dmg
     runs-on: ${{ matrix.runner }}
