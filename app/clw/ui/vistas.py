@@ -52,6 +52,7 @@ R_BOTON = (BOTON[0] - 30, BOTON[1] - 30, BOTON[2] + 60, BOTON[3] + 60 + 30)
 
 LICENCIA_UI = Proveedor("licencia", "NO LIMIT", "NL-", version.PAGINA + "#precio", "¿No tienes código? Cómpralo aquí")
 PROV_UI = dict(PROVEEDORES, licencia=LICENCIA_UI)
+MODELO_DE = {"gemini": "gemini-flash-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna"}
 
 
 def _enmascarar(t):
@@ -366,9 +367,11 @@ class Interfaz:
             return
         parece = clave_parece_de(texto)
         if parece and parece != k["prov"]:
-            otro = PROVEEDORES[parece].nombre
-            k["msg"], k["tipo"] = f"Esa clave parece de {otro}. Pégala en {otro} o usa una de {PROVEEDORES[k['prov']].nombre}.", "error"
-            return
+            # pego la clave de otra IA (ej. la gratis de Gemini donde iba la de Claude): se guarda en esa
+            k["prov"] = parece
+            if not self.config.tiene_clave(self.modelo_actual().proveedor):
+                self.config["modelo"] = MODELO_DE[parece]
+                self.agregar_actividad(f"Cambié a {buscar_modelo(MODELO_DE[parece]).nombre} (tu clave es de {PROVEEDORES[parece].nombre})", "info")
         k["verificando"] = True
         k["msg"], k["tipo"] = "", ""
         self.app.verificar_clave(k["prov"], texto)

@@ -167,6 +167,10 @@ def prueba_clave_mala_y_de_otro():
     for ch in "AIzaSyBoguskey":
         ui.tecla(ch, ch)
     ui.guardar_clave()
+    # pego la de Gemini donde iba la de Claude: se revisa y se guarda como de Gemini (ya no es error)
+    assert ui.clave["prov"] == "gemini" and ("verificar", "gemini", "AIzaSyBoguskey") in app.log, app.log
+    assert c["modelo"] == "gemini-flash-latest"
+    ui.clave_verificada("gemini", "AIzaSyBoguskey", ErrorIA("Tu clave de Gemini no sirve. Revisa que esté completa.", "clave"))
     assert ui.clave["tipo"] == "error" and "Gemini" in ui.clave["msg"]
     _pasar(ui, reloj, 0.4)
     _guardar(ui, "08_clave_de_otro")

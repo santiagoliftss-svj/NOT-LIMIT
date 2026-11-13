@@ -8,6 +8,7 @@ Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-X
 
 - Ahora necesita tu código de NO LIMIT (se compra, un código por persona). Se pega una sola vez.
 - En Mac se actualiza sola, como en Windows: baja la versión nueva y la cambia al cerrar o al tocar **Actualizar**. Después de actualizar te vuelve a pedir los dos permisos de macOS.
+- Si pegas la clave de otra IA (por ejemplo la gratis de Gemini donde iba la de Claude), ya no marca error: la guarda en la correcta y se cambia a ese modelo.
 - Gemini Pro ya dice que necesita saldo (con la clave gratis solo jala Gemini Flash).
 
 **Nuevo en 1.4**

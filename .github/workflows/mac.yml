@@ -59,6 +59,9 @@ jobs:
         run: python tests/correr.py
 
       - name: Armar NO LIMIT.app
+        env:
+          MAC_FIRMA_P12: ${{ secrets.MAC_FIRMA_P12 }}
+          MAC_FIRMA_CLAVE: ${{ secrets.MAC_FIRMA_CLAVE }}
         run: |
           # el OCR sale de Homebrew de esta version de macOS: esa es la minima
           export MAC_MINIMO="$(sw_vers -productVersion | cut -d. -f1).0"
@@ -66,7 +69,7 @@ jobs:
           pyinstaller build/clw_gang_mac.spec --noconfirm --distpath dist --workpath build/temp
           python build/empacar_tesseract_mac.py meter "dist/NO LIMIT.app"
           cp LICENCIAS.txt app/assets/fuentes/OFL-Archivo.txt "dist/NO LIMIT.app/Contents/Resources/"
-          codesign --force --deep -s - "dist/NO LIMIT.app"
+          bash build/firmar_mac.sh "dist/NO LIMIT.app"
           codesign --verify --deep --strict --verbose=2 "dist/NO LIMIT.app"
           du -sh "dist/NO LIMIT.app"
 

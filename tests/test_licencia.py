@@ -110,3 +110,19 @@ def prueba_codigo_primero_luego_clave():
         assert "código de NO LIMIT" in ui.clave["msg"]                    # pego el codigo donde va la clave
         ui._ir("ajustes")
         ui.render()
+
+
+def prueba_clave_de_otra_ia_se_acomoda_sola():
+    with _Sin():
+        ui, app, c = _ui()
+        c["licencia"] = CODIGO
+        assert c["modelo"].startswith("claude")
+        ui.inyectar()
+        assert ui.pantalla == "clave" and ui.clave["prov"] == "claude"
+        app.portapapeles = "AIzaSyA-clave-gratis-de-gemini-1234567"
+        ui._accion("pegar")
+        ui.guardar_clave()
+        assert ("verificar", "gemini") in app.log, app.log          # se revisa como clave de Gemini
+        assert c["modelo"] == "gemini-flash-latest"
+        ui.clave_verificada("gemini", "AIzaSyA-clave-gratis-de-gemini-1234567", None)
+        assert c.tiene_clave("gemini") and "iniciar" in app.log
