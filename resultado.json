@@ -1,0 +1,316 @@
+{
+  "ocr": {
+    "ok": true,
+    "seg": 0.11,
+    "detalle": {
+      "exe": "/Users/runner/work/NOT-LIMIT/NOT-LIMIT/dist/NO LIMIT.app/Contents/Resources/tesseract/tesseract",
+      "tessdata": "/Users/runner/work/NOT-LIMIT/NOT-LIMIT/dist/NO LIMIT.app/Contents/Resources/tesseract/tessdata",
+      "idiomas": [
+        "eng",
+        "osd",
+        "spa"
+      ]
+    }
+  },
+  "motor": {
+    "ok": true,
+    "seg": 4.09,
+    "detalle": {
+      "quiz": [
+        [
+          "clic",
+          573,
+          168
+        ]
+      ],
+      "cajitas": [
+        [
+          "clic",
+          239,
+          122
+        ],
+        [
+          "escribe",
+          "13/12"
+        ],
+        [
+          "clic",
+          239,
+          242
+        ],
+        [
+          "escribe",
+          "5/13"
+        ],
+        [
+          "clic",
+          239,
+          362
+        ],
+        [
+          "escribe",
+          "√3/2"
+        ]
+      ]
+    }
+  },
+  "proveedores": {
+    "ok": true,
+    "seg": 0.17,
+    "detalle": {
+      "claude": "{\"tipo\":\"opcion\",\"ids\":[0]}",
+      "gemini": "{\"tipo\":\"opcion\",\"ids\":[0]}",
+      "openai": "{\"tipo\":\"opcion\",\"ids\":[0]}"
+    }
+  },
+  "cifrado": {
+    "ok": true,
+    "seg": 0.03,
+    "detalle": "mac:MM"
+  },
+  "interfaz": {
+    "ok": true,
+    "seg": 0.97,
+    "detalle": [
+      1.0,
+      1.5
+    ]
+  },
+  "red": {
+    "ok": false,
+    "seg": 0.1,
+    "error": "HTTPError: HTTP Error 403: rate limit exceeded",
+    "traza": "Traceback (most recent call last):\n  File \"clw/autoprueba.py\", line 28, in _paso\n  File \"clw/autoprueba.py\", line 224, in p_red\n  File \"urllib/request.py\", line 215, in urlopen\n  File \"urllib/request.py\", line 521, in open\n  File \"urllib/request.py\", line 630, in http_response\n  File \"urllib/request.py\", line 559, in error\n  File \"urllib/request.py\", line 492, in _call_chain\n  File \"urllib/request.py\", line 639, in http_error_default\nurllib.error.HTTPError: HTTP Error 403: rate limit exceeded\n"
+  },
+  "ventana": {
+    "ok": true,
+    "detalle": {
+      "tam": [
+        380,
+        629
+      ],
+      "escala": 1.0,
+      "render": [
+        380,
+        600
+      ],
+      "bandeja": true,
+      "permisos": {
+        "accesibilidad": true,
+        "pantalla": true
+      },
+      "diferencia": 2.24,
+      "diferencia_al_reves": 32.4,
+      "escala_pantalla": 1.0,
+      "nitida": true
+    }
+  },
+  "rendimiento": {
+    "ok": true,
+    "detalle": {
+      "escala": 1.0,
+      "ms": {
+        "mouse_principal": {
+          "prom": 3.17,
+          "p90": 4.85,
+          "max": 27.99,
+          "n": 48
+        },
+        "quieta_animada": {
+          "prom": 1.85,
+          "p90": 3.34,
+          "max": 8.7,
+          "n": 323
+        },
+        "transicion_ajustes": {
+          "prom": 0.02,
+          "p90": 0.0,
+          "max": 12.36,
+          "n": 18675
+        },
+        "hoja_abriendo": {
+          "prom": 0.02,
+          "p90": 0.0,
+          "max": 9.43,
+          "n": 18506
+        }
+      }
+    }
+  },
+  "bandeja": {
+    "ok": true,
+    "detalle": {
+      "activo": true,
+      "visible": false,
+      "estado": "withdrawn",
+      "bandeja": true,
+      "escucha": true,
+      "sin_permiso": false,
+      "actividad": []
+    }
+  },
+  "reabrir": {
+    "ok": true,
+    "detalle": {
+      "visible": true,
+      "estado": "normal",
+      "activo": true
+    }
+  },
+  "e2e": {
+    "ok": false,
+    "detalle": {
+      "opcion": {
+        "ok": false,
+        "clics": [],
+        "esperado": [
+          490,
+          140,
+          850,
+          200
+        ],
+        "actividad": [
+          [
+            "20:50",
+            "Marcó 1 opción",
+            "ok"
+          ]
+        ],
+        "pedidos_ia": 6,
+        "escala": 1.0
+      },
+      "escribir": {
+        "ok": true,
+        "exacto": true,
+        "texto": "Cuatro, señor ¿sí?",
+        "diag": {
+          "ia_campo": "C0"
+        },
+        "actividad": [
+          [
+            "20:50",
+            "Marcó 1 opción",
+            "ok"
+          ]
+        ]
+      },
+      "casillas": {
+        "ok": true,
+        "valores": {
+          "Rojo": 1,
+          "Verde": 0,
+          "Azul": 1,
+          "Gato": 0
+        },
+        "actividad": [
+          [
+            "20:51",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "20:50",
+            "Marcó 1 opción",
+            "ok"
+          ]
+        ],
+        "seg": 4.5
+      },
+      "menu": {
+        "ok": true,
+        "valor": "Mitocondria",
+        "actividad": [
+          [
+            "20:51",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "20:51",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "20:50",
+            "Marcó 1 opción",
+            "ok"
+          ]
+        ],
+        "seg": 4.8
+      },
+      "arrastrar": {
+        "ok": false,
+        "centro": [
+          160.0,
+          180.0
+        ],
+        "actividad": [
+          [
+            "20:51",
+            "No supe cómo contestarla",
+            "info"
+          ],
+          [
+            "20:51",
+            "Eligió 1 en menús",
+            "ok"
+          ],
+          [
+            "20:51",
+            "Marcó 2",
+            "ok"
+          ]
+        ],
+        "seg": 45.2
+      },
+      "candado": {
+        "ok": true,
+        "clics_siguiente": 0,
+        "teclas": [],
+        "actividad": [
+          [
+            "20:52",
+            "No la marqué para no picar algo mal. Respuesta: Cervantes",
+            "info"
+          ],
+          [
+            "20:51",
+            "No supe cómo contestarla",
+            "info"
+          ],
+          [
+            "20:51",
+            "Eligió 1 en menús",
+            "ok"
+          ]
+        ],
+        "seg": 2.8
+      }
+    }
+  },
+  "cpu": {
+    "ok": true,
+    "detalle": {
+      "ventana_al_frente": 8.26,
+      "escondida_y_activa": 0.75
+    }
+  },
+  "permisos": {
+    "ok": true,
+    "detalle": {
+      "faltaban": [],
+      "pantalla_sin_permisos": null
+    }
+  },
+  "_version": "2.0.0",
+  "_obligatorias": [
+    "ocr",
+    "motor",
+    "proveedores",
+    "cifrado",
+    "interfaz",
+    "ventana",
+    "red"
+  ],
+  "_sistema": "darwin"
+}

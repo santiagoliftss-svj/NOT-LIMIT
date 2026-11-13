@@ -1,0 +1,17 @@
+2026-11-13 20:50:23,508 INFO activado con claude-haiku-5-5
+2026-11-13 20:50:24,701 INFO ventana escondida junto al reloj
+2026-11-13 20:50:31,767 INFO modelo=claude-haiku-5-5 ubicar=1.6s ia=0.0s region=(0, 0, 1024, 768) tipo=opcion/opcion cajas=27 campos=2 pasos=1 rechazadas=[] salida={"tipo": "opcion", "ids": [0]}
+2026-11-13 20:50:33,168 INFO hecho={'clic': 1, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=3.1s
+2026-11-13 20:51:11,759 INFO modelo=claude-haiku-5-5 ubicar=1.1s ia=0.0s region=(0, 0, 1024, 768) tipo=abierta/abierta cajas=27 campos=5 pasos=1 rechazadas=[] salida={"tipo": "abierta", "respuestas": [{"campo": "C0", "texto": "Cuatro, se\u00f1or \u00bfs\u00ed?"}]}
+2026-11-13 20:51:14,815 INFO revisar: {"tipo": "abierta", "respuestas": [{"campo": "C0", "texto": "Cuatro, se\u00f1or \u00bfs\u00ed?"}]}
+2026-11-13 20:51:14,816 INFO hecho={'clic': 0, 'escribir': 1, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=4.2s
+2026-11-13 20:51:16,811 INFO modelo=claude-haiku-5-5 ubicar=0.7s ia=0.0s region=(0, 0, 1024, 614) tipo=opcion_multiple/opcion_multiple cajas=25 campos=1 pasos=2 rechazadas=[] salida={"tipo": "opcion_multiple", "respuesta": "Rojo | Azul", "acciones": [{"hacer": "clic", "en": 14, "texto": "Rojo"}, {"hacer": "clic", "en": 20, "texto": "Azul"}]}
+2026-11-13 20:51:19,806 INFO revisar: {"ok": true}
+2026-11-13 20:51:19,806 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=3.7s
+2026-11-13 20:51:21,903 INFO modelo=claude-haiku-5-5 ubicar=0.8s ia=0.0s region=(0, 0, 1024, 614) tipo=desplegable/desplegable cajas=22 campos=1 pasos=1 rechazadas=[] salida={"tipo": "desplegable", "respuesta": "Mitocondria", "acciones": [{"hacer": "elegir", "en": 14, "opcion": "Mitocondria"}]}
+2026-11-13 20:51:24,736 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 1, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=3.6s
+2026-11-13 20:51:27,088 INFO modelo=claude-haiku-5-5 ubicar=0.8s ia=0.0s region=(0, 0, 1024, 612) tipo=arrastrar/arrastrar cajas=22 campos=2 pasos=0 rechazadas=['arrastre fuera de la pregunta'] salida={"tipo": "arrastrar", "acciones": [{"hacer": "arrastrar", "desde": 15, "hasta": -1}]}
+2026-11-13 20:51:27,114 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=0.9s
+2026-11-13 20:52:13,346 INFO modelo=claude-haiku-5-5 ubicar=1.2s ia=0.0s region=(0, 0, 1024, 614) tipo=abierta/abierta cajas=21 campos=1 pasos=0 rechazadas=['es un boton para avanzar o mandar (Siguiente)', 'no se ve un campo para escribir ahi'] salida={"tipo": "abierta", "respuesta": "Cervantes", "acciones": [{"hacer": "clic", "en": 20}, {"hacer": "escribir", "en": {"x": 211, "y": 223}, "texto": "zzz"}]}
+2026-11-13 20:52:13,376 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=1.3s
+2026-11-13 20:52:16,334 INFO detenido
