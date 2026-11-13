@@ -195,7 +195,7 @@
   html.es-mac .solo-win { display: none; }
   .boton-mac { display: inline-flex; align-items: center; justify-content: center; }
   .boton-mac svg { width: 18px; height: 18px; margin-right: 10px; flex: none; }
-  html.es-mac .boton-mac { order: -1; }
+  .par-descargas { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
 
   /* entrada de la portada */
   .portada .entra { opacity: 0; transform: translateY(18px); filter: blur(8px); }
@@ -771,12 +771,14 @@
     <p class="sub entra" style="--retraso:.45s">Pon el puntero sobre la pregunta y haz <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. NO LIMIT lee la pantalla, piensa y marca la respuesta por ti.</p>
 
     <div class="acciones entra" style="--retraso:.55s">
+      <div class="par-descargas">
       <a class="liquido descarga" id="ctaPortada" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe">
         <span class="liquido-forma" aria-hidden="true"><i class="gota g1"></i><i class="gota g2"></i><i class="gota g3"></i></span>
         <span class="liquido-brillo" aria-hidden="true"></span>
         <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
       </a>
       <a class="vidrio-btn boton-mac js-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
+      </div>
       <a class="vidrio-btn" href="#demo">Pruébalo aquí</a>
     </div>
     <p class="meta entra js-meta" style="--retraso:.65s">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
@@ -1010,12 +1012,14 @@
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tus preguntas no pasan por ningún servidor nuestro.</span></li>
         </ul>
         <div class="acciones">
+          <div class="par-descargas">
           <a class="liquido descarga" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe">
             <span class="liquido-forma" aria-hidden="true"><i class="gota g1"></i><i class="gota g2"></i><i class="gota g3"></i></span>
             <span class="liquido-brillo" aria-hidden="true"></span>
             <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
           </a>
           <a class="vidrio-btn boton-mac js-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
+          </div>
         </div>
         <p class="nota-clave js-meta">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
       </div>
@@ -1067,12 +1071,14 @@
       <img class="final-logo" id="finalLogo" src="assets/marca.webp" alt="NO LIMIT" width="1400" height="592" loading="lazy" data-revela>
       <h2 class="titulo destello" data-revela>Sin límite.</h2>
       <div class="acciones" data-revela style="--retraso:.1s">
+        <div class="par-descargas">
         <a class="liquido descarga" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe">
           <span class="liquido-forma" aria-hidden="true"><i class="gota g1"></i><i class="gota g2"></i><i class="gota g3"></i></span>
           <span class="liquido-brillo" aria-hidden="true"></span>
           <svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows
         </a>
         <a class="vidrio-btn boton-mac js-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
+        </div>
       </div>
       <p class="meta js-meta" data-revela>Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
     </div>

@@ -6,6 +6,7 @@ Al abrir la app, elige el modelo, pega tu API key y toca **INYECTAR**. Luego pon
 
 **Nuevo en 1.4**
 
+- Contesta más tipos de pregunta: verdadero o falso, completar espacios, preguntas con gráficas, dibujos, mapas o tablas (lee los datos de la imagen) y las de dar clic en una parte de una imagen.
 - Si la IA está saturada (pasa seguido con la clave gratis de Gemini), NO LIMIT reintenta y se pasa sola a otro modelo. Ya no se queda en "saturada".
 - Más precisa: piensa más antes de contestar, lee con cuidado los NO / EXCEPTO / INCORRECTA y comprueba la respuesta antes de marcarla.
 - Ya hay versión para Mac (macOS 15 o más nuevo). Ahí el atajo es **Option + clic**.
