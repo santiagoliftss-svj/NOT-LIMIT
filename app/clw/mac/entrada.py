@@ -220,6 +220,48 @@ def seleccionar_todo():
     _tecla(K_A, Q.kCGEventFlagMaskCommand)
 
 
+TECLAS = {"derecha": 124, "izquierda": 123, "arriba": 126, "abajo": 125, "retroceso": 51, "escape": 53, "enter": 36}
+
+
+def tecla(nombre, veces=1):
+    """Presiona una tecla especial (derecha, izquierda, arriba, abajo, retroceso, escape, enter)."""
+    codigo = TECLAS[nombre]
+    for _ in range(max(1, int(veces))):
+        _tecla(codigo)
+        time.sleep(0.03)
+
+
+def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
+    """Presiona en (x0, y0), se mueve poco a poco (eventos de 'arrastrar') y suelta en (x1, y1). Pixeles."""
+    s = _escala
+    a = Q.CGPointMake(x0 / s, y0 / s)
+    _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventMouseMoved, a, Q.kCGMouseButtonLeft))
+    time.sleep(0.08)
+    abajo = Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseDown, a, Q.kCGMouseButtonLeft)
+    Q.CGEventSetIntegerValueField(abajo, Q.kCGMouseEventClickState, 1)
+    _mandar(abajo)
+    time.sleep(0.15)
+    ultimo = a
+    try:
+        puntos = [(x0 + d, y0 + d // 3) for d in (3, 6, 9)]
+        for i in range(1, pasos + 1):
+            if cancelar and cancelar():
+                break
+            t = i / pasos
+            t = t * t * (3 - 2 * t)
+            puntos.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+        puntos += [(x1, y1), (x1 + 1, y1), (x1, y1)]
+        for (x, y) in puntos:
+            ultimo = Q.CGPointMake(x / s, y / s)
+            _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseDragged, ultimo, Q.kCGMouseButtonLeft))
+            time.sleep(0.016)
+        time.sleep(0.12)
+    finally:
+        arriba = Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseUp, ultimo, Q.kCGMouseButtonLeft)
+        Q.CGEventSetIntegerValueField(arriba, Q.kCGMouseEventClickState, 1)
+        _mandar(arriba)
+
+
 def trozos(texto):
     """Cada caracter por separado (un emoji o una letra con acento combinado van juntos en UTF-16)."""
     out = []
@@ -252,7 +294,8 @@ def escribir(texto, cancelar=None):
     return enviados == len(trozos(texto))
 
 
-__all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic",
+__all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
+           "arrastrar", "TECLAS",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente", "U32", "VK_LBUTTON",
            "VK_RBUTTON", "VK_CONTROL", "VK_ESCAPE", "VK_MENU", "VK_ATAJO"]

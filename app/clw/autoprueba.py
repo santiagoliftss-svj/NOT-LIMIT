@@ -104,6 +104,30 @@ def _buscar(texto, fragmento, campos=False):
     return None
 
 
+def _puntero(texto):
+    import re
+    m = re.search(r"esta en \((\d+),(\d+)\)", texto)
+    return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+
+
+def _id(texto, fragmento):
+    i = _buscar(texto, fragmento)
+    return int(i) if i is not None else -1
+
+
+def _fases(contestar, tipo="otra", revisar=None, ancho=760, alto=440):
+    """IA falsa de NO LIMIT 2.0: UBICAR (caja alrededor del puntero), CONTESTAR y REVISAR."""
+    def elegir(t):
+        if t.startswith("FASE: UBICAR"):
+            x, y = _puntero(t)
+            return json.dumps({"hay_pregunta": True, "caja": [max(0, x - 260), max(0, y - 140), x + ancho, y + alto],
+                               "tipo": tipo})
+        if t.startswith("FASE: REVISAR"):
+            return json.dumps(revisar(t) if revisar else {"ok": True})
+        return json.dumps(contestar(t))
+    return elegir
+
+
 # ---------------------------------------------------------------- pruebas
 
 class _Acciones:
@@ -525,12 +549,170 @@ def _ventana_y_e2e(salida):
                         pass
                     _cerrar_nativo(hwnd)
                     top.destroy()
-                    root.after(300, juego_pantalla_completa)
+                    root.after(300, e2e_casillas)
                 else:
                     root.after(200, revisar)
             root.after(500, revisar)
         except Exception as e:
             pruebas["escribir_nativo"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_casillas)
+
+    def ventana_prueba(titulo, w, h):
+        top = tk.Toplevel(root)
+        top.title(titulo)
+        top.geometry(f"{w}x{h}+0+0")
+        top.configure(bg="white")
+        top.attributes("-topmost", True)
+        return top
+
+    def esperar(nombre, listo, detalle, despues, top, limite=45, minimo=0.0):
+        inicio = time.time()
+
+        def revisar():
+            t = time.time() - inicio
+            ocupado = bot._ocupado.locked()
+            if (t >= minimo and listo() and not ocupado) or t > limite:
+                time.sleep(0.2)
+                det = detalle()
+                det["actividad"] = list(v.ui.actividad)[:3]
+                det["seg"] = round(t, 1)
+                pruebas[nombre] = det
+                copiar_revision(nombre)
+                grab_seguro("e2e_" + nombre, top)
+                top.destroy()
+                root.after(300, despues)
+            else:
+                root.after(250, revisar)
+        root.after(800, revisar)
+
+    # -------- E2E 4: casillas (seleccion multiple): las dos correctas, ninguna de mas
+    def e2e_casillas():
+        try:
+            top = ventana_prueba("Prueba casillas", 820, 420)
+            tk.Label(top, text="4. Selecciona los colores primarios", font=("Arial", 20), bg="white",
+                     fg="#222").place(x=40, y=30)
+            vars_ = {}
+            for i, t in enumerate(["Rojo", "Verde", "Azul", "Gato"]):
+                var = tk.IntVar(value=0)
+                tk.Checkbutton(top, text=t, variable=var, font=("Arial", 18), bg="white", activebackground="white",
+                               highlightthickness=0).place(x=60, y=90 + i * 60)
+                vars_[t] = var
+            top.update()
+            _IAFalsa.elegir = _fases(lambda t: {"tipo": "opcion_multiple", "respuesta": "Rojo | Azul", "acciones": [
+                {"hacer": "clic", "en": _id(t, "Rojo"), "texto": "Rojo"},
+                {"hacer": "clic", "en": _id(t, "Azul"), "texto": "Azul"}]}, "opcion_multiple")
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+
+            def valores():
+                return {k: var.get() for k, var in vars_.items()}
+
+            def listo():
+                return valores() == {"Rojo": 1, "Verde": 0, "Azul": 1, "Gato": 0}
+            esperar("casillas", listo, lambda: {"ok": listo(), "valores": valores()}, e2e_menu, top, minimo=2.0)
+        except Exception as e:
+            pruebas["casillas"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_menu)
+
+    # -------- E2E 5: menu desplegable: abrirlo y elegir la opcion correcta
+    def e2e_menu():
+        try:
+            from tkinter import ttk
+            top = ventana_prueba("Prueba menu", 820, 420)
+            top.option_add("*TCombobox*Listbox.font", ("Arial", 18))
+            tk.Label(top, text="5. ¿Dónde se produce la energía de la célula?", font=("Arial", 20), bg="white",
+                     fg="#222").place(x=40, y=30)
+            cb = ttk.Combobox(top, values=["Núcleo", "Mitocondria", "Ribosoma"], state="readonly", font=("Arial", 18))
+            cb.set("Elige una")
+            cb.place(x=60, y=100, width=320, height=44)
+            top.update()
+            _IAFalsa.elegir = _fases(lambda t: {"tipo": "desplegable", "respuesta": "Mitocondria", "acciones": [
+                {"hacer": "elegir", "en": _id(t, "Elige"), "opcion": "Mitocondria"}]}, "desplegable")
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+            esperar("menu", lambda: cb.get() == "Mitocondria", lambda: {"ok": cb.get() == "Mitocondria",
+                                                                        "valor": cb.get()}, e2e_arrastrar, top,
+                    minimo=2.0)
+        except Exception as e:
+            pruebas["menu"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_arrastrar)
+
+    # -------- E2E 6: arrastrar una etiqueta hasta su lugar
+    def e2e_arrastrar():
+        try:
+            top = ventana_prueba("Prueba arrastrar", 820, 420)
+            cv = tk.Canvas(top, width=820, height=420, bg="white", highlightthickness=0)
+            cv.place(x=0, y=0)
+            cv.create_text(40, 30, text="6. Arrastra la etiqueta a su lugar", anchor="nw", font=("Arial", 20),
+                           fill="#222")
+            cv.create_rectangle(450, 140, 720, 320, outline="#888", width=2)
+            cv.create_text(585, 230, text="Aquí va", font=("Arial", 18), fill="#666")
+            cv.create_rectangle(60, 150, 260, 210, fill="#dde4ff", outline="#557", tags="pieza")
+            cv.create_text(160, 180, text="Corazón", font=("Arial", 18), fill="#112", tags="pieza")
+            agarre = {}
+
+            def bajar(e):
+                agarre["x"], agarre["y"] = e.x, e.y
+
+            def mover(e):
+                if "x" in agarre:
+                    cv.move("pieza", e.x - agarre["x"], e.y - agarre["y"])
+                    agarre["x"], agarre["y"] = e.x, e.y
+
+            def soltar(e):
+                agarre.clear()
+            cv.tag_bind("pieza", "<ButtonPress-1>", bajar)
+            cv.tag_bind("pieza", "<B1-Motion>", mover)
+            cv.tag_bind("pieza", "<ButtonRelease-1>", soltar)
+            top.update()
+            _IAFalsa.elegir = _fases(lambda t: {"tipo": "arrastrar", "acciones": [
+                {"hacer": "arrastrar", "desde": _id(t, "Coraz"), "hasta": _id(t, "Aqu")}]}, "arrastrar")
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+
+            def centro():
+                x0, y0, x1, y1 = cv.bbox("pieza")
+                return (x0 + x1) / 2, (y0 + y1) / 2
+
+            def listo():
+                x, y = centro()
+                return 450 <= x <= 720 and 140 <= y <= 320
+            esperar("arrastrar", listo, lambda: {"ok": listo(), "centro": centro()}, e2e_seguro, top, minimo=2.0)
+        except Exception as e:
+            pruebas["arrastrar"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_seguro)
+
+    # -------- E2E 7: el candado: aunque la IA lo pida, NO pica "Siguiente" ni escribe fuera de un campo
+    def e2e_seguro():
+        try:
+            top = ventana_prueba("Prueba candado", 820, 420)
+            tk.Label(top, text="7. Escribe el nombre del autor", font=("Arial", 20), bg="white", fg="#222").place(x=40, y=30)
+            picados, teclas = [], []
+            tk.Button(top, text="Siguiente", font=("Arial", 18), command=lambda: picados.append(1)).place(x=560, y=300)
+            top.bind("<Key>", lambda e: teclas.append(e.keysym))
+            top.update()
+
+            def contestar(t):
+                ident = _buscar(t, "nombre del autor")
+                x = y = 0
+                for i, cx, cy, _txt in _lineas(t):
+                    if i == ident:
+                        x, y = cx, cy + 120
+                return {"tipo": "abierta", "respuesta": "Cervantes", "acciones": [
+                    {"hacer": "clic", "en": _id(t, "Siguiente")},
+                    {"hacer": "escribir", "en": {"x": x, "y": y}, "texto": "zzz"}]}
+            _IAFalsa.elegir = _fases(contestar, "abierta")
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            inicio = len(v.ui.actividad)
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+
+            def listo():
+                return any("Cervantes" in str(a) for a in list(v.ui.actividad)[:2])
+            esperar("candado", listo, lambda: {"ok": listo() and not picados and not teclas, "picados": picados,
+                                               "teclas": teclas[:10], "antes": inicio}, juego_pantalla_completa, top,
+                    minimo=2.0)
+        except Exception as e:
+            pruebas["candado"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, juego_pantalla_completa)
 
     # -------- un "juego" en pantalla completa: Ctrl + clic ahi NO debe hacer nada
@@ -633,7 +815,7 @@ def _ventana_y_e2e(salida):
     def terminar():
         if estado["fin"]:
             return
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 3,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 7,
                              "detalle": pruebas}
         RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         try:
@@ -645,7 +827,7 @@ def _ventana_y_e2e(salida):
         root.after(100, v.salir)
 
     root.after(900, paso_ventana)
-    root.after(150000, terminar)
+    root.after(240000, terminar)
     root.mainloop()
 
 
@@ -734,7 +916,7 @@ def main(salida):
     try:
         if sys.platform == "darwin":
             from .mac import autoprueba as mac
-            mac.ventana_y_e2e(salida, RESULTADOS, _IAFalsa, _buscar, ESPERADO)
+            mac.ventana_y_e2e(salida, RESULTADOS, _IAFalsa, _buscar, ESPERADO, _fases, _id, _lineas)
         else:
             _ventana_y_e2e(salida)
     except Exception as e:

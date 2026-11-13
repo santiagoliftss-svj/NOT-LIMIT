@@ -23,9 +23,10 @@ ESTADOS = {
     "activo": ("Activo", f"{plataforma.ATAJO} sobre cualquier pregunta"),
     "leyendo": ("Leyendo la pantalla…", "Esc cancela"),
     "pensando": ("Pensando la respuesta…", "Esc cancela"),
-    "escribiendo": ("Escribiendo…", "No toques el teclado. Esc cancela"),
+    "escribiendo": ("Contestando…", "No toques el mouse ni el teclado. Esc cancela"),
+    "revisando": ("Revisando que quedó bien…", "Esc cancela"),
 }
-OCUPADO = ("leyendo", "pensando", "escribiendo")
+OCUPADO = ("leyendo", "pensando", "escribiendo", "revisando")
 SELLOS = {"claude": "Cl", "gemini": "Ge", "openai": "GPT"}
 PERMISOS = (("accesibilidad", "Accesibilidad", "Para dar clic y escribir"),
             ("pantalla", "Grabación de pantalla", "Para leer la pregunta"))

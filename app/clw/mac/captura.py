@@ -48,6 +48,20 @@ def foto(x, y, w, h):
             pass
 
 
+def capturar_zona(left, top, w, h):
+    """Foto de un rectangulo en pixeles (como lo maneja el motor)."""
+    import math
+    s = entrada.escala_actual()
+    x, y = int(math.floor(left / s)), int(math.floor(top / s))
+    ww, hh = int(math.ceil((left + w) / s)) - x, int(math.ceil((top + h) / s)) - y
+    img = foto(x, y, max(1, ww), max(1, hh))
+    W, H = max(1, round(ww * s)), max(1, round(hh * s))
+    if img.size != (W, H):
+        img = img.resize((W, H), Image.LANCZOS)
+    dx, dy = int(round(left - x * s)), int(round(top - y * s))
+    return img.crop((dx, dy, dx + int(w), dy + int(h)))
+
+
 def capturar(px, py, tam, arriba):
     """(imagen, left, top) en pixeles, como en Windows."""
     s = entrada.escala_actual()

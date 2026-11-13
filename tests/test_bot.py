@@ -93,6 +93,10 @@ def prueba_bot_contesta_opcion():
     motor.capturar = lambda x, y: (img, OFF[0], OFF[1])
     try:
         def ia(texto):
+            if texto.startswith("FASE: UBICAR"):
+                return json.dumps({"hay_pregunta": True, "caja": [60, 40, 900, 330], "tipo": "opcion_unica"}), False
+            if texto.startswith("FASE: REVISAR"):
+                return json.dumps({"ok": True}), False
             for l in texto.splitlines():
                 if "París" in l and l.startswith("["):
                     return json.dumps({"tipo": "opcion", "ids": [int(l[1:l.index("]")])]}), False

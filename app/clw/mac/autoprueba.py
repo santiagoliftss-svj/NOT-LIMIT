@@ -118,9 +118,124 @@ def _origen_contenido(v):
     return c.origin.x, _alto_principal() - (c.origin.y + c.size.height)
 
 
+class _VistaArrastre(NSView):
+    """Fondo (imagen) + una pieza que se arrastra con el mouse de verdad (mouseDown / mouseDragged / mouseUp)."""
+
+    def initWithFrame_(self, marco):
+        self = objc.super(_VistaArrastre, self).initWithFrame_(marco)
+        if self is None:
+            return None
+        self.fondo = None
+        self.pieza = None
+        self.pos = [60.0, 150.0]          # esquina de la pieza (puntos, desde arriba)
+        self.tam = (200.0, 60.0)
+        self.agarre = None
+        return self
+
+    def isFlipped(self):
+        return True
+
+    def acceptsFirstMouse_(self, evento):
+        return True
+
+    def drawRect_(self, rect):
+        from AppKit import NSCompositingOperationSourceOver
+        from Foundation import NSZeroRect
+        if self.fondo is not None:
+            self.fondo.drawInRect_fromRect_operation_fraction_respectFlipped_hints_(
+                self.bounds(), NSZeroRect, NSCompositingOperationSourceOver, 1.0, True, None)
+        if self.pieza is not None:
+            self.pieza.drawInRect_fromRect_operation_fraction_respectFlipped_hints_(
+                NSMakeRect(self.pos[0], self.pos[1], self.tam[0], self.tam[1]), NSZeroRect,
+                NSCompositingOperationSourceOver, 1.0, True, None)
+
+    def _p(self, evento):
+        p = self.convertPoint_fromView_(evento.locationInWindow(), None)
+        return p.x, p.y
+
+    def mouseDown_(self, evento):
+        x, y = self._p(evento)
+        if self.pos[0] <= x <= self.pos[0] + self.tam[0] and self.pos[1] <= y <= self.pos[1] + self.tam[1]:
+            self.agarre = (x - self.pos[0], y - self.pos[1])
+
+    def mouseDragged_(self, evento):
+        if self.agarre is not None:
+            x, y = self._p(evento)
+            self.pos = [x - self.agarre[0], y - self.agarre[1]]
+            self.setNeedsDisplay_(True)
+
+    def mouseUp_(self, evento):
+        self.agarre = None
+
+
+class _VistaTeclas(NSView):
+    """Contenido que anota cualquier tecla que le llegue (para ver que NO se escribio nada fuera de un campo)."""
+
+    def initWithFrame_(self, marco):
+        self = objc.super(_VistaTeclas, self).initWithFrame_(marco)
+        if self is None:
+            return None
+        self.teclas = []
+        return self
+
+    def isFlipped(self):
+        return True
+
+    def acceptsFirstResponder(self):
+        return True
+
+    def keyDown_(self, evento):
+        self.teclas.append(str(evento.characters() or ""))
+
+
+class _BotonContador(NSView):
+    """Un 'boton' que solo anota si le dan clic."""
+
+    def initWithFrame_(self, marco):
+        self = objc.super(_BotonContador, self).initWithFrame_(marco)
+        if self is None:
+            return None
+        self.clics = 0
+        self.imagen = None
+        return self
+
+    def isFlipped(self):
+        return True
+
+    def acceptsFirstMouse_(self, evento):
+        return True
+
+    def drawRect_(self, rect):
+        from AppKit import NSCompositingOperationCopy
+        from Foundation import NSZeroRect
+        if self.imagen is not None:
+            self.imagen.drawInRect_fromRect_operation_fraction_respectFlipped_hints_(
+                self.bounds(), NSZeroRect, NSCompositingOperationCopy, 1.0, True, None)
+
+    def mouseDown_(self, evento):
+        self.clics += 1
+
+
+def _texto_img(texto, w, h, tam=24, fondo=(255, 255, 255), color=(30, 30, 30), borde=None):
+    from PIL import ImageDraw
+    from .. import muestras
+    im = Image.new("RGBA", (w, h), fondo + (255,))
+    d = ImageDraw.Draw(im)
+    if borde:
+        d.rectangle((0, 0, w - 1, h - 1), outline=borde, width=2)
+    f = muestras._f(tam, 500)
+    caja = d.textbbox((0, 0), texto, font=f)
+    d.text(((w - (caja[2] - caja[0])) / 2, (h - (caja[3] - caja[1])) / 2 - caja[1]), texto, font=f, fill=color)
+    return im
+
+
+def _nsimagen(im):
+    return NSImage.alloc().initWithCGImage_size_(_cgimagen(im.convert("RGBA")), NSMakeSize(im.width, im.height))
+
+
 # ---------------------------------------------------------------- la prueba
 
-def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO):
+def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=None, lineas=None):
     import queue
 
     from .. import config, motor, muestras
@@ -343,12 +458,175 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO):
                     except Exception:
                         pass
                     w.orderOut_(None)
-                    root.after(300, reabrir)
+                    root.after(300, e2e_casillas)
                 else:
                     root.after(200, revisar)
             root.after(500, revisar)
         except Exception as e:
             pruebas["escribir"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_casillas)
+
+    def esperar(nombre, w, listo, detalle, despues, limite=45, minimo=2.0):
+        inicio = time.time()
+
+        def revisar():
+            t = time.time() - inicio
+            if (t >= minimo and listo() and not bot._ocupado.locked()) or t > limite:
+                det = detalle()
+                det["actividad"] = list(v.ui.actividad)[:3]
+                det["seg"] = round(t, 1)
+                pruebas[nombre] = det
+                copiar_revision(nombre)
+                try:
+                    guardar("e2e_" + nombre, foto_ventana(int(w.windowNumber())))
+                except Exception:
+                    pass
+                w.orderOut_(None)
+                root.after(300, despues)
+            else:
+                root.after(250, revisar)
+        root.after(800, revisar)
+
+    def etiqueta(contenido, texto, x, y, w=700, h=34, tam=22):
+        e = NSTextField.labelWithString_(texto)
+        e.setFont_(NSFont.systemFontOfSize_(tam))
+        e.setTextColor_(NSColor.colorWithCalibratedWhite_alpha_(0.13, 1.0))
+        alto = contenido.frame().size.height
+        e.setFrame_(NSMakeRect(x, y if contenido.isFlipped() else alto - y - h, w, h))
+        contenido.addSubview_(e)
+        return e
+
+    # -------- E2E 3: casillas (seleccion multiple): las dos correctas, ninguna de mas
+    def e2e_casillas():
+        try:
+            from AppKit import NSButton, NSButtonTypeSwitch
+            w = _ventana_prueba(30, 60, 820, 420, "Prueba casillas")
+            contenido = w.contentView()
+            etiqueta(contenido, "4. Selecciona los colores primarios", 40, 30)
+            botones = {}
+            for i, t in enumerate(["Rojo", "Verde", "Azul", "Gato"]):
+                b = NSButton.alloc().initWithFrame_(NSMakeRect(60, 420 - (90 + i * 60) - 36, 300, 36))
+                b.setButtonType_(NSButtonTypeSwitch)
+                b.setTitle_(t)
+                b.setFont_(NSFont.systemFontOfSize_(22))
+                contenido.addSubview_(b)
+                botones[t] = b
+            w.makeKeyAndOrderFront_(None)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+            IA.elegir = fases(lambda t: {"tipo": "opcion_multiple", "respuesta": "Rojo | Azul", "acciones": [
+                {"hacer": "clic", "en": id_de(t, "Rojo"), "texto": "Rojo"},
+                {"hacer": "clic", "en": id_de(t, "Azul"), "texto": "Azul"}]}, "opcion_multiple")
+            ox, oy = _origen_contenido(w)
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 47), daemon=True).start()
+
+            def valores():
+                return {k: int(b.state()) for k, b in botones.items()}
+
+            def listo():
+                return valores() == {"Rojo": 1, "Verde": 0, "Azul": 1, "Gato": 0}
+            esperar("casillas", w, listo, lambda: {"ok": listo(), "valores": valores()}, e2e_menu)
+        except Exception as e:
+            pruebas["casillas"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_menu)
+
+    # -------- E2E 4: menu desplegable nativo (NSPopUpButton)
+    def e2e_menu():
+        try:
+            from AppKit import NSPopUpButton
+            w = _ventana_prueba(30, 60, 820, 420, "Prueba menu")
+            contenido = w.contentView()
+            etiqueta(contenido, "5. ¿Dónde se produce la energía de la célula?", 40, 30)
+            pb = NSPopUpButton.alloc().initWithFrame_pullsDown_(NSMakeRect(60, 420 - 100 - 40, 320, 40), False)
+            pb.addItemsWithTitles_(["Elige una", "Núcleo", "Mitocondria", "Ribosoma"])
+            pb.setFont_(NSFont.systemFontOfSize_(20))
+            contenido.addSubview_(pb)
+            w.makeKeyAndOrderFront_(None)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+            IA.elegir = fases(lambda t: {"tipo": "desplegable", "respuesta": "Mitocondria", "acciones": [
+                {"hacer": "elegir", "en": id_de(t, "Elige"), "opcion": "Mitocondria"}]}, "desplegable")
+            ox, oy = _origen_contenido(w)
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 47), daemon=True).start()
+
+            def valor():
+                return str(pb.titleOfSelectedItem() or "")
+            esperar("menu", w, lambda: valor() == "Mitocondria", lambda: {"ok": valor() == "Mitocondria",
+                                                                          "valor": valor()}, e2e_arrastrar)
+        except Exception as e:
+            pruebas["menu"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_arrastrar)
+
+    # -------- E2E 5: arrastrar una etiqueta hasta su lugar
+    def e2e_arrastrar():
+        try:
+            from PIL import ImageDraw
+            W_, H_ = 820, 420
+            w = _ventana_prueba(30, 60, W_, H_, "Prueba arrastrar")
+            fondo = Image.new("RGBA", (W_, H_), (255, 255, 255, 255))
+            d_ = ImageDraw.Draw(fondo)
+            from .. import muestras
+            d_.text((40, 30), "6. Arrastra la etiqueta a su lugar", font=muestras._f(24, 600), fill=(30, 30, 30))
+            d_.rectangle((450, 140, 720, 320), outline=(130, 130, 130), width=2)
+            d_.text((535, 215), "Aquí va", font=muestras._f(22, 500), fill=(90, 90, 90))
+            vista = _VistaArrastre.alloc().initWithFrame_(NSMakeRect(0, 0, W_, H_))
+            vista.fondo = _nsimagen(fondo)
+            vista.pieza = _nsimagen(_texto_img("Corazón", 200, 60, 22, (221, 228, 255), (20, 20, 40), (80, 80, 120)))
+            w.setContentView_(vista)
+            w.makeKeyAndOrderFront_(None)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+            IA.elegir = fases(lambda t: {"tipo": "arrastrar", "acciones": [
+                {"hacer": "arrastrar", "desde": id_de(t, "Coraz"), "hasta": id_de(t, "Aqu")}]}, "arrastrar")
+            ox, oy = _origen_contenido(w)
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 45), daemon=True).start()
+
+            def centro():
+                return vista.pos[0] + vista.tam[0] / 2, vista.pos[1] + vista.tam[1] / 2
+
+            def listo():
+                x, y = centro()
+                return 450 <= x <= 720 and 140 <= y <= 320
+            esperar("arrastrar", w, listo, lambda: {"ok": listo(), "centro": centro()}, e2e_seguro)
+        except Exception as e:
+            pruebas["arrastrar"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_seguro)
+
+    # -------- E2E 6: el candado: aunque la IA lo pida, NO pica "Siguiente" ni escribe fuera de un campo
+    def e2e_seguro():
+        try:
+            W_, H_ = 820, 420
+            w = _ventana_prueba(30, 60, W_, H_, "Prueba candado")
+            vista = _VistaTeclas.alloc().initWithFrame_(NSMakeRect(0, 0, W_, H_))
+            w.setContentView_(vista)
+            etiqueta(vista, "7. Escribe el nombre del autor", 40, 30)
+            boton = _BotonContador.alloc().initWithFrame_(NSMakeRect(560, 300, 180, 50))
+            boton.imagen = _nsimagen(_texto_img("Siguiente", 180, 50, 22, (235, 235, 240), (20, 20, 20), (120, 120, 120)))
+            vista.addSubview_(boton)
+            w.makeKeyAndOrderFront_(None)
+            w.makeFirstResponder_(vista)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+
+            def contestar(t):
+                ident = buscar(t, "nombre del autor")
+                x = y = 0
+                for i, cx, cy, _txt in lineas(t):
+                    if i == ident:
+                        x, y = cx, cy + 120
+                return {"tipo": "abierta", "respuesta": "Cervantes", "acciones": [
+                    {"hacer": "clic", "en": id_de(t, "Siguiente")},
+                    {"hacer": "escribir", "en": {"x": x, "y": y}, "texto": "zzz"}]}
+            IA.elegir = fases(contestar, "abierta")
+            ox, oy = _origen_contenido(w)
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 47), daemon=True).start()
+
+            def listo():
+                return any("Cervantes" in str(a) for a in list(v.ui.actividad)[:2])
+            esperar("candado", w, listo, lambda: {"ok": listo() and boton.clics == 0 and not vista.teclas,
+                                                  "clics_siguiente": boton.clics, "teclas": vista.teclas[:10]}, reabrir)
+        except Exception as e:
+            pruebas["candado"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, reabrir)
 
     # -------- abrir NO LIMIT otra vez (Dock / Launchpad): la ventana escondida vuelve
@@ -373,7 +651,7 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO):
         if estado["fin"]:
             return
         estado["fin"] = True
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 2,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 6,
                              "detalle": pruebas}
         RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         RESULTADOS["permisos"] = {"ok": not extra.get("permisos_faltan"),
@@ -387,5 +665,5 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO):
         root.after(100, v.salir)
 
     root.after(1200, paso_ventana)
-    root.after(170000, terminar)
+    root.after(260000, terminar)
     root.mainloop()

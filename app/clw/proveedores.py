@@ -154,6 +154,16 @@ def _base(proveedor, predeterminada):
 # ---------------------------------------------------------------- variantes por proveedor
 
 def _variantes(proveedor, preciso):
+    """preciso: False (rapido), True (piensa) o "alto" (piensa mas: problemas de calcular)."""
+    if preciso == "alto":
+        if proveedor == "claude":
+            return [{"output_config": {"effort": "high"}}, {"output_config": {"effort": "medium"}},
+                    {"output_config": {"effort": "low"}}, {}]
+        if proveedor == "gemini":
+            return [{"thinkingConfig": {"thinkingLevel": "high"}}, {"thinkingConfig": {"thinkingLevel": "medium"}},
+                    {"thinkingConfig": {"thinkingLevel": "low"}}, {}]
+        if proveedor == "openai":
+            return [{"reasoning_effort": "high"}, {"reasoning_effort": "medium"}, {"reasoning_effort": "low"}, {}]
     if proveedor == "claude":
         if preciso:
             return [{"output_config": {"effort": "medium"}}, {"output_config": {"effort": "low"}}, {}]
@@ -315,7 +325,7 @@ class ClienteIA:
         ultimo = None
         while i < len(variantes):
             url, cab, cuerpo = _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variantes[i])
-            estado, resp = _http("POST", url, cab, cuerpo, timeout=90 if preciso else 60)
+            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 60)
             if estado == 200:
                 with self._candado:
                     self._recordado[llave] = i

@@ -182,6 +182,73 @@ def clic(x, y):
     U32.mouse_event(0x0004, 0, 0, 0, 0)  # izquierdo arriba
 
 
+# teclas especiales que se pueden mandar (editores de ecuaciones, menus)
+TECLAS = {"derecha": 0x27, "izquierda": 0x25, "arriba": 0x26, "abajo": 0x28, "retroceso": 0x08, "escape": 0x1B,
+          "enter": 0x0D}
+_EXTENDIDA = 0x0001
+_FLECHAS = (0x25, 0x26, 0x27, 0x28)
+
+
+def tecla(nombre, veces=1):
+    """Presiona una tecla especial (derecha, izquierda, arriba, abajo, retroceso, escape, enter)."""
+    vk = TECLAS[nombre]
+    ext = _EXTENDIDA if vk in _FLECHAS else 0
+    for _ in range(max(1, int(veces))):
+        _enviar([(vk, 0, ext), (vk, 0, ext | _TECLA_ARRIBA)])
+        time.sleep(0.03)
+
+
+def _virtual():
+    try:
+        x, y = U32.GetSystemMetrics(76), U32.GetSystemMetrics(77)
+        w, h = U32.GetSystemMetrics(78), U32.GetSystemMetrics(79)
+        if w > 0 and h > 0:
+            return x, y, w, h
+    except Exception:
+        pass
+    return 0, 0, 1920, 1080
+
+
+def _mover_abs(x, y):
+    """Mueve el mouse con un evento de 'movimiento' de verdad (las paginas web lo necesitan para arrastrar)."""
+    vx, vy, vw, vh = _virtual()
+    dx = int(round((x - vx) * 65535 / max(1, vw - 1)))
+    dy = int(round((y - vy) * 65535 / max(1, vh - 1)))
+    ev = (_INPUT * 1)()
+    ev[0].type = 0
+    ev[0].u.mi = _MOUSEINPUT(dx, dy, 0, 0x0001 | 0x8000 | 0x4000, 0, 0)   # MOVE | ABSOLUTE | VIRTUALDESK
+    U32.SendInput(1, ev, ctypes.sizeof(_INPUT))
+
+
+def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
+    """Presiona en (x0, y0), se mueve poco a poco y suelta en (x1, y1)."""
+    x0, y0, x1, y1 = (int(round(v)) for v in (x0, y0, x1, y1))
+    U32.SetCursorPos(x0, y0)
+    _mover_abs(x0, y0)
+    time.sleep(0.08)
+    U32.mouse_event(0x0002, 0, 0, 0, 0)          # izquierdo abajo
+    time.sleep(0.15)
+    try:
+        for dx in (3, 6, 9):                        # primero poquito: asi la pagina sabe que empieza a arrastrar
+            _mover_abs(x0 + dx, y0 + dx // 3)
+            time.sleep(0.03)
+        for i in range(1, pasos + 1):
+            if cancelar and cancelar():
+                break
+            t = i / pasos
+            t = t * t * (3 - 2 * t)                 # arranca y frena suave
+            _mover_abs(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)
+            time.sleep(0.016)
+        _mover_abs(x1, y1)
+        time.sleep(0.12)
+        _mover_abs(x1 + 1, y1)
+        time.sleep(0.06)
+        _mover_abs(x1, y1)
+        time.sleep(0.1)
+    finally:
+        U32.mouse_event(0x0004, 0, 0, 0, 0)       # izquierdo arriba
+
+
 def eventos_texto(texto):
     """Cada letra como caracter Unicode: acentos, ñ, ¿ y √ salen bien con cualquier teclado."""
     eventos = []
@@ -227,7 +294,8 @@ def tam_input():
     return ctypes.sizeof(_INPUT)
 
 
-__all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic",
+__all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
+           "arrastrar", "TECLAS",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente"]
 

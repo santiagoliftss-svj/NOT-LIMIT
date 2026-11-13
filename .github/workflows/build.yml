@@ -2,7 +2,7 @@ name: Armar NO LIMIT
 
 on:
   push:
-    branches: [main]
+    branches: [main, prueba-v2]
     paths-ignore: ["docs/**", "README.md"]
   workflow_dispatch:
 

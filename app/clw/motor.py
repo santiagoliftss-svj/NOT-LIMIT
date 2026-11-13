@@ -110,6 +110,12 @@ def capturar(px, py):
     return img, left, top
 
 
+def capturar_zona(left, top, w, h):
+    """Foto de un rectangulo de la pantalla (pixeles), para ver como quedo despues de actuar."""
+    left, top, w, h = int(left), int(top), int(w), int(h)
+    return ImageGrab.grab(bbox=(left, top, left + w, top + h), all_screens=True).convert("RGB")
+
+
 if sys.platform == "darwin":             # Mac: screencapture, en pixeles reales (Retina)
     from .mac import captura as _captura_mac
 
@@ -121,6 +127,9 @@ if sys.platform == "darwin":             # Mac: screencapture, en pixeles reales
 
     def capturar(px, py):  # noqa: F811
         return _captura_mac.capturar(px, py, TAM_BASE, ARRIBA_BASE)
+
+    def capturar_zona(left, top, w, h):  # noqa: F811
+        return _captura_mac.capturar_zona(left, top, w, h)
 
 
 # ================================================================ OCR (texto en pantalla)
