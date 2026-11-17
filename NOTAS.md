@@ -4,6 +4,12 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.1.1**
+
+- Gráficas tipo MyLab / Pearson: lee los números de los ejes rayita por rayita (la cuadrícula punteada ya no la confunde) y traza la recta dando clic en sus puntos exactos.
+- Nunca arrastra para trazar ni escribe en una gráfica (eso seleccionaba el texto de la página).
+- Ya no hace Cmd/Ctrl + A en campos vacíos: solo cuando hay que reemplazar algo escrito. Así nunca selecciona toda la página.
+
 **Nuevo en 2.1 (más lista para encontrar dónde contestar, sobre todo en Mac)**
 
 - Primero resuelve la pregunta y YA con la respuesta busca dónde va: opciones, casillas, menús o la caja para escribir, aunque sea de otro color o forma (cajas delgadas azules, angostas, redondeadas, con fondo oscuro, solo una raya abajo como en Google Forms, o la caja de un juego de preguntas).

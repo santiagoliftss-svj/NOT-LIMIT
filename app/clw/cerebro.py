@@ -96,7 +96,7 @@ Por tipo:
 - NUMERICA (aunque los numeros cambien al azar): usa los numeros que se ven en ESTA imagen, comprueba, y escribe solo el valor (con unidad solo si no aparece ya junto al campo). Redondea como lo pida la pregunta; decimales con punto.
 - MATEMATICA EXACTA (editor de ecuaciones con fracciones, exponentes o raices): escribe con / para fracciones, ^ para exponentes y sqrt para raices, y pon {derecha} para salir de un exponente, del denominador o de una raiz. Ejemplo: x^2{derecha}+3/4{derecha}. En campos normales escribe 3/4, x^2 o √3 tal cual.
 - ZONA DE CLIC (clic sobre una parte de una imagen, mapa o diagrama): un clic en el centro exacto de esa parte; usa las reglas para dar coordenadas precisas.
-- GRAFICAR en un plano cartesiano: da un clic por punto con sus coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT calcula donde cae en la pantalla con los numeros de los ejes. Si hay que mover un punto, "arrastrar" con "hasta":{"gx":..,"gy":..}. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
+- GRAFICAR en un plano cartesiano: da un clic por punto con sus coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT calcula donde cae en la pantalla con los numeros de los ejes. Para TRAZAR una recta, segmento, rayo o parabola con el lapiz o la herramienta de dibujo (MyLab, Pearson, GeoGebra): clics separados en sus puntos, en orden (recta: dos puntos; parabola: el vertice y otro punto). Usa puntos con coordenadas enteras que caigan dentro del plano (por ejemplo donde cruza los ejes). NUNCA arrastres para trazar y NUNCA escribas en una grafica. "arrastrar" con "hasta":{"gx":..,"gy":..} es solo para mover un punto que YA esta dibujado. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
 - PASOS GUIADOS: contesta solo los pasos que se ven ahorita.
 - GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la orilla de arriba de cada barra hasta su valor con "hasta":{"x": x de la barra, "gy": valor}, o da clic en cada punto con {"gx","gy"}.
 - ORDENAR: usa "ordenar" con el orden final.
@@ -650,6 +650,27 @@ def _control_en(x, y, controles, margen=0):
     return mejor[1] if mejor else None
 
 
+def _usa_plano(datos):
+    """True si alguna accion de la IA usa coordenadas del plano (gx / gy)."""
+    def tiene(o):
+        return isinstance(o, dict) and ("gx" in o or "gy" in o)
+    for a in _a_lista_de_acciones(datos):
+        if any(tiene(a.get(k)) for k in ("en", "desde", "hasta")):
+            return True
+    return False
+
+
+def _con_texto(caja, cajas, controles=(), pagina=None):
+    """True si el campo ya tiene algo escrito (no solo el texto gris de ayuda): solo entonces se selecciona todo
+    antes de escribir. Asi, si el clic no quedo en el campo, Cmd/Ctrl + A nunca selecciona toda la pagina."""
+    if pagina is not None:
+        return bool(str(controles[pagina].get("valor") or "").strip())
+    for c in cajas:
+        if motor._dentro(c["cx"], c["cy"], caja) and motor._norm(c["texto"]) and not _AYUDA.search(motor._norm(c["texto"])):
+            return True
+    return False
+
+
 def _campo_libre_de_pagina(x, y, controles, zoom, usados):
     """Campo de la pagina para una respuesta que la IA puso donde no hay campo: el unico campo libre de la pregunta,
     o el mas cercano (a menos de 140 px y claramente mas cerca que el siguiente). Si no, None."""
@@ -732,7 +753,7 @@ def _corregir_id(i, texto, cajas):
     return i
 
 
-def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
+def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=None):
     """Revisa cada accion de la IA contra el candado. Puntos en pixeles de la region (la imagen recortada)."""
     plan = Plan()
     plan.datos = datos
@@ -744,6 +765,14 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
     vistos = set()
     ax_usados = set()
     plano = ejes(cajas)
+    if (not plano["x"] or not plano["y"]) and _usa_plano(datos):
+        # graficas tipo MyLab: los numeros de los ejes se leen rayita por rayita (el OCR general se confunde
+        # con la cuadricula punteada). Sin numeros no se adivina donde va un punto.
+        try:
+            fino = motor.ejes_del_plano(region_img, zoom, ocr)
+        except Exception:
+            fino = {"x": None, "y": None}
+        plano = {"x": fino["x"] or plano["x"], "y": fino["y"] or plano["y"]}
 
     def _res(obj):
         return resolver(obj, cajas, campos, s, W, H, plano, controles)
@@ -816,7 +845,10 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
                 ax_usados.add(pagina)
                 x, y = _centro(controles[pagina]["caja"])
                 plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": controles[pagina]["caja"],
-                                   "seguro_campo": True})
+                                   "seguro_campo": True, "con_texto": _con_texto(None, cajas, controles, pagina)})
+                continue
+            if plan.tipo in ("graficar", "zona_clic"):
+                rechazar(a, "en una grafica no se escribe")
                 continue
             if ic is not None and controles[ic]["tipo"] != "campo":
                 rechazar(a, f"ahi la pagina tiene un {controles[ic]['tipo']}, no un campo")
@@ -858,7 +890,8 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
                 rechazar(a, f"ahi la pagina tiene un {controles[ib]['tipo']}, no un campo")
                 continue
             plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": caja,
-                               "seguro_campo": k is not None, "verificar_campo": verificar})
+                               "seguro_campo": k is not None, "verificar_campo": verificar,
+                               "con_texto": _con_texto(caja, cajas)})
 
         elif hacer == "elegir":
             opcion = str(a.get("opcion") or a.get("texto") or "").strip()
@@ -1059,8 +1092,10 @@ class Ejecutor:
             self.fallas.append((paso, "el cursor no quedo en un campo: no escribi nada"))
             self.no_escritos.append(paso["texto"])
             return self.foto()
-        # Cmd/Ctrl + A solo si se sabe que el cursor esta en un campo (o no hay forma de saberlo: Windows)
-        if foco is True or (info and info.get("campo") is True) or (info is None and foco is None and not verificar):
+        # Cmd/Ctrl + A solo si el campo ya tiene algo escrito Y se sabe que el cursor esta en un campo (o no hay
+        # forma de saberlo: Windows). Un campo vacio no lo necesita, y asi nunca se selecciona toda la pagina.
+        if paso.get("con_texto", True) and (foco is True or (info and info.get("campo") is True)
+                                            or (info is None and foco is None and not verificar)):
             self.a.seleccionar_todo()
             time.sleep(0.06)
         _escribir_con_teclas(self.a, paso["texto"], self.cancelar)
@@ -1252,7 +1287,7 @@ def revisar(foto, plan, preguntar, ocr, zoom=1.0, controles=()):
     if datos.get("ok") is not False:
         return vacio, salida
     correccion = planear({"acciones": datos.get("acciones") or [], "respuesta": plan.respuesta,
-                          "tipo": plan.tipo}, cajas, campos, s, foto, zoom, controles)
+                          "tipo": plan.tipo}, cajas, campos, s, foto, zoom, controles, ocr)
     return correccion, salida
 
 

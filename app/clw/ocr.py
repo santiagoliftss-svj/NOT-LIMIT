@@ -46,8 +46,8 @@ class OCR:
             return "eng"
         return self.idioma
 
-    def datos(self, imagen, psm=11):
-        """Corre tesseract y devuelve un dict estilo pytesseract.image_to_data."""
+    def datos(self, imagen, psm=11, solo=None):
+        """solo: caracteres permitidos (por ejemplo "-0123456789" para leer los numeros de un eje)."""
         if not self.exe:
             raise RuntimeError("No hay OCR instalado")
         fd, entrada = tempfile.mkstemp(suffix=".png", prefix="clw_")
@@ -57,6 +57,8 @@ class OCR:
             imagen.save(entrada, format="PNG")
             cmd = [self.exe, entrada, salida, "--psm", str(psm), "-l", self.idioma_usable(),
                    "-c", "tessedit_create_tsv=1"]
+            if solo:
+                cmd += ["-c", "tessedit_char_whitelist=" + solo]
             p = subprocess.run(cmd, capture_output=True, env=self._entorno(), timeout=40,
                                creationflags=_SIN_VENTANA)
             if p.returncode != 0:

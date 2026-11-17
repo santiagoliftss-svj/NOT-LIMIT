@@ -784,3 +784,75 @@ def prueba_si_la_ia_senala_algo_que_no_es_campo_usa_el_campo_de_la_pagina():
     plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": {"x": 400, "y": 330}, "texto": "a"},
                                          {"hacer": "escribir", "en": "C0", "texto": "b"}]}, CAJAS, campos, 1.0, img, controles=ctl2)
     assert [round(p["p"][1]) for p in plan.pasos] == [322, 442], plan.pasos
+
+
+# ---------------------------------------------------------------- 2.1.1: graficas tipo MyLab y Cmd/Ctrl + A
+
+def _mylab(zoom=1.0, cruz=(0, 5)):
+    """Plano como el de MyLab / Pearson: cuadricula punteada, rayitas, numeros de 2 en 2 y la cruz del mouse."""
+    from PIL import ImageFont
+    z = lambda v: int(round(v * zoom))                       # noqa: E731
+    img = Image.new("RGB", (z(700), z(640)), "white")
+    d = ImageDraw.Draw(img)
+    x0, y0, paso = z(40), z(20), z(28)
+    f = ImageFont.load_default(size=z(15))
+    px = lambda g: x0 + (g + 10) * paso                       # noqa: E731
+    py = lambda g: y0 + (10 - g) * paso                       # noqa: E731
+    d.rectangle([x0 - z(6), y0 - z(6), px(10) + z(6), py(-10) + z(6)], outline=(0, 0, 0), width=max(1, z(1)))
+    for k in range(-10, 11):
+        for t in range(int(y0), int(py(-10)), z(4)):
+            d.point((px(k), t), fill=(60, 60, 60))
+            d.point((t - y0 + x0, py(k)), fill=(60, 60, 60))
+    d.line([px(-10), py(0), px(10), py(0)], fill=(0, 0, 0), width=max(1, z(1)))
+    d.line([px(0), py(10), px(0), py(-10)], fill=(0, 0, 0), width=max(1, z(1)))
+    for k in range(-10, 11, 2):
+        if k == 0:
+            continue
+        t = str(k)
+        bw = d.textlength(t, font=f)
+        d.text((px(k) - bw / 2, py(0) + z(14)), t, fill=(0, 0, 0), font=f)
+        d.text((px(0) - bw - z(10), py(k) - z(8)), t, fill=(0, 0, 0), font=f)
+        d.line([px(k), py(0) - z(5), px(k), py(0) + z(5)], fill=(0, 0, 0))
+        d.line([px(0) - z(5), py(k), px(0) + z(5), py(k)], fill=(0, 0, 0))
+    d.line([x0, py(cruz[1]), px(10), py(cruz[1])], fill=(0, 0, 0), width=z(2))
+    d.line([px(cruz[0]), y0, px(cruz[0]), py(-10)], fill=(0, 0, 0), width=z(2))
+    return img, px, py
+
+
+def prueba_grafica_tipo_mylab_traza_la_recta_en_su_lugar():
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        print("    (sin OCR en esta maquina: se salta)")
+        return
+    for zoom in (1.0, 2.0):
+        img, px, py = _mylab(zoom)
+        cajas = motor.detectar_cajas(img, img.width / 2, img.height / 2, zoom, ocr)
+        datos = {"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [
+            {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}},
+            {"hacer": "escribir", "en": {"x": 300, "y": 300}, "texto": "y=2x+2"}]}
+        plan = cerebro.planear(datos, cajas, [], 1.0, img, zoom, ocr=ocr)
+        puntos = [p["p"] for p in plan.pasos if p["hacer"] == "clic"]
+        assert len(puntos) == 2, (zoom, plan.pasos, plan.rechazadas)
+        for (x, y), (gx, gy) in zip(puntos, ((0, 2), (-1, 0))):
+            assert abs(x - px(gx)) <= 2 and abs(y - py(gy)) <= 2, (zoom, (x, y), (px(gx), py(gy)))
+        assert not any(p["hacer"] == "escribir" for p in plan.pasos), plan.pasos      # en una grafica no se escribe
+
+
+def prueba_campo_vacio_no_selecciona_todo():
+    img = Image.new("RGB", (900, 650), "white")
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": "C0", "texto": "1910"}]}, CAJAS,
+                           [campo(150, 300, 650, 344)], 1.0, img)
+    p = Pantalla()
+    _escribe(p, plan.pasos[0])
+    assert p.log == [("clic", 400, 322), ("escribe", "1910")], p.log           # sin Ctrl + A
+    cajas = CAJAS + [caja(160, 310, 260, 334, "1810")]                          # ya tenia algo: si lo reemplaza
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": "C0", "texto": "1910"}]}, cajas,
+                           [campo(150, 300, 650, 344)], 1.0, img)
+    p = Pantalla()
+    _escribe(p, plan.pasos[0])
+    assert ("ctrl+a",) in p.log, p.log
+
+
+def prueba_las_instrucciones_no_arrastran_para_trazar():
+    assert "NUNCA arrastres para trazar" in cerebro.SISTEMA_CONTESTAR

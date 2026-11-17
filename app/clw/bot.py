@@ -241,7 +241,7 @@ class Bot:
             self._emitir("actividad", "La IA se quedó sin espacio. Prueba otra vez.", "error")
             return None
         datos = motor.interpretar(salida)
-        plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles)
+        plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles, self.ocr)
         log.info("modelo=%s ubicar=%.1fs ia=%.1fs region=%s tipo=%s/%s cajas=%d campos=%d controles=%d pasos=%d "
                  "rechazadas=%s salida=%s", id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo, len(cajas), len(campos),
                  len(controles), len(plan.pasos), [m for _, m in plan.rechazadas][:4], salida[:500])
