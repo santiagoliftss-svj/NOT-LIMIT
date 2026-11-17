@@ -213,6 +213,8 @@ class Bot:
         """Las tres fases. Devuelve (plan, ejecutor) o None."""
         preguntar, id_real = self._preguntador()
         t0 = time.time()
+        # (Mac) que la app de enfrente prenda su accesibilidad web mientras la IA ubica la pregunta
+        self._accesibilidad("preparar_accesibilidad", left + px, top + py)
         ub = cerebro.ubicar(img, px, py, preguntar, zoom)
         self._cancelado()
         if not ub.hay:
@@ -223,14 +225,15 @@ class Bot:
         recorte = img.crop(region)
         cpx, cpy = px - region[0], py - region[1]
         cajas, campos = cerebro.leer(recorte, cpx, cpy, zoom, self.ocr)
+        controles = self._controles(left, top, region, (left + px, top + py))
         t_ubicar = time.time() - t0
         self._cancelado()
 
         self._emitir("estado", "pensando")
         t1 = time.time()
-        b64, mime, s, tam = cerebro.preparar_imagen(recorte, campos, puntero=(cpx, cpy))
+        b64, mime, s, tam = cerebro.preparar_imagen(recorte, campos, puntero=(cpx, cpy), cajas=cajas, controles=controles)
         pista = f"Tipo probable: {ub.tipo or 'no se sabe'}. Se contesta con: {ub.controles or 'no se sabe'}.\n"
-        texto = "FASE: CONTESTAR\n" + pista + cerebro.texto_cajas(cajas, campos, s, tam, (cpx, cpy))
+        texto = "FASE: CONTESTAR\n" + pista + cerebro.texto_cajas(cajas, campos, s, tam, (cpx, cpy), controles)
         esfuerzo = "alto" if ub.tipo in cerebro.TIPOS_CALCULO else None
         salida, cortado = cerebro.llamar(preguntar, b64, mime, texto, "contestar", esfuerzo)
         t_ia = time.time() - t1
@@ -238,10 +241,10 @@ class Bot:
             self._emitir("actividad", "La IA se quedó sin espacio. Prueba otra vez.", "error")
             return None
         datos = motor.interpretar(salida)
-        plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom)
-        log.info("modelo=%s ubicar=%.1fs ia=%.1fs region=%s tipo=%s/%s cajas=%d campos=%d pasos=%d rechazadas=%s salida=%s",
-                 id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo, len(cajas), len(campos), len(plan.pasos),
-                 [m for _, m in plan.rechazadas][:4], salida[:500])
+        plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles)
+        log.info("modelo=%s ubicar=%.1fs ia=%.1fs region=%s tipo=%s/%s cajas=%d campos=%d controles=%d pasos=%d "
+                 "rechazadas=%s salida=%s", id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo, len(cajas), len(campos),
+                 len(controles), len(plan.pasos), [m for _, m in plan.rechazadas][:4], salida[:500])
         if self.config["guardar_capturas"]:
             cerebro.guardar_revision(os.path.join(rutas.carpeta_datos(), "revision"), img, region, cajas, campos,
                                      plan.pasos)
@@ -263,7 +266,8 @@ class Bot:
                 foto = self._foto(left, top, region)
                 if foto is None:
                     break
-                correccion, sal = cerebro.revisar(foto, plan, preguntar, self.ocr, zoom)
+                correccion, sal = cerebro.revisar(foto, plan, preguntar, self.ocr, zoom,
+                                                  self._controles(left, top, region, (left + px, top + py)))
                 log.info("revisar: %s", sal[:300])
                 if not correccion.pasos:
                     break
@@ -272,6 +276,32 @@ class Bot:
         log.info("hecho=%s fallas=%s total=%.1fs", ej.hecho, [m for _, m in ej.fallas][:4], time.time() - t0)
         self._reportar_plan(plan, ej)
         return plan, ej
+
+    def _accesibilidad(self, nombre, *args):
+        f = getattr(self.acciones, nombre, None)
+        if not f:
+            return None
+        try:
+            return f(*args)
+        except Exception as e:
+            log.info("accesibilidad %s: %s", nombre, e)
+            return None
+
+    def _controles(self, left, top, region, punto):
+        """Controles de la pagina dentro de la pregunta, en pixeles de la region (en Windows: ninguno)."""
+        x0, y0 = left + region[0], top + region[1]
+        w, h = region[2] - region[0], region[3] - region[1]
+        lista = self._accesibilidad("controles_en", x0, y0, w, h, punto) or []
+        out = []
+        for c in lista:
+            a, b, cc, d = c["caja"]
+            caja = (max(0.0, a - x0), max(0.0, b - y0), min(float(w), cc - x0), min(float(h), d - y0))
+            if caja[2] - caja[0] < 3 or caja[3] - caja[1] < 3:
+                continue
+            c = dict(c)
+            c["caja"] = caja
+            out.append(c)
+        return out[:60]
 
     def _reportar_plan(self, plan, ej):
         h = ej.hecho
@@ -283,6 +313,8 @@ class Bot:
                 self._emitir("actividad", f"No pude con esta: {_corto(plan.no_se_puede, 50)}.{extra}", "info")
             elif plan.tipo == "ninguna":
                 self._emitir("actividad", "No vi ninguna pregunta ahí", "info")
+            elif ej.no_escritos:
+                self._emitir("actividad", f"No encontré dónde escribir. Respuesta: {_corto(ej.no_escritos[0], 60)}", "info")
             elif respuesta:
                 self._emitir("actividad", f"No la marqué para no picar algo mal. Respuesta: {respuesta}", "info")
             else:

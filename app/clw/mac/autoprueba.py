@@ -217,6 +217,19 @@ class _BotonContador(NSView):
         self.clics += 1
 
 
+class _VistaCaja(NSView):
+    """Caja delgada azul y redondeada (como la de un juego de preguntas)."""
+
+    def drawRect_(self, rect):
+        from AppKit import NSBezierPath
+        NSColor.colorWithCalibratedRed_green_blue_alpha_(0.23, 0.51, 0.96, 1.0).setStroke()
+        r = self.bounds()
+        camino = NSBezierPath.bezierPathWithRoundedRect_xRadius_yRadius_(
+            NSMakeRect(r.origin.x + 0.5, r.origin.y + 0.5, r.size.width - 1, r.size.height - 1), 5, 5)
+        camino.setLineWidth_(1.0)
+        camino.stroke()
+
+
 def _texto_img(texto, w, h, tam=24, fondo=(255, 255, 255), color=(30, 30, 30), borde=None):
     from PIL import ImageDraw
     from .. import muestras
@@ -625,9 +638,117 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
             def listo():
                 return any("Cervantes" in str(a) for a in list(v.ui.actividad)[:2])
             esperar("candado", w, listo, lambda: {"ok": listo() and boton.clics == 0 and not vista.teclas,
-                                                  "clics_siguiente": boton.clics, "teclas": vista.teclas[:10]}, reabrir)
+                                                  "clics_siguiente": boton.clics, "teclas": vista.teclas[:10]}, e2e_juego)
         except Exception as e:
             pruebas["candado"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_juego)
+
+    # -------- E2E 7: la caja de un juego de preguntas (delgada, azul, angosta) con un campo sin orilla adentro
+    def e2e_juego():
+        try:
+            W_, H_ = 820, 360
+            w = _ventana_prueba(30, 60, W_, H_, "Prueba juego")
+            contenido = w.contentView()
+            etiqueta(contenido, "8. Escribe la capital de Italia", 40, 30, w=600)
+            contenido.addSubview_(_VistaCaja.alloc().initWithFrame_(NSMakeRect(300, H_ - 170 - 36, 140, 36)))
+            campo = NSTextField.alloc().initWithFrame_(NSMakeRect(306, H_ - 175 - 26, 128, 26))
+            campo.setBordered_(False)
+            campo.setDrawsBackground_(False)
+            campo.setFocusRingType_(1)               # sin anillo de foco (como en un juego)
+            campo.setFont_(NSFont.systemFontOfSize_(16))
+            contenido.addSubview_(campo)
+            w.makeKeyAndOrderFront_(None)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+            diag = {}
+
+            def contestar(t):
+                c = buscar(t, "", campos=True)
+                if not c:
+                    c = next((i for i, _x, _y, txt in lineas(t) if i.startswith("A") and txt.startswith("campo")), None)
+                diag["campo"] = c
+                diag["controles"] = [l for l in t.splitlines() if l.startswith("[A")][:6]
+                return {"tipo": "abierta", "respuesta": "Roma", "acciones": [
+                    {"hacer": "escribir", "en": c or {"x": 0, "y": 0}, "texto": "Roma"}]}
+            IA.elegir = fases(contestar, "abierta")
+            ox, oy = _origen_contenido(w)
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 47), daemon=True).start()
+
+            def listo():
+                return str(campo.stringValue() or "").strip() == "Roma"
+            esperar("juego", w, listo, lambda: {"ok": listo(), "texto": str(campo.stringValue() or ""), "diag": diag},
+                    e2e_ax)
+        except Exception as e:
+            pruebas["juego"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_ax)
+
+    # -------- E2E 8: accesibilidad: NO LIMIT ve los controles reales (campo, casilla, circulo), sabe que hay en
+    # cada punto y si el cursor quedo en un campo (con esto ya no escribe ni selecciona todo donde no es)
+    def e2e_ax():
+        try:
+            from AppKit import NSButton
+
+            from . import ax
+            from . import entrada as E
+            W_, H_ = 700, 300
+            w = _ventana_prueba(30, 60, W_, H_, "Prueba accesibilidad")
+            contenido = w.contentView()
+            etiqueta(contenido, "8. ¿De qué color es el cielo?", 40, 24, w=500)
+            campo = NSTextField.alloc().initWithFrame_(NSMakeRect(40, H_ - 80 - 36, 400, 36))
+            campo.setPlaceholderString_("Tu respuesta")
+            contenido.addSubview_(campo)
+            casilla = NSButton.checkboxWithTitle_target_action_("Azul", None, None)
+            casilla.setFrame_(NSMakeRect(40, H_ - 150 - 24, 200, 24))
+            contenido.addSubview_(casilla)
+            circulo = NSButton.radioButtonWithTitle_target_action_("Rojo", None, None)
+            circulo.setFrame_(NSMakeRect(40, H_ - 200 - 24, 200, 24))
+            contenido.addSubview_(circulo)
+            w.makeKeyAndOrderFront_(None)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+            ox, oy = _origen_contenido(w)
+            res = {}
+
+            def medir():
+                try:
+                    time.sleep(0.8)
+                    res["confiable"] = bool(ax.AX and ax.AX.AXIsProcessTrusted())
+                    ax.preparar(ox + 60, oy + 60)
+                    ctl = ax.controles((ox, oy, W_, H_), (ox + 60, oy + 100))
+                    res["controles"] = [(c["tipo"], c.get("etiqueta"), [round(v) for v in c["marco"]]) for c in ctl]
+
+                    def hay(tipo, x, y):
+                        return any(c["tipo"] == tipo and c["marco"][0] - 4 <= ox + x <= c["marco"][0] + c["marco"][2] + 4
+                                   and c["marco"][1] - 4 <= oy + y <= c["marco"][1] + c["marco"][3] + 4 for c in ctl)
+                    res["ve_campo"] = hay("campo", 240, 98)
+                    res["ve_casilla"] = hay("casilla", 60, 162)
+                    res["ve_circulo"] = hay("circulo", 60, 212)
+                    res["en_campo"] = ax.que_hay_en(ox + 240, oy + 98)
+                    res["en_etiqueta"] = ax.que_hay_en(ox + 150, oy + 41)
+                    res["en_casilla"] = ax.que_hay_en(ox + 50, oy + 162)
+                    _, esc = E.pantalla_en(ox, oy)
+                    E.poner_escala(esc)
+                    E.clic((ox + 240) * esc, (oy + 98) * esc)
+                    time.sleep(0.5)
+                    res["foco_en_campo"] = ax.foco_editable()
+                except Exception as e:
+                    res["error"] = repr(e)
+                    res["traza"] = traceback.format_exc()[-1500:]
+                res["listo"] = True
+            threading.Thread(target=medir, name="prueba-ax", daemon=True).start()
+
+            def listo():
+                return bool(res.get("listo"))
+
+            def detalle():
+                en_campo, en_etiqueta = res.get("en_campo") or {}, res.get("en_etiqueta") or {}
+                ok = (res.get("confiable") and res.get("ve_campo") and res.get("ve_casilla") and res.get("ve_circulo")
+                      and en_campo.get("campo") is True and en_etiqueta.get("campo") is False
+                      and (res.get("en_casilla") or {}).get("campo") is False and res.get("foco_en_campo") is True)
+                return dict(res, ok=bool(ok))
+            esperar("accesibilidad", w, listo, detalle, reabrir, limite=25, minimo=0.5)
+        except Exception as e:
+            pruebas["accesibilidad"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, reabrir)
 
     # -------- abrir NO LIMIT otra vez (Dock / Launchpad): la ventana escondida vuelve
@@ -652,7 +773,7 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
         if estado["fin"]:
             return
         estado["fin"] = True
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 6,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 8,
                              "detalle": pruebas}
         RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         RESULTADOS["permisos"] = {"ok": not extra.get("permisos_faltan"),
@@ -666,5 +787,5 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
         root.after(100, v.salir)
 
     root.after(1200, paso_ventana)
-    root.after(260000, terminar)
+    root.after(310000, terminar)
     root.mainloop()

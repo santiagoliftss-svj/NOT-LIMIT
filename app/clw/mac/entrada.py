@@ -300,8 +300,60 @@ def escribir(texto, cancelar=None):
     return enviados == len(trozos(texto))
 
 
+# ---------------------------------------------------------------- accesibilidad (que dice la pagina de si misma)
+
+def preparar_accesibilidad(x, y):
+    """Prende la accesibilidad web de la app que esta en ese punto (pixeles). Ver mac/ax.py."""
+    try:
+        from . import ax
+        return ax.preparar(x / _escala, y / _escala)
+    except Exception:
+        return False
+
+
+def foco_editable():
+    """True si el cursor del teclado esta en un campo para escribir; False si no; None si no se sabe."""
+    try:
+        from . import ax
+        return ax.foco_editable()
+    except Exception:
+        return None
+
+
+def que_hay_en(x, y):
+    """Que hay en ese punto (pixeles): {'rol', 'campo': True/False/None, 'enlace': bool} o None."""
+    try:
+        from . import ax
+        return ax.que_hay_en(x / _escala, y / _escala)
+    except Exception:
+        return None
+
+
+def controles_en(left, top, w, h, punto=None):
+    """Controles de la pagina dentro de ese rectangulo (pixeles): [{'rol','tipo','etiqueta','valor','caja'}]."""
+    try:
+        from . import ax
+        s = _escala
+        pts = (left / s, top / s, w / s, h / s)
+        pp = (punto[0] / s, punto[1] / s) if punto else None
+        out = []
+        for c in ax.controles(pts, pp):
+            x, y, ww, hh = c.pop("marco")
+            c["caja"] = (x * s, y * s, (x + ww) * s, (y + hh) * s)
+            out.append(c)
+        return out
+    except Exception:
+        return []
+
+
+def forma_cursor():
+    """En Mac la accesibilidad ya dice si hay un campo (que_hay_en / foco_editable)."""
+    return None
+
+
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
-           "arrastrar", "mover", "TECLAS",
+           "arrastrar", "mover", "TECLAS", "preparar_accesibilidad", "foco_editable", "controles_en", "que_hay_en",
+           "forma_cursor",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente", "U32", "VK_LBUTTON",
            "VK_RBUTTON", "VK_CONTROL", "VK_ESCAPE", "VK_MENU", "VK_ATAJO"]

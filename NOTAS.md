@@ -4,6 +4,14 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.1 (más lista para encontrar dónde contestar, sobre todo en Mac)**
+
+- Primero resuelve la pregunta y YA con la respuesta busca dónde va: opciones, casillas, menús o la caja para escribir, aunque sea de otro color o forma (cajas delgadas azules, angostas, redondeadas, con fondo oscuro, solo una raya abajo como en Google Forms, o la caja de un juego de preguntas).
+- En Mac le pregunta a la página qué es cada cosa (campo, casilla, círculo, menú, botón o enlace) con la accesibilidad de macOS. Así sabe exacto dónde escribir y qué está marcado.
+- En Mac ya no selecciona toda la página ni abre pestañas: antes de escribir revisa que el cursor de verdad quedó dentro de un campo, y nunca le da clic a un enlace.
+- En Windows, si la caja para escribir no tiene orilla, confirma con el cursor de texto (la I) que ahí sí se escribe; si no, no toca nada y te dice la respuesta.
+- No pica una opción si el texto no cuadra con lo que eligió la IA, y no escribe en botones que parecen cajas.
+
 **Nuevo en 2.0 (la actualización más grande)**
 
 - Trabaja con calma, como una persona: primero ubica la pregunta que señalaste, la lee de cerca (solo esa, no toda la pantalla), la resuelve, la contesta y al final revisa que haya quedado bien. Tarda de 10 a 30 segundos según la pregunta.

@@ -341,6 +341,116 @@ def rectangulos(img, zoom=1.0, relajado=False):
     return finales
 
 
+def subrayados(img, zoom=1.0):
+    """Campos que son solo una raya abajo (el 'Tu respuesta' de Google Forms, un ______ para completar).
+    Devuelve [(x0, y0, x1, y1)]: el espacio para escribir, justo arriba de la raya.
+    Descarta: orillas de cajas o tablas, texto subrayado (enlaces), separadores y bordes entre dos colores."""
+    gris = ImageOps.grayscale(img)
+    W, H = gris.size
+    if W < 20 or H < 20:
+        return []
+    mascara = ImageChops.difference(gris, fondo_por_zonas(gris, max(24, int(40 * zoom)))).point(
+        lambda v: 255 if v > 14 else 0)
+    filas = mascara.tobytes()
+    columnas = mascara.transpose(Image.Transpose.TRANSPOSE).tobytes()
+    pix = gris.tobytes()
+    largo_min = int(46 * zoom)
+    grueso_max = max(3, int(round(3 * zoom)))
+    holgura = max(3, int(3 * zoom))
+    patron = re.compile(rb"\xff{%d,}" % largo_min)
+
+    # 1) rayas: corridas horizontales que siguen en renglones seguidos con casi el mismo largo
+    abiertas, rayas = [], []
+    for y in range(H):
+        nuevas = []
+        for m in patron.finditer(filas[y * W:(y + 1) * W]):
+            a, b = m.start(), m.end()
+            for g in abiertas:
+                if g[3] == y - 1 and abs(g[0] - a) <= holgura and abs(g[1] - b) <= holgura:
+                    g[0], g[1], g[3] = min(g[0], a), max(g[1], b), y
+                    abiertas.remove(g)
+                    nuevas.append(g)
+                    break
+            else:
+                nuevas.append([a, b, y, y])
+        rayas.extend(abiertas)
+        abiertas = nuevas
+        if len(rayas) > 600:
+            break                     # pantalla con demasiadas rayas (un patron): no adivinar
+    rayas.extend(abiertas)
+
+    def valores(y, a, b):
+        return pix[y * W + a: y * W + b]
+
+    def mediana(seg):
+        return sorted(seg)[len(seg) // 2]
+
+    def parejo(seg, v):
+        return sum(1 for p in seg if abs(p - v) <= 16) / len(seg)
+
+    def tinta(c, y0, y1):
+        if c < 0 or c >= W:
+            return 0.0
+        y0, y1 = max(0, y0), min(H, y1)
+        seg = columnas[c * H + y0: c * H + y1]
+        return seg.count(255) / len(seg) if seg else 0.0
+
+    sep = int(2 * zoom) + 1
+    alto = int(24 * zoom)
+    lado = int(26 * zoom)
+    out = []
+    for a, b, y0, y1 in rayas:
+        ancho = b - a
+        if y1 - y0 + 1 > grueso_max or ancho > 0.7 * W:
+            continue                  # barra gruesa o separador de lado a lado
+        ya, yb = y0 - sep, y1 + sep
+        if ya < int(10 * zoom) or yb >= H:
+            continue
+        linea, arriba, abajo = valores((y0 + y1) // 2, a, b), valores(ya, a, b), valores(yb, a, b)
+        va, vb, vl = mediana(arriba), mediana(abajo), mediana(linea)
+        if abs(va - vb) > 18 or abs(vl - va) < 14 or abs(vl - vb) < 14:
+            continue                  # borde entre dos colores, no una raya
+        if parejo(arriba, va) < 0.85 or parejo(abajo, vb) < 0.85:
+            continue                  # algo pegado a la raya (letras con colita): texto subrayado
+        paso = max(1, int(zoom))
+        cols = range(a, b, paso)
+        con_tinta = sum(1 for c in cols if tinta(c, y0 - int(16 * zoom), y0 - int(2 * zoom)) > 0)
+        if con_tinta / len(cols) > 0.6:
+            continue                  # renglon de texto subrayado (un enlace), no un espacio para escribir
+        lados = {}
+        for nombre, rango in (("abajo", (y1 + 1, y1 + 1 + lado)), ("arriba", (y0 - lado, y0))):
+            izq = max(tinta(c, *rango) for c in range(a - int(14 * zoom), a + int(4 * zoom) + 1))
+            der = max(tinta(c, *rango) for c in range(b - 1 - int(4 * zoom), b + int(14 * zoom)))
+            lados[nombre] = (izq, der)
+        if any(min(v) >= 0.55 or max(v) >= 0.8 for v in lados.values()):
+            continue                  # orilla de una caja o de una tabla (eso lo ve rectangulos)
+        out.append((a, max(0, y0 - alto), b, y1 + 1))
+
+    out.sort(key=lambda r: (r[3], r[0]))
+    finales = []
+    for r in out:
+        if not any(abs(r[3] - f[3]) < 6 * zoom and r[0] < f[2] and f[0] < r[2] for f in finales):
+            finales.append(r)
+    return finales[:16]
+
+
+def quitar_orillas(subs, rects, zoom=1.0):
+    """Quita las rayas que en realidad son la orilla de arriba o de abajo de un rectangulo ya encontrado."""
+    m = 4 * zoom
+    salida = []
+    for s in subs:
+        y = s[3] - 1
+        orilla = False
+        for f in rects:
+            junto = min(s[2], f[2]) - max(s[0], f[0])
+            if junto > 0.6 * (s[2] - s[0]) and (abs(y - f[1]) <= m or abs(y - f[3]) <= m):
+                orilla = True
+                break
+        if not orilla:
+            salida.append(s)
+    return salida
+
+
 def _dentro(x, y, caja, margen=0):
     return caja[0] - margen <= x <= caja[2] + margen and caja[1] - margen <= y <= caja[3] + margen
 

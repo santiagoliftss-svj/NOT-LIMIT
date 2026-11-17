@@ -710,10 +710,83 @@ def _ventana_y_e2e(salida):
             def listo():
                 return any("Cervantes" in str(a) for a in list(v.ui.actividad)[:2])
             esperar("candado", listo, lambda: {"ok": listo() and not picados and not teclas, "picados": picados,
-                                               "teclas": teclas[:10], "antes": inicio}, juego_pantalla_completa, top,
+                                               "teclas": teclas[:10], "antes": inicio}, e2e_juego, top,
                     minimo=2.0)
         except Exception as e:
             pruebas["candado"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_juego)
+
+    # -------- E2E 8: la caja de un juego de preguntas (como el de los amigos): delgada, azul y angosta, abajo
+    # de la pregunta. NO LIMIT la tiene que encontrar por su forma y escribir ahi.
+    def e2e_juego():
+        try:
+            top = ventana_prueba("Prueba juego", 820, 420)
+            lienzo = tk.Canvas(top, width=820, height=420, bg="#f4f7ff", highlightthickness=0)
+            lienzo.place(x=0, y=0)
+            lienzo.create_text(40, 50, text="8. Escribe la capital de Italia", anchor="w", font=("Arial", 20),
+                               fill="#1e2a44")
+            lienzo.create_rectangle(300, 170, 440, 206, outline="#3b82f6", width=1)      # la caja del juego
+            ent = tk.Entry(top, font=("Arial", 15), relief="flat", bd=0, highlightthickness=0, bg="#f4f7ff",
+                           fg="#1e2a44", insertbackground="#1e2a44")
+            ent.place(x=304, y=175, width=132, height=26)
+            top.update()
+            diag = {}
+
+            def contestar(t):
+                c = _buscar(t, "", campos=True)
+                diag["campo"] = c
+                return {"tipo": "abierta", "respuesta": "Roma", "acciones": [
+                    {"hacer": "escribir", "en": c if c else {"x": 0, "y": 0}, "texto": "Roma"}]}
+            _IAFalsa.elegir = _fases(contestar, "abierta")
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 50), daemon=True).start()
+
+            def listo():
+                return ent.get().strip() == "Roma"
+            esperar("juego", listo, lambda: {"ok": listo(), "texto": ent.get(), "diag": diag}, e2e_sin_borde, top,
+                    minimo=2.0)
+        except Exception as e:
+            pruebas["juego"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_sin_borde)
+
+    # -------- E2E 9: un campo sin orilla ni raya (solo el texto gris "Tu respuesta"): NO LIMIT confirma con el
+    # cursor de texto (la I) que ahi si se escribe; en el fondo (flecha) no escribe nada.
+    def e2e_sin_borde():
+        try:
+            top = ventana_prueba("Prueba sin borde", 820, 420)
+            tk.Label(top, text="9. ¿Cuántas patas tiene una araña?", font=("Arial", 20), bg="white",
+                     fg="#222").place(x=40, y=30)
+            ent = tk.Entry(top, font=("Arial", 16), relief="flat", bd=0, highlightthickness=0, bg="white", fg="#888")
+            ent.insert(0, "Tu respuesta")
+            ent.place(x=40, y=110, width=400, height=30)
+
+            def quitar_ayuda(e):
+                if ent.get() == "Tu respuesta":
+                    ent.delete(0, "end")
+                    ent.configure(fg="#222")
+            ent.bind("<FocusIn>", quitar_ayuda, add="+")
+            teclas_fondo = []
+            top.bind("<Key>", lambda e: teclas_fondo.append(e.keysym) if e.widget is top else None)
+            top.update()
+            diag = {}
+
+            def contestar(t):
+                i = _buscar(t, "Tu respuesta")
+                diag["id"] = i
+                return {"tipo": "numerica", "respuesta": "8", "acciones": [
+                    {"hacer": "escribir", "en": int(i) if i and i.isdigit() else {"x": 0, "y": 0}, "texto": "8"},
+                    {"hacer": "escribir", "en": {"x": 600, "y": 320}, "texto": "zzz"}]}   # fondo: NO escribe
+            _IAFalsa.elegir = _fases(contestar, "numerica")
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+
+            def listo():
+                return ent.get().strip() == "8"
+            esperar("sin_borde", listo, lambda: {"ok": listo() and not teclas_fondo, "texto": ent.get(),
+                                                 "teclas_fondo": teclas_fondo[:10], "diag": diag},
+                    juego_pantalla_completa, top, minimo=2.0)
+        except Exception as e:
+            pruebas["sin_borde"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, juego_pantalla_completa)
 
     # -------- un "juego" en pantalla completa: Ctrl + clic ahi NO debe hacer nada
@@ -816,7 +889,7 @@ def _ventana_y_e2e(salida):
     def terminar():
         if estado["fin"]:
             return
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 7,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 9,
                              "detalle": pruebas}
         RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         try:
@@ -828,7 +901,7 @@ def _ventana_y_e2e(salida):
         root.after(100, v.salir)
 
     root.after(900, paso_ventana)
-    root.after(240000, terminar)
+    root.after(330000, terminar)
     root.mainloop()
 
 

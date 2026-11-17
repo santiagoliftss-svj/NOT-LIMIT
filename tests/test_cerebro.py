@@ -154,8 +154,10 @@ def prueba_candado_solo_escribe_en_campos():
         {"hacer": "escribir", "en": {"x": 400, "y": 500}, "texto": "esto no"},   # ahi no hay campo: NO escribe
         {"hacer": "escribir", "en": 0, "texto": "tampoco"}]}                     # el enunciado no es un campo
     plan = cerebro.planear(datos, CAJAS, campos, 1.0, img)
-    assert [(p["hacer"], p["texto"]) for p in plan.pasos] == [("escribir", "1910")], plan.pasos
-    assert len(plan.rechazadas) == 2
+    # el punto sin campo queda "por confirmar": solo se escribe si al momento la compu confirma que hay un campo
+    assert [(p["hacer"], p["texto"], p["verificar_campo"]) for p in plan.pasos] == [
+        ("escribir", "1910", False), ("escribir", "esto no", True)], plan.pasos
+    assert len(plan.rechazadas) == 1 and "campo" in plan.rechazadas[0][1], plan.rechazadas
 
 
 def prueba_candado_escribe_en_campo_cercano_o_dibujado():
@@ -248,7 +250,7 @@ def prueba_navegacion():
 
 def prueba_ubicar_caja_y_respaldo():
     img = Image.new("RGB", (1600, 900), "white")
-    s = cerebro._escala(1600, 900, 1280, 1200)
+    s = cerebro._escala(1600, 900, 1568, 1560)
     u = cerebro.ubicar(img, 800, 300, lambda b, m, t: (json.dumps(
         {"hay_pregunta": True, "caja": [int(400 * s), int(200 * s), int(1000 * s), int(500 * s)], "tipo": "opcion_unica"}),
         False), 1.0)
@@ -267,7 +269,7 @@ def prueba_ubicar_caja_y_respaldo():
 
 def prueba_ubicar_entiende_cajas_en_mil():
     img = Image.new("RGB", (1000, 600), "white")
-    s = cerebro._escala(1000, 600, 1280, 1200)
+    s = cerebro._escala(1000, 600, 1568, 1560)
     W, H = int(1000 * s), int(600 * s)
     # Gemini a veces manda [y0, x0, y1, x1] en 0..1000: la pregunta esta alrededor del puntero (800, 450)
     caja = [int(650), int(700), int(850), int(900)]
@@ -517,3 +519,239 @@ def prueba_bot_si_todo_era_peligroso_solo_avisa_la_respuesta():
     assert p.log == [], p.log                      # no escribio en la pagina a lo loco
     ev = _eventos(b)
     assert any(e[0] == "actividad" and "Respuesta: Porque si" in e[1] for e in ev), ev
+
+
+# ---------------------------------------------------------------- 2.1: controles de la pagina (Mac) y candado al escribir
+
+def control(x0, y0, x1, y1, tipo, etiqueta="", valor="", rol=""):
+    return {"rol": rol or {"campo": "AXTextField", "casilla": "AXCheckBox", "circulo": "AXRadioButton",
+                           "menu": "AXPopUpButton", "boton": "AXButton"}[tipo],
+            "tipo": tipo, "etiqueta": etiqueta, "valor": valor, "caja": (x0, y0, x1, y1)}
+
+
+CONTROLES = [control(100, 100, 130, 130, "casilla", "Rojo"), control(100, 160, 130, 190, "casilla", "Verde"),
+             control(150, 300, 650, 340, "campo", "Tu respuesta"), control(400, 400, 600, 440, "menu", "Elige una"),
+             control(700, 600, 800, 630, "boton", "Siguiente")]
+
+
+def prueba_controles_de_la_pagina():
+    img = Image.new("RGB", (900, 650), "white")
+    datos = {"acciones": [
+        {"hacer": "clic", "en": "A0"},                                   # casilla Rojo
+        {"hacer": "clic", "en": "A4"},                                   # boton Siguiente: NO
+        {"hacer": "escribir", "en": {"x": 300, "y": 330}, "texto": "1910"},  # cae en el campo de la pagina
+        {"hacer": "escribir", "en": "A1", "texto": "no"},                # una casilla no es campo: NO
+        {"hacer": "elegir", "en": "A3", "opcion": "Mitocondria"}]}
+    plan = cerebro.planear(datos, [], [], 1.0, img, 1.0, CONTROLES)
+    hechos = [(p["hacer"], p.get("desc") or p.get("texto")) for p in plan.pasos]
+    assert hechos == [("clic", "Rojo"), ("escribir", "1910"), ("elegir", "Elige una")], (hechos, plan.rechazadas)
+    assert plan.pasos[1]["p"] == (400, 320) and plan.pasos[1]["seguro_campo"]          # el centro del campo real
+    motivos = " | ".join(m for _, m in plan.rechazadas)
+    assert "avanzar" in motivos and "casilla" in motivos, motivos
+    b64, mime, s, tam = cerebro.preparar_imagen(img, [campo(150, 300, 650, 340)], cajas=CAJAS, controles=CONTROLES)
+    t = cerebro.texto_cajas(CAJAS, [], s, tam, None, CONTROLES)
+    assert "[A0]" in t and "casilla 'Rojo' (sin marcar)" in t and "campo 'Tu respuesta' (vacio)" in t, t
+
+
+def prueba_no_pica_si_el_texto_no_cuadra():
+    img = Image.new("RGB", (900, 650), "white")
+    plan = cerebro.planear({"acciones": [{"hacer": "clic", "en": 3, "texto": "Lisboa"}]}, CAJAS, [], 1.0, img)
+    assert plan.pasos == [] and "no cuadra" in plan.rechazadas[0][1], plan.rechazadas
+
+
+class PantallaMac(Pantalla):
+    """Como en Mac: la pagina dice que hay en cada punto y si el cursor quedo en un campo."""
+    def __init__(self, que=None, foco=None):
+        super().__init__()
+        self.que, self.foco_val = que, foco
+
+    def que_hay_en(self, x, y):
+        return self.que(x, y) if callable(self.que) else self.que
+
+    def foco_editable(self):
+        return self.foco_val() if callable(self.foco_val) else self.foco_val
+
+
+def _escribe(p, paso):
+    ej = cerebro.Ejecutor(p, 0, 0, (0, 0, 1000, 700), foto=lambda: p.foto(0, 0, 1000, 700), pausa=0)
+    ej.correr([paso])
+    return ej
+
+
+def prueba_mac_no_escribe_donde_la_pagina_dice_que_no_hay_campo():
+    p = PantallaMac(que={"rol": "AXStaticText", "campo": False, "enlace": False})
+    ej = _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
+    assert p.log == [] and ej.no_escritos == ["hola"] and ej.fallas, p.log      # ni clic, ni Cmd+A, ni teclas
+
+
+def prueba_mac_si_el_cursor_no_queda_en_un_campo_no_teclea():
+    p = PantallaMac(que={"rol": "AXGroup", "campo": None, "enlace": False}, foco=False)
+    ej = _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
+    assert ("ctrl+a",) not in p.log and not any(a[0] == "escribe" for a in p.log), p.log
+    assert len(p.clics()) == 2 and ej.no_escritos == ["hola"]                 # lo intento 2 veces y no tecleo
+
+
+def prueba_mac_con_cursor_en_campo_si_escribe():
+    p = PantallaMac(que={"rol": "AXTextField", "campo": True, "enlace": False}, foco=True)
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
+    assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log
+
+
+def prueba_mac_sin_saber_escribe_sin_seleccionar_todo():
+    p = PantallaMac(que={"rol": "AXGroup", "campo": None, "enlace": False}, foco=None)
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
+    assert ("ctrl+a",) not in p.log and ("escribe", "hola") in p.log, p.log
+
+
+def prueba_juego_en_canvas_si_escribe_en_su_campo():
+    p = PantallaMac(que={"rol": "AXImage", "campo": False, "enlace": False}, foco=None)
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "seguro_campo": True})
+    assert ("escribe", "hola") in p.log and ("ctrl+a",) not in p.log, p.log
+
+
+def prueba_windows_escribe_como_antes():
+    p = Pantalla()
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
+    assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log
+
+
+def prueba_nunca_pica_un_enlace():
+    p = PantallaMac(que={"rol": "AXStaticText", "campo": False, "enlace": True})
+    ej = cerebro.Ejecutor(p, 0, 0, (0, 0, 1000, 700), foto=lambda: p.foto(0, 0, 1000, 700), pausa=0)
+    ej.correr([{"hacer": "clic", "p": (300, 200), "desc": "Ver más en Microsoft"}])
+    assert p.clics() == [] and ej.fallas, p.log
+
+
+def prueba_bot_con_controles_de_la_pagina():
+    class PantallaControles(PantallaMac):
+        def controles_en(self, left, top, w, h, punto=None):
+            # (en pixeles de pantalla)
+            return [dict(c, caja=(c["caja"][0] + left, c["caja"][1] + top, c["caja"][2] + left, c["caja"][3] + top))
+                    for c in CONTROLES]
+
+        def preparar_accesibilidad(self, x, y):
+            self.log.append(("preparar",))
+    p = PantallaControles(que={"rol": "AXCheckBox", "campo": False, "enlace": False}, foco=None)
+    vistos = {}
+
+    def contestar(t):
+        vistos["t"] = t
+        return {"tipo": "opcion_multiple", "respuesta": "Rojo", "acciones": [{"hacer": "clic", "en": "A0"}]}
+    cli = ClienteFases(ubicar=lambda t: {"hay_pregunta": True, "caja": [0, 0, 1000, 700], "tipo": "opcion_multiple"},
+                       contestar=contestar)
+    b, c = _bot(cli, p)
+    with Parche(cerebro__leer=lambda img, px, py, zoom, ocr: ([], []), motor__capturar_zona=p.foto):
+        b.contestar(p.img.copy(), 0, 0, 150, 125, 1.0)
+    assert ("preparar",) in p.log
+    assert "[A0]" in vistos["t"] and "casilla 'Rojo'" in vistos["t"], vistos["t"][-400:]
+    assert any(c[0] == "clic" and 100 <= c[1] <= 130 and 100 <= c[2] <= 130 for c in p.clics()), p.log
+
+
+# ---------------------------------------------------------------- 2.1: campos raros y confirmar antes de escribir
+
+def _escena_campos(zoom=1.0):
+    from PIL import ImageFont
+    z = lambda v: int(v * zoom)                       # noqa: E731
+    try:
+        f = ImageFont.truetype("DejaVuSans.ttf", z(15))
+    except Exception:
+        f = ImageFont.load_default()
+    img = Image.new("RGB", (z(900), z(700)), "white")
+    d = ImageDraw.Draw(img)
+    d.text((z(55), z(112)), "Tu respuesta", fill=(112, 117, 122), font=f)                       # Google Forms
+    d.line([z(55), z(136), z(380), z(136)], fill=(224, 224, 224), width=max(1, z(1)))
+    d.text((z(55), z(200)), "Consulta la guía oficial aquí", fill=(26, 13, 171), font=f)     # enlace subrayado
+    d.line([z(55), z(219), z(262), z(219)], fill=(26, 13, 171), width=max(1, z(1)))
+    d.rectangle([z(55), z(250), z(400), z(290)], outline=(120, 120, 120), width=max(1, z(1)))  # caja normal
+    d.text((z(55), z(330)), "La capital de Francia es", fill=(20, 20, 20), font=f)            # ______ en un renglon
+    d.line([z(250), z(347), z(360), z(347)], fill=(20, 20, 20), width=max(1, z(1)))
+    d.rounded_rectangle([z(55), z(390), z(200), z(426)], radius=z(10), fill=(26, 115, 232))  # boton relleno
+    d.line([z(0), z(460), z(900), z(460)], fill=(220, 220, 220), width=1)                     # separador
+    for yy in (490, 525, 560):                                                                   # tabla
+        d.line([z(55), z(yy), z(455), z(yy)], fill=(150, 150, 150), width=max(1, z(1)))
+    for xx in (55, 255, 455):
+        d.line([z(xx), z(490), z(xx), z(560)], fill=(150, 150, 150), width=max(1, z(1)))
+    d.rectangle([z(500), z(600), z(880), z(690)], fill=(40, 40, 40))                           # zona oscura
+    d.line([z(55), z(640), z(380), z(640)], fill=(103, 58, 183), width=max(2, z(2)))          # raya con foco
+    return img
+
+
+def prueba_campos_que_son_solo_una_raya():
+    for zoom in (1.0, 2.0):
+        img = _escena_campos(zoom)
+        subs = motor.quitar_orillas(motor.subrayados(img, zoom), motor.rectangulos(img, zoom), zoom)
+        rayas = sorted((round(r[0] / zoom), round((r[3] - 1) / zoom)) for r in subs)
+        # Google Forms, el ______ del renglon y la raya con foco; NO el enlace, la caja, el boton, el separador,
+        # la tabla ni la orilla de la zona oscura
+        assert len(rayas) == 3, (zoom, rayas)
+        for x, y in ((55, 136), (250, 347), (55, 640)):
+            assert any(abs(rx - x) <= 3 and abs(ry - y) <= 4 for rx, ry in rayas), (zoom, rayas)
+
+
+def prueba_leer_junta_cajas_y_rayas():
+    img = _escena_campos(1.0)
+    _, campos = cerebro.leer(img, 450, 350, 1.0, None)
+    centros = [(round(c["cx"]), round(c["cy"])) for c in campos]
+    assert any(abs(y - 124) < 14 and 150 < x < 300 for x, y in centros), centros      # Tu respuesta
+    assert any(abs(y - 270) < 6 for x, y in centros), centros                          # la caja normal
+
+
+def prueba_no_escribe_en_una_caja_que_es_boton():
+    img = Image.new("RGB", (900, 650), "white")
+    campos = [campo(680, 590, 820, 640)]                       # un boton con orilla parece caja
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": "C0", "texto": "1910"}]}, CAJAS, campos, 1.0, img)
+    assert plan.pasos == [] and "boton" in plan.rechazadas[0][1], plan.rechazadas
+
+
+def prueba_no_escribe_encima_del_enunciado_aunque_no_haya_campo():
+    img = Image.new("RGB", (900, 650), "white")
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": {"x": 300, "y": 55}, "texto": "x"}]},
+                           CAJAS, [], 1.0, img)
+    assert plan.pasos == [] and plan.rechazadas, plan.pasos
+
+
+def prueba_texto_de_ayuda_sin_caja_queda_por_confirmar():
+    img = Image.new("RGB", (900, 650), "white")
+    cajas = CAJAS + [caja(150, 420, 380, 444, "Escribe tu respuesta")]
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": 5, "texto": "París"}]}, cajas, [], 1.0, img)
+    assert len(plan.pasos) == 1 and plan.pasos[0]["verificar_campo"], (plan.pasos, plan.rechazadas)
+
+
+class PantallaWin(Pantalla):
+    def __init__(self, cursor):
+        super().__init__()
+        self.cursor = cursor
+
+    def forma_cursor(self):
+        return self.cursor
+
+
+def prueba_windows_por_confirmar_sin_cursor_de_texto_no_toca():
+    p = PantallaWin("flecha")
+    ej = _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
+    assert p.clics() == [] and ej.no_escritos == ["hola"], p.log
+
+
+def prueba_windows_por_confirmar_con_cursor_de_texto_escribe_sin_seleccionar_todo():
+    p = PantallaWin("texto")
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
+    assert p.log == [("clic", 300, 200), ("escribe", "hola")], p.log
+
+
+def prueba_mac_por_confirmar_solo_si_el_foco_queda_en_un_campo():
+    p = PantallaMac(que={"rol": "AXGroup", "campo": None, "enlace": False}, foco=None)
+    ej = _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
+    assert not any(a[0] == "escribe" for a in p.log) and ej.no_escritos == ["hola"], p.log
+    p = PantallaMac(que={"rol": "AXGroup", "campo": None, "enlace": False}, foco=True)
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
+    assert ("escribe", "hola") in p.log, p.log
+    p = PantallaMac(que={"rol": "AXTextField", "campo": True, "enlace": False}, foco=True)
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
+    assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log
+
+
+def prueba_las_instrucciones_piden_respuesta_y_luego_donde():
+    t = cerebro.SISTEMA_CONTESTAR
+    assert t.index('"respuesta"') < t.index('"donde"') < t.index('"acciones"')
+    for palabra in ("raya", "angosta", "fondo oscuro", "A#", "AZULES", "NARANJAS", "enlaces"):
+        assert palabra in t, palabra

@@ -38,7 +38,7 @@ Tu trabajo: encontrar UNA pregunta, la que esta bajo el puntero o la mas cercana
 Responde SOLO un JSON en una linea:
 {"hay_pregunta": true, "caja": [x0, y0, x1, y1], "tipo": "<tipo>", "controles": "<como se contesta en pantalla>"}
 
-- "caja" encierra TODA esa pregunta: el enunciado, sus imagenes, graficas o tablas, y TODOS sus controles para contestar (opciones, casillas, campos, menus, elementos para arrastrar y los lugares donde se sueltan, el plano para graficar). Si dudas, hazla un poco mas grande, pero no metas otras preguntas.
+- "caja" encierra TODA esa pregunta: el enunciado, sus imagenes, graficas o tablas, y TODOS sus controles para contestar (opciones, casillas, campos, menus, elementos para arrastrar y los lugares donde se sueltan, el plano para graficar). El lugar para escribir puede ser de cualquier color o forma (caja delgada azul o gris, angosta, redondeada, con fondo oscuro, solo una raya abajo, la caja de un juego de preguntas) y puede estar abajo o a un lado: tambien va dentro. Si dudas, hazla un poco mas grande, pero no metas otras preguntas.
 - "tipo" es uno de: opcion_unica, opcion_multiple, verdadero_falso, completar, desplegable, relacionar, abierta, numerica, matematica, zona_clic, graficar, estadistica, pasos, ordenar, arrastrar, matriz, simulacion, audio_video, otra.
   (opcion_multiple = varias casillas; desplegable = menus para elegir, tambien dentro de un parrafo; matematica = editor de ecuaciones; zona_clic = dar clic en una parte de una imagen; matriz = tabla de filas y columnas con circulos o casillas.)
 - Si no hay ninguna pregunta cerca del puntero: {"hay_pregunta": false}"""
@@ -46,20 +46,30 @@ Responde SOLO un JSON en una linea:
 SISTEMA_CONTESTAR = """Eres el motor de NO LIMIT: contestas UNA pregunta que el usuario tiene en su pantalla y dices exactamente que acciones hacer con el mouse y el teclado para dejarla contestada.
 
 Recibes:
-1) Una imagen recortada SOLO con la pregunta. Arriba y a la izquierda tiene reglas con coordenadas en pixeles: (0,0) es la esquina de arriba a la izquierda de la imagen, sin contar las reglas. Los campos para escribir que se detectaron estan marcados con un recuadro morado y su etiqueta (C0, C1, ...).
+1) Una imagen recortada SOLO con la pregunta. Arriba y a la izquierda tiene reglas con coordenadas en pixeles: (0,0) es la esquina de arriba a la izquierda de la imagen, sin contar las reglas. Encima lleva marcas:
+   - numeros AZULES a la izquierda de los textos cortos: el id de esa caja de texto (para que no te equivoques de opcion).
+   - recuadros MORADOS con C0, C1, ...: campos para escribir detectados por su forma (cajas o rayas).
+   - recuadros NARANJAS con A0, A1, ...: controles que la PAGINA dice que son (campo, casilla, circulo, menu, boton). Son lo mas confiable.
 2) La lista de cajas de texto leidas con OCR: id, centro (x,y) y texto. El OCR puede traer errores o simbolos raros; guiate por la imagen.
 3) La lista de campos para escribir: id (C0, C1, ...), centro y tamano.
-4) Una pista del tipo de pregunta (puede estar mal: tu decides).
+4) Si hay, la lista de controles de la pagina: id (A0, A1, ...), centro, que es y su estado (marcado, sin marcar, lo que tiene escrito).
+5) Una pista del tipo de pregunta (puede estar mal: tu decides).
 
 Trabaja en este orden:
 1. Lee TODA la pregunta con calma: enunciado, imagen, grafica o tabla, unidades y lo que pide exactamente. Palabras como NO, EXCEPTO, INCORRECTA, FALSA, MENOS, NUNCA, TODAS o "selecciona todas" cambian la respuesta.
 2. Decide el tipo de pregunta y como se contesta en esta pantalla.
 3. Resuelvela. Si hay que calcular o razonar (matematicas, fisica, quimica, logica), hazlo paso a paso y comprueba el resultado (sustituye o recalcula); en "pasos" deja solo un resumen corto (maximo 5 renglones). Si hay grafica o imagen, lee sus datos con cuidado.
 4. Escribe la respuesta final en "respuesta" (en palabras; si son varias, separadas con " | ").
-5. Arma las acciones. Revisa que cada id que uses tenga el texto de tu respuesta (es facil equivocarse por uno).
+5. YA con la respuesta, busca DONDE va en la pantalla y dilo en "donde" (por ejemplo: "circulo A3 de la opcion 'Rojo'", "campo C1 abajo de la pregunta", "caja azul angosta en (412,300)"). Mira toda la imagen: el lugar para contestar NO siempre se ve igual.
+6. Arma las acciones. Revisa que cada id que uses tenga el texto de tu respuesta (es facil equivocarse por uno).
 
 Responde SOLO un JSON en una linea, sin texto antes ni despues:
-{"tipo":"...","pasos":"...","respuesta":"...","acciones":[...],"seguro":"alto"}
+{"tipo":"...","pasos":"...","respuesta":"...","donde":"...","acciones":[...],"seguro":"alto"}
+
+Donde contestar:
+- Si hay controles A#, usalos primero: su posicion y su estado son los reales. Para marcar una opcion usa el A# de su circulo o casilla (o el id azul de su texto); para escribir, el A# del campo; para un menu, el A# del menu.
+- Los lugares para escribir pueden ser de cualquier color y forma: caja con orilla delgada (azul, gris, morada, verde, roja), caja angosta o chiquita, redondeada, con fondo oscuro o de color, solo una raya abajo (como "Tu respuesta" de Google Forms o un ______), o la caja de un juego de preguntas (Kahoot, Quizizz, Genially, Wordwall, Educaplay, Quizlet, juegos hechos por maestros o amigos), que casi siempre esta abajo o a un lado de la pregunta. Si es un C# o un A#, usa ese id; si lo ves pero no tiene marca, usa su centro con {"x":..,"y":..} medido con las reglas. NO LIMIT comprueba que de verdad sea un campo antes de escribir.
+- En "clic" pon siempre en "texto" el texto de la opcion que quieres marcar: si no cuadra con lo que hay en ese id, NO LIMIT no pica.
 
 Acciones. "en", "desde" y "hasta" pueden ser: el id de una caja de texto (numero), un campo ("C0") o un punto {"x":..,"y":..} de la imagen. En matrices tambien {"fila": id del texto del renglon, "columna": id del texto de la columna}.
 - {"hacer":"clic","en":5,"texto":"texto de la opcion"}   marcar una opcion, casilla, circulo, celda o zona de una imagen.
@@ -71,7 +81,8 @@ Acciones. "en", "desde" y "hasta" pueden ser: el id de una caja de texto (numero
 Reglas de seguridad (muy importantes):
 - NUNCA des clic en botones para avanzar, mandar o cerrar: Siguiente, Anterior, Enviar, Entregar, Terminar, Comprobar, Continuar, Saltar, Responder, Aceptar, Submit, Next, Check, Done. Esos los toca el usuario.
 - NUNCA des clic en el texto del enunciado ni fuera de la pregunta.
-- Solo escribe en campos para escribir: los C#, o el texto gris que esta adentro de un campo (como "Escriba su respuesta"). Si no ves donde escribir, NO inventes un punto: deja "acciones" vacio y pon la respuesta en "respuesta".
+- NUNCA des clic en enlaces (texto azul o subrayado que abre otra pagina), ni en logos, menus de la pagina o pestanas.
+- Solo escribe en campos para escribir: los A# que son campo, los C#, una caja o raya para escribir que veas en la imagen, o el texto gris que esta adentro de un campo (como "Escriba su respuesta"). Si no ves donde escribir, NO inventes un punto: deja "acciones" vacio y pon la respuesta en "respuesta".
 - Pon "seguro":"bajo" si no estas seguro de COMO se contesta en esta pantalla (donde dar clic, que arrastrar). Asi NO LIMIT no toca nada y solo muestra la respuesta.
 - Si no se puede contestar (audio, video, algo que no se ve), pon "acciones": [] y explica en "no_se_puede".
 
@@ -97,6 +108,8 @@ Por tipo:
 Si en la imagen no hay ninguna pregunta: {"tipo":"ninguna","acciones":[]}"""
 
 SISTEMA_REVISAR = """Eres el revisor de NO LIMIT. Ya se hicieron acciones con el mouse y el teclado para contestar una pregunta. Recibes la imagen de la pregunta COMO QUEDO (con reglas de coordenadas arriba y a la izquierda, y los campos marcados en morado), la lista de textos leidos con OCR, la respuesta que se queria dejar y las acciones que se hicieron.
+
+Si hay controles de la pagina (A0, A1, ...) con su estado (marcado, sin marcar, lo que tienen escrito), ese estado es el REAL: confia en el antes que en la imagen.
 
 Revisa si quedo contestada EXACTAMENTE como se queria:
 - opciones y casillas: marcadas las correctas y NINGUNA de mas.
@@ -184,13 +197,43 @@ def _escala(w, h, lado=1568, tokens=1560):
     return min(1.0, s)
 
 
-def preparar_imagen(img, campos=(), puntero=None, lado=1568, tokens=1560):
-    """(b64, mime, s, (w, h)): la imagen reducida para la IA, con campos, puntero y reglas."""
+NARANJA = (235, 110, 0)
+AZUL_TAG = (20, 70, 200)
+
+
+def _tag(dib, x, y, texto, color, fuente, W, H, lado="izq"):
+    """Etiqueta chiquita con el numero: a la izquierda de la caja (o arriba si no cabe)."""
+    caja = dib.textbbox((0, 0), texto, font=fuente)
+    tw, th = caja[2] - caja[0] + 4, caja[3] - caja[1] + 2
+    if lado == "izq" and x - tw - 2 >= 0:
+        tx, ty = x - tw - 2, y
+    else:
+        tx, ty = x, y - th - 2 if y - th - 2 >= 0 else y
+    tx, ty = max(0, min(W - tw, tx)), max(0, min(H - th, ty))
+    dib.rectangle((tx, ty, tx + tw, ty + th), fill=color)
+    dib.text((tx + 2, ty + 1 - caja[1]), texto, fill=(255, 255, 255), font=fuente)
+
+
+def _es_opcion(c):
+    """Cajas de texto cortas (opciones, etiquetas, numeros): esas llevan su numero dibujado."""
+    t = str(c.get("texto") or "")
+    return 0 < len(t) <= 60 and len(t.split()) <= 8
+
+
+def preparar_imagen(img, campos=(), puntero=None, lado=1568, tokens=1560, cajas=(), controles=()):
+    """(b64, mime, s, (w, h)): la imagen reducida para la IA, con reglas, puntero y etiquetas:
+    numero azul junto a cada opcion corta (su id), C# morado en cada campo detectado y A# naranja en cada control
+    que la pagina dice que es (campo, casilla, circulo, menu)."""
     s = _escala(img.width, img.height, lado, tokens)
     tam = (max(1, int(img.width * s)), max(1, int(img.height * s)))
     im = img.resize(tam, Image.LANCZOS) if s != 1.0 else img.copy()
     dib = ImageDraw.Draw(im)
     fuente = _fuente(13)
+    chica = _fuente(11)
+    for i, c in enumerate(controles):
+        x0, y0, x1, y1 = [v * s for v in c["caja"]]
+        dib.rectangle((x0 - 1, y0 - 1, x1 + 1, y1 + 1), outline=NARANJA, width=2)
+        _tag(dib, x1 + 3, y0, f"A{i}", NARANJA, chica, tam[0], tam[1], lado="der")
     for i, c in enumerate(campos):
         x0, y0, x1, y1 = [v * s for v in c["caja"]]
         dib.rectangle((x0 - 2, y0 - 2, x1 + 2, y1 + 2), outline=motor.MORADO, width=2)
@@ -199,6 +242,10 @@ def preparar_imagen(img, campos=(), puntero=None, lado=1568, tokens=1560):
         caja_txt = dib.textbbox((x0, ty), etiqueta, font=fuente)
         dib.rectangle((caja_txt[0] - 1, caja_txt[1] - 1, caja_txt[2] + 1, caja_txt[3] + 1), fill=(255, 255, 255))
         dib.text((x0, ty), etiqueta, fill=motor.MORADO, font=fuente)
+    for i, c in enumerate(cajas):
+        if _es_opcion(c):
+            x0, y0 = c["caja"][0] * s, c["caja"][1] * s
+            _tag(dib, x0, y0, str(i), AZUL_TAG, chica, tam[0], tam[1])
     if puntero is not None:
         x, y = puntero[0] * s, puntero[1] * s
         if 0 <= x < tam[0] and 0 <= y < tam[1]:
@@ -208,25 +255,43 @@ def preparar_imagen(img, campos=(), puntero=None, lado=1568, tokens=1560):
     return b64, mime, s, tam
 
 
-def texto_cajas(cajas, campos, s, tam, puntero=None):
+def _desc_control(c):
+    estado = ""
+    v = str(c.get("valor") or "")
+    if c["tipo"] in ("casilla", "circulo"):
+        estado = " (marcado)" if v in ("1", "True", "true") else " (sin marcar)"
+    elif c["tipo"] in ("campo", "menu") and v:
+        estado = f" (dice: {v[:40]})"
+    elif c["tipo"] == "campo":
+        estado = " (vacio)"
+    return f"{c['tipo']} '{c.get('etiqueta') or ''}'{estado}"
+
+
+def texto_cajas(cajas, campos, s, tam, puntero=None, controles=()):
     filas = [f"Imagen de {tam[0]}x{tam[1]} px (sin contar las reglas)."]
     if puntero is not None:
         x, y = int(puntero[0] * s), int(puntero[1] * s)
         if 0 <= x < tam[0] and 0 <= y < tam[1]:
             filas.append(f"El puntero (circulo rojo) esta en ({x},{y}).")
     if cajas:
-        filas.append("Cajas de texto (id | centro x,y | texto):")
+        filas.append("Cajas de texto (id | centro x,y | texto). Las cortas llevan su id dibujado en azul a su izquierda:")
         for i, c in enumerate(cajas):
             filas.append(f"[{i}] ({int(c['cx'] * s)},{int(c['cy'] * s)}) {c['texto']}")
     else:
         filas.append("No se detectaron cajas de texto: usa puntos x,y.")
     if campos:
-        filas.append("Campos para escribir detectados (id | centro x,y | ancho x alto):")
+        filas.append("Campos para escribir detectados por su forma (id | centro x,y | ancho x alto), marcados en morado:")
         for i, c in enumerate(campos):
             x0, y0, x1, y1 = c["caja"]
             filas.append(f"[C{i}] ({int(c['cx'] * s)},{int(c['cy'] * s)}) {int((x1 - x0) * s)}x{int((y1 - y0) * s)}")
     else:
-        filas.append("No se detectaron campos para escribir.")
+        filas.append("No se detectaron campos para escribir por su forma.")
+    if controles:
+        filas.append("Controles que la PAGINA dice que son (lo mas confiable para saber donde contestar), marcados en "
+                     "naranja (id | centro x,y | que es):")
+        for i, c in enumerate(controles):
+            x0, y0, x1, y1 = c["caja"]
+            filas.append(f"[A{i}] ({int((x0 + x1) / 2 * s)},{int((y0 + y1) / 2 * s)}) {_desc_control(c)}")
     return "\n".join(filas)
 
 
@@ -334,7 +399,7 @@ class Ubicacion:
 
 def ubicar(img, px, py, preguntar, zoom=1.0):
     """Fase 1: donde esta la pregunta y de que tipo es."""
-    b64, mime, s, tam = preparar_imagen(img, puntero=(px, py), lado=1280, tokens=1200)
+    b64, mime, s, tam = preparar_imagen(img, puntero=(px, py), lado=1568, tokens=1560)
     texto = (f"FASE: UBICAR\nCaptura de {tam[0]}x{tam[1]} px (sin contar las reglas). "
              f"El puntero (circulo rojo) esta en ({int(px * s)},{int(py * s)}).")
     salida, _ = llamar(preguntar, b64, mime, texto, "ubicar")
@@ -365,9 +430,14 @@ def leer(img, px, py, zoom, ocr):
 
     def buscar():
         try:
-            rects["r"] = motor.rectangulos(img, zoom)
+            r = motor.rectangulos(img, zoom)
         except Exception:
-            rects["r"] = []
+            r = []
+        try:
+            r = r + motor.quitar_orillas(motor.subrayados(img, zoom), r, zoom)
+        except Exception:
+            pass
+        rects["r"] = r
 
     hilo = threading.Thread(target=buscar, daemon=True)
     hilo.start()
@@ -512,14 +582,27 @@ def ejes(cajas):
     return out
 
 
-def resolver(obj, cajas, campos, s, W, H, plano=None):
-    """Lo que eligio la IA -> (x, y, i_caja, i_campo) en pixeles de la region, o None si no cuadra."""
+def _centro(caja):
+    return (caja[0] + caja[2]) / 2, (caja[1] + caja[3]) / 2
+
+
+def resolver(obj, cajas, campos, s, W, H, plano=None, controles=()):
+    """Lo que eligio la IA -> (x, y, i_caja, i_campo, i_control) en pixeles de la region, o None si no cuadra."""
     if isinstance(obj, str):
         mc = re.fullmatch(r"\s*[Cc]\s*(\d+)\s*", obj)
         if mc:
             i = int(mc.group(1))
             if 0 <= i < len(campos):
-                return campos[i]["cx"], campos[i]["cy"], None, i
+                return campos[i]["cx"], campos[i]["cy"], None, i, None
+            return None
+        ma = re.fullmatch(r"\s*[Aa]\s*(\d+)\s*", obj)
+        if ma:
+            i = int(ma.group(1))
+            if 0 <= i < len(controles):
+                x, y = _centro(controles[i]["caja"])
+                if not (0 <= x < W and 0 <= y < H):
+                    return None
+                return x, y, _caja_en(x, y, cajas), None, i
             return None
         obj = obj.strip()
     if isinstance(obj, dict):
@@ -530,7 +613,7 @@ def resolver(obj, cajas, campos, s, W, H, plano=None):
             f, c = int(f), int(c)
             if not (0 <= f < len(cajas) and 0 <= c < len(cajas)):
                 return None
-            return cajas[c]["cx"], cajas[f]["cy"], None, None
+            return cajas[c]["cx"], cajas[f]["cy"], None, None, None
         x, y = motor._numero(obj.get("x")), motor._numero(obj.get("y"))
         gx, gy = motor._numero(obj.get("gx")), motor._numero(obj.get("gy"))
         if (gx is not None or gy is not None) and s > 0:
@@ -548,13 +631,48 @@ def resolver(obj, cajas, campos, s, W, H, plano=None):
         x, y = x / s, y / s
         if not (0 <= x < W and 0 <= y < H):
             return None                  # fuera de la pregunta: no
-        return x, y, _caja_en(x, y, cajas), None
+        return x, y, _caja_en(x, y, cajas), None, _control_en(x, y, controles)
     n = motor._numero(obj)
     if n is not None and float(n).is_integer():
         i = int(n)
         if 0 <= i < len(cajas):
-            return cajas[i]["cx"], cajas[i]["cy"], i, None
+            return cajas[i]["cx"], cajas[i]["cy"], i, None, None
     return None
+
+
+def _control_en(x, y, controles, margen=0):
+    mejor = None
+    for i, c in enumerate(controles or ()):
+        if motor._dentro(x, y, c["caja"], margen):
+            area = (c["caja"][2] - c["caja"][0]) * (c["caja"][3] - c["caja"][1])
+            if mejor is None or area < mejor[0]:
+                mejor = (area, i)
+    return mejor[1] if mejor else None
+
+
+_AYUDA = re.compile(r"respuesta|responde|escrib|answer|type|enter|aqui|here|tu texto|your|valor|numero|resultado")
+
+
+def _sin_texto_o_ayuda(x, y, i, cajas):
+    """True si en ese punto no hay texto, o solo el texto gris de ayuda de un campo ('Escribe tu respuesta')."""
+    if i is None:
+        i = _caja_en(x, y, cajas)
+    if i is None:
+        return True
+    t = motor._norm(cajas[i]["texto"])
+    return bool(t) and len(t.split()) <= 5 and bool(_AYUDA.search(t))
+
+
+def _campo_de_pagina(x, y, controles, radio):
+    """El campo para escribir (segun la pagina) que contiene el punto o esta a 'radio' pixeles."""
+    mejor = None
+    for i, c in enumerate(controles or ()):
+        if c.get("tipo") != "campo":
+            continue
+        d = motor._distancia(x, y, c["caja"])
+        if d <= radio and (mejor is None or d < mejor[0]):
+            mejor = (d, i)
+    return mejor[1] if mejor else None
 
 
 def refinar_campo(img, x, y, zoom=1.0):
@@ -566,7 +684,13 @@ def refinar_campo(img, x, y, zoom=1.0):
         if zona[2] - zona[0] < 10 or zona[3] - zona[1] < 10:
             continue
         mejor = None
-        for r in motor.rectangulos(img.crop(zona), zoom, relajado=True):
+        recorte = img.crop(zona)
+        candidatos = motor.rectangulos(recorte, zoom, relajado=True)
+        try:
+            candidatos = candidatos + motor.quitar_orillas(motor.subrayados(recorte, zoom), candidatos, zoom)
+        except Exception:
+            pass
+        for r in candidatos:
             c = (r[0] + zona[0], r[1] + zona[1], r[2] + zona[0], r[3] + zona[1])
             d = motor._distancia(x, y, c)
             if d > 30 * zoom:
@@ -595,7 +719,7 @@ def _corregir_id(i, texto, cajas):
     return i
 
 
-def planear(datos, cajas, campos, s, region_img, zoom=1.0):
+def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
     """Revisa cada accion de la IA contra el candado. Puntos en pixeles de la region (la imagen recortada)."""
     plan = Plan()
     plan.datos = datos
@@ -608,7 +732,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
     plano = ejes(cajas)
 
     def _res(obj):
-        return resolver(obj, cajas, campos, s, W, H, plano)
+        return resolver(obj, cajas, campos, s, W, H, plano, controles)
 
     def rechazar(a, motivo):
         plan.rechazadas.append((a, motivo))
@@ -630,15 +754,22 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
             if r is None:
                 rechazar(a, "fuera de la pregunta o no existe")
                 continue
-            x, y, i, _ = r
+            x, y, i, _, ic = r
             es_id = not isinstance(obj, dict) and motor._numero(obj) is not None
             if i is not None and es_id:
                 j = _corregir_id(i, a.get("texto"), cajas)
                 if j != i:
                     i = j
                     x, y = cajas[i]["cx"], cajas[i]["cy"]
+                if a.get("texto") and motor.parecido(str(a["texto"]), cajas[i]["texto"]) < 0.45:
+                    # el texto de la opcion que dice la IA no se parece a lo que hay ahi: mejor no picar a lo loco
+                    rechazar(a, f"el texto no cuadra ('{a['texto']}' vs '{cajas[i]['texto']}')")
+                    continue
             texto_caja = cajas[i]["texto"] if i is not None else ""
-            if i is not None and es_navegacion(texto_caja):
+            if ic is not None:
+                texto_caja = texto_caja or controles[ic].get("etiqueta") or controles[ic]["tipo"]
+            if (i is not None and es_navegacion(cajas[i]["texto"])) or (
+                    ic is not None and controles[ic]["tipo"] == "boton" and es_navegacion(controles[ic].get("etiqueta"))):
                 rechazar(a, f"es un boton para avanzar o mandar ({texto_caja})")
                 continue
             clave = (round(x / 6), round(y / 6))
@@ -646,7 +777,8 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
                 continue                 # el mismo clic dos veces desmarcaria la casilla
             vistos.add(clave)
             plan.pasos.append({"hacer": "clic", "p": (x, y), "desc": texto_caja or a.get("texto") or "punto",
-                               "caja": cajas[i]["caja"] if i is not None else None})
+                               "caja": cajas[i]["caja"] if i is not None else None,
+                               "control": controles[ic] if ic is not None else None})
 
         elif hacer == "escribir":
             texto = motor.limpiar_respuesta(str(a.get("texto") or ""))
@@ -659,7 +791,17 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
             if r is None:
                 rechazar(a, "no hay un campo para escribir ahi")
                 continue
-            x, y, i, k = r
+            x, y, i, k, ic = r
+            pagina = ic if (ic is not None and controles[ic]["tipo"] == "campo") else _campo_de_pagina(x, y, controles, 30 * zoom)
+            if pagina is not None:
+                # la pagina dice que ahi hay un campo: ese es (lo mas seguro)
+                x, y = _centro(controles[pagina]["caja"])
+                plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": controles[pagina]["caja"],
+                                   "seguro_campo": True})
+                continue
+            if ic is not None and controles[ic]["tipo"] != "campo":
+                rechazar(a, f"ahi la pagina tiene un {controles[ic]['tipo']}, no un campo")
+                continue
             if k is None:
                 # solo se escribe en campos de verdad: uno detectado cerca, o un rectangulo alrededor del punto
                 k = _campo_en(x, y, campos, 40 * zoom)
@@ -668,19 +810,36 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
                         if motor._dentro(c["cx"], c["cy"], cajas[i]["caja"]) or motor._dentro(cajas[i]["cx"], cajas[i]["cy"], c["caja"]):
                             k = kk
                             break
+            verificar = False
             if k is not None:
                 x, y = campos[k]["cx"], campos[k]["cy"]
                 caja = campos[k]["caja"]
             else:
                 fino = refinar_campo(region_img, x, y, zoom)
-                if not fino:
+                if fino:
+                    x, y, caja = fino
+                elif (isinstance(obj, dict) or i is not None) and _sin_texto_o_ayuda(x, y, i, cajas):
+                    # la IA ve donde escribir pero no tiene forma de caja ni de raya (un juego, algo raro): se escribe
+                    # solo si al momento la computadora confirma que ahi hay un campo (Mac: la pagina; Windows: la I
+                    # del cursor). Si no, no se toca nada. Nunca encima del texto de la pregunta.
+                    caja = (x - 8 * zoom, y - 8 * zoom, x + 8 * zoom, y + 8 * zoom)
+                    verificar = True
+                else:
                     rechazar(a, "no se ve un campo para escribir ahi")
                     continue
-                x, y, caja = fino
             if i is not None and es_navegacion(cajas[i]["texto"]):
                 rechazar(a, "es un boton")
                 continue
-            plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": caja})
+            boton = next((c["texto"] for c in cajas if es_navegacion(c["texto"]) and motor._dentro(c["cx"], c["cy"], caja)), None)
+            if boton:
+                rechazar(a, f"esa caja es un boton ({boton})")
+                continue
+            ib = _control_en(x, y, controles)
+            if ib is not None and controles[ib]["tipo"] in ("boton", "casilla", "circulo"):
+                rechazar(a, f"ahi la pagina tiene un {controles[ib]['tipo']}, no un campo")
+                continue
+            plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": caja,
+                               "seguro_campo": k is not None, "verificar_campo": verificar})
 
         elif hacer == "elegir":
             opcion = str(a.get("opcion") or a.get("texto") or "").strip()
@@ -688,12 +847,13 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0):
             if r is None or not opcion:
                 rechazar(a, "menu u opcion no validos")
                 continue
-            x, y, i, _ = r
+            x, y, i, _, ic = r
             if i is not None and es_navegacion(cajas[i]["texto"]):
                 rechazar(a, "es un boton")
                 continue
             plan.pasos.append({"hacer": "elegir", "p": (x, y), "opcion": opcion,
-                               "desc": cajas[i]["texto"] if i is not None else "menu"})
+                               "desc": cajas[i]["texto"] if i is not None else (
+                                   controles[ic].get("etiqueta") if ic is not None else "menu") or "menu"})
 
         elif hacer == "arrastrar":
             r1 = _res(a.get("desde"))
@@ -762,6 +922,7 @@ class Ejecutor:
         self.fallas = []
         self.marcados = []               # textos de lo que se marco (para avisar)
         self.escritos = []
+        self.no_escritos = []            # respuestas que no se pudieron escribir (se avisan)
 
     def pantalla(self, x, y):
         return self.left + self.region[0] + x, self.top + self.region[1] + y
@@ -793,8 +954,34 @@ class Ejecutor:
         return self.hecho
 
     # ---- cada accion
+    def _que_hay(self, X, Y):
+        f = getattr(self.a, "que_hay_en", None)
+        try:
+            return f(X, Y) if f else None
+        except Exception:
+            return None
+
+    def _foco(self):
+        f = getattr(self.a, "foco_editable", None)
+        try:
+            return f() if f else None
+        except Exception:
+            return None
+
+    def _cursor(self):
+        f = getattr(self.a, "forma_cursor", None)
+        try:
+            return f() if f else None
+        except Exception:
+            return None
+
     def _clic(self, paso, antes):
         X, Y = self.pantalla(*paso["p"])
+        info = self._que_hay(X, Y)
+        if info and info.get("enlace") and not paso.get("control"):
+            # un enlace abre otra pagina o pestana: eso nunca es una respuesta
+            self.fallas.append((paso, "ahi hay un enlace: no lo pique"))
+            return antes
         if hasattr(self.a, "mover"):
             # primero solo se pone encima: asi el "antes" ya trae el efecto de pasar el mouse y si despues del
             # clic no cambia nada es que el clic de verdad no se registro
@@ -817,11 +1004,46 @@ class Ejecutor:
         return despues
 
     def _escribir(self, paso, antes):
+        """Escribe solo si de verdad hay un campo: en Mac se le pregunta a la pagina que hay en ese punto y si el
+        cursor quedo dentro de un campo. Si no, NO se selecciona todo ni se teclea nada (eso era lo que abria
+        pestanas y seleccionaba toda la pagina)."""
         X, Y = self.pantalla(*paso["p"])
+        info = self._que_hay(X, Y)
+        if info and info.get("campo") is False and not (paso.get("seguro_campo") and info.get("rol") in ("AXImage", "AXCanvas")):
+            self.fallas.append((paso, f"ahi no hay un campo para escribir ({info.get('rol')})"))
+            self.no_escritos.append(paso["texto"])
+            return antes
+        if info and info.get("enlace"):
+            self.fallas.append((paso, "ahi hay un enlace, no un campo"))
+            self.no_escritos.append(paso["texto"])
+            return antes
+        # un lugar que la IA ve pero que no tiene forma de campo: hay que confirmarlo antes de tocar
+        verificar = bool(paso.get("verificar_campo")) and not (info and info.get("campo") is True)
+        forma = None
+        if verificar:
+            if hasattr(self.a, "mover"):
+                self.a.mover(X, Y)
+                time.sleep(0.15)
+            forma = self._cursor()
+            if info is None and forma != "texto":
+                self.fallas.append((paso, "no se confirmo que ahi haya un campo: no escribi nada"))
+                self.no_escritos.append(paso["texto"])
+                return antes
         self.a.clic(X, Y)
         time.sleep(0.3)
-        self.a.seleccionar_todo()
-        time.sleep(0.06)
+        foco = self._foco()
+        if foco is False:
+            self.a.clic(X, Y)                # a veces el primer clic solo activa la ventana
+            time.sleep(0.35)
+            foco = self._foco()
+        if foco is False or (verificar and foco is not True and forma != "texto"):
+            self.fallas.append((paso, "el cursor no quedo en un campo: no escribi nada"))
+            self.no_escritos.append(paso["texto"])
+            return self.foto()
+        # Cmd/Ctrl + A solo si se sabe que el cursor esta en un campo (o no hay forma de saberlo: Windows)
+        if foco is True or (info and info.get("campo") is True) or (info is None and foco is None and not verificar):
+            self.a.seleccionar_todo()
+            time.sleep(0.06)
         _escribir_con_teclas(self.a, paso["texto"], self.cancelar)
         time.sleep(0.25)
         self.hecho["escribir"] += 1
@@ -998,20 +1220,20 @@ def necesita_revision(plan, ejecutor):
     return clics >= 1
 
 
-def revisar(foto, plan, preguntar, ocr, zoom=1.0):
+def revisar(foto, plan, preguntar, ocr, zoom=1.0, controles=()):
     """Fase 3: con la foto de como quedo, la IA dice si esta bien o que corregir. Devuelve un Plan (vacio si ok)."""
     cajas, campos = leer(foto, foto.width / 2, foto.height / 2, zoom, ocr)
-    b64, mime, s, tam = preparar_imagen(foto, campos)
+    b64, mime, s, tam = preparar_imagen(foto, campos, cajas=cajas, controles=controles)
     texto = ("FASE: REVISAR\n"
              f"Respuesta que se queria dejar: {plan.respuesta or '(ver acciones)'}\n"
-             f"Acciones que se hicieron: {describir(plan.pasos)}\n" + texto_cajas(cajas, campos, s, tam))
+             f"Acciones que se hicieron: {describir(plan.pasos)}\n" + texto_cajas(cajas, campos, s, tam, None, controles))
     salida, _ = llamar(preguntar, b64, mime, texto, "revisar")
     datos = motor.interpretar(salida)
     vacio = Plan()
     if datos.get("ok") is not False:
         return vacio, salida
     correccion = planear({"acciones": datos.get("acciones") or [], "respuesta": plan.respuesta,
-                          "tipo": plan.tipo}, cajas, campos, s, foto, zoom)
+                          "tipo": plan.tipo}, cajas, campos, s, foto, zoom, controles)
     return correccion, salida
 
 

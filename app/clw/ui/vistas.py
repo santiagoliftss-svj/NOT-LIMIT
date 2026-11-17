@@ -51,7 +51,7 @@ R_MARCA = (MARCA_X - 6, MARCA_Y - 6, MARCA_W + 12, MARCA_H + 12)
 R_BOTON = (BOTON[0] - 30, BOTON[1] - 30, BOTON[2] + 60, BOTON[3] + 60 + 30)
 
 
-LICENCIA_UI = Proveedor("licencia", "NO LIMIT", "NL-", version.PAGINA + "#precio", "¿No tienes código? Cómpralo aquí")
+LICENCIA_UI = Proveedor("licencia", "NO LIMIT", "NL-", version.PAGINA + "#pago", "¿No tienes código? Cómpralo aquí")
 PROV_UI = dict(PROVEEDORES, licencia=LICENCIA_UI)
 MODELO_DE = {"gemini": "gemini-flash-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna"}
 

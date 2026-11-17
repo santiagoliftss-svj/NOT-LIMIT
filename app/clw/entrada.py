@@ -305,5 +305,55 @@ __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ven
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente"]
 
+# ---------------------------------------------------------------- accesibilidad (en Windows todavia no: la vista basta)
+
+def preparar_accesibilidad(x, y):
+    return False
+
+
+def foco_editable():
+    """None = no se sabe (en Windows se escribe en los campos que se ven)."""
+    return None
+
+
+def controles_en(left, top, w, h, punto=None):
+    return []
+
+
+def que_hay_en(x, y):
+    return None
+
+
+class _CURSORINFO(ctypes.Structure):
+    _fields_ = [("cbSize", ctypes.c_uint32), ("flags", ctypes.c_uint32), ("hCursor", ctypes.c_void_p),
+                ("ptScreenPos", _POINT)]
+
+
+_IDC = {32513: "texto", 32649: "mano", 32512: "flecha"}      # IDC_IBEAM, IDC_HAND, IDC_ARROW
+_cursores = {}
+
+
+def forma_cursor():
+    """El cursor que se ve ahorita: 'texto' (la I de escribir: hay un campo o texto), 'mano', 'flecha', 'otra',
+    o None si no se puede saber. Los navegadores usan los cursores del sistema, asi que se comparan directo."""
+    if U32 is None:
+        return None
+    try:
+        if not _cursores:
+            U32.LoadCursorW.restype = ctypes.c_void_p
+            U32.LoadCursorW.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+            for idc, nombre in _IDC.items():
+                h = U32.LoadCursorW(None, ctypes.c_void_p(idc))
+                if h:
+                    _cursores[h] = nombre
+        ci = _CURSORINFO()
+        ci.cbSize = ctypes.sizeof(_CURSORINFO)
+        if not U32.GetCursorInfo(ctypes.byref(ci)) or not ci.hCursor:
+            return None
+        return _cursores.get(ci.hCursor, "otra")
+    except Exception:
+        return None
+
+
 if sys.platform == "darwin":             # Mac: mismos nombres, hechos con Quartz
     from .mac.entrada import *  # noqa: F401,F403,E402
