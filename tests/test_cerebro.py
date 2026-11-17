@@ -755,3 +755,32 @@ def prueba_las_instrucciones_piden_respuesta_y_luego_donde():
     assert t.index('"respuesta"') < t.index('"donde"') < t.index('"acciones"')
     for palabra in ("raya", "angosta", "fondo oscuro", "A#", "AZULES", "NARANJAS", "enlaces"):
         assert palabra in t, palabra
+
+
+def prueba_si_no_escribio_avisa_la_respuesta_de_la_ia():
+    p = PantallaWin("flecha")
+    cajas = _quiz(p)
+    cli = ClienteFases(
+        ubicar=lambda t: {"hay_pregunta": True, "caja": [60, 20, 900, 660], "tipo": "abierta"},
+        contestar=lambda t: {"tipo": "abierta", "respuesta": "Cervantes",
+                             "acciones": [{"hacer": "escribir", "en": {"x": 600, "y": 400}, "texto": "zzz"}]})
+    b, c = _bot(cli, p)
+    with Parche(cerebro__leer=lambda img, px, py, zoom, ocr: (cajas, []), motor__capturar_zona=p.foto):
+        b.contestar(p.img.copy(), 0, 0, 150, 125, 1.0)
+    assert p.log == [], p.log
+    ev = _eventos(b)
+    assert any(e[0] == "actividad" and "Respuesta: Cervantes" in e[1] for e in ev), ev
+
+
+def prueba_si_la_ia_senala_algo_que_no_es_campo_usa_el_campo_de_la_pagina():
+    img = Image.new("RGB", (900, 650), "white")
+    campos = [campo(20, 0, 880, 28)]                                       # (la barra de titulo parece caja)
+    ctl = [control(150, 300, 650, 344, "campo", "Escriba su respuesta")]
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": "C0", "texto": "4"}]}, CAJAS, campos, 1.0, img, controles=ctl)
+    assert len(plan.pasos) == 1 and plan.pasos[0]["seguro_campo"], (plan.pasos, plan.rechazadas)
+    assert abs(plan.pasos[0]["p"][1] - 322) < 3, plan.pasos
+    # dos campos y dos respuestas: cada una al suyo (y no repite campo)
+    ctl2 = [control(150, 300, 650, 344, "campo"), control(150, 420, 650, 464, "campo")]
+    plan = cerebro.planear({"acciones": [{"hacer": "escribir", "en": {"x": 400, "y": 330}, "texto": "a"},
+                                         {"hacer": "escribir", "en": "C0", "texto": "b"}]}, CAJAS, campos, 1.0, img, controles=ctl2)
+    assert [round(p["p"][1]) for p in plan.pasos] == [322, 442], plan.pasos

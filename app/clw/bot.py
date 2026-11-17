@@ -314,7 +314,8 @@ class Bot:
             elif plan.tipo == "ninguna":
                 self._emitir("actividad", "No vi ninguna pregunta ahí", "info")
             elif ej.no_escritos:
-                self._emitir("actividad", f"No encontré dónde escribir. Respuesta: {_corto(ej.no_escritos[0], 60)}", "info")
+                self._emitir("actividad", f"No encontré dónde escribir. Respuesta: {respuesta or _corto(ej.no_escritos[0], 60)}",
+                             "info")
             elif respuesta:
                 self._emitir("actividad", f"No la marqué para no picar algo mal. Respuesta: {respuesta}", "info")
             else:

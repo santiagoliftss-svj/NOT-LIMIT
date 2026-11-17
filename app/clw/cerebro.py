@@ -650,6 +650,19 @@ def _control_en(x, y, controles, margen=0):
     return mejor[1] if mejor else None
 
 
+def _campo_libre_de_pagina(x, y, controles, zoom, usados):
+    """Campo de la pagina para una respuesta que la IA puso donde no hay campo: el unico campo libre de la pregunta,
+    o el mas cercano (a menos de 140 px y claramente mas cerca que el siguiente). Si no, None."""
+    libres = [i for i, c in enumerate(controles or ()) if c.get("tipo") == "campo" and i not in usados]
+    if len(libres) == 1:
+        return libres[0]
+    cerca = sorted((motor._distancia(x, y, controles[i]["caja"]), i) for i in libres)
+    cerca = [t for t in cerca if t[0] <= 140 * zoom]
+    if cerca and (len(cerca) == 1 or cerca[1][0] - cerca[0][0] > 30 * zoom):
+        return cerca[0][1]
+    return None
+
+
 _AYUDA = re.compile(r"respuesta|responde|escrib|answer|type|enter|aqui|here|tu texto|your|valor|numero|resultado")
 
 
@@ -729,6 +742,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
     plan.seguro = str(datos.get("seguro") or "alto").strip().lower()
     W, H = region_img.size
     vistos = set()
+    ax_usados = set()
     plano = ejes(cajas)
 
     def _res(obj):
@@ -793,8 +807,13 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=()):
                 continue
             x, y, i, k, ic = r
             pagina = ic if (ic is not None and controles[ic]["tipo"] == "campo") else _campo_de_pagina(x, y, controles, 30 * zoom)
+            if pagina is None and ic is None:
+                # la IA senalo algo que la pagina NO dice que sea campo (un titulo, un adorno, el enunciado...):
+                # si en la pregunta hay un solo campo libre (o uno claramente mas cercano), la respuesta va ahi
+                pagina = _campo_libre_de_pagina(x, y, controles, zoom, ax_usados)
             if pagina is not None:
                 # la pagina dice que ahi hay un campo: ese es (lo mas seguro)
+                ax_usados.add(pagina)
                 x, y = _centro(controles[pagina]["caja"])
                 plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": controles[pagina]["caja"],
                                    "seguro_campo": True})

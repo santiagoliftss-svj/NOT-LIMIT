@@ -663,9 +663,10 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
             diag = {}
 
             def contestar(t):
-                c = buscar(t, "", campos=True)
+                # (como la IA de verdad: primero el campo que dice la pagina, A#; si no hay, el C# que se ve)
+                c = next((i for i, _x, _y, txt in lineas(t) if i.startswith("A") and txt.startswith("campo")), None)
                 if not c:
-                    c = next((i for i, _x, _y, txt in lineas(t) if i.startswith("A") and txt.startswith("campo")), None)
+                    c = buscar(t, "", campos=True)
                 diag["campo"] = c
                 diag["controles"] = [l for l in t.splitlines() if l.startswith("[A")][:6]
                 return {"tipo": "abierta", "respuesta": "Roma", "acciones": [
