@@ -661,13 +661,13 @@ def _usa_plano(datos):
 
 
 def _con_texto(caja, cajas, controles=(), pagina=None):
-    """True si el campo ya tiene algo escrito (no solo el texto gris de ayuda): solo entonces se selecciona todo
+    """True si en el campo se ve algo escrito: solo entonces se selecciona todo
     antes de escribir. Asi, si el clic no quedo en el campo, Cmd/Ctrl + A nunca selecciona toda la pagina."""
     if pagina is not None:
         return bool(str(controles[pagina].get("valor") or "").strip())
     for c in cajas:
-        if motor._dentro(c["cx"], c["cy"], caja) and motor._norm(c["texto"]) and not _AYUDA.search(motor._norm(c["texto"])):
-            return True
+        if motor._dentro(c["cx"], c["cy"], caja) and motor._norm(c["texto"]):
+            return True                  # (tambien texto gris: en algunas paginas es texto de verdad y hay que quitarlo)
     return False
 
 
