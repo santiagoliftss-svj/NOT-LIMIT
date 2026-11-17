@@ -1002,3 +1002,16 @@ def prueba_si_la_cuenta_no_cuadra_escribe_la_correcta():
         {"hacer": "escribir", "en": "C0", "texto": "4"}, {"hacer": "escribir", "en": "C1", "texto": "6"}]}
     plan = cerebro.planear(datos, CAJAS, [campo(150, 300, 650, 344), campo(150, 400, 650, 444)], 1.0, img)
     assert [p["texto"] for p in plan.pasos] == ["4", "9"], plan.pasos
+
+
+def prueba_grafica_real_de_windows_con_cuadricula_encima_de_los_numeros():
+    """Captura de verdad (autoprueba en Windows): las lineas punteadas pasan por encima de los numeros."""
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        return
+    img = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "datos", "grafica_windows.png")).convert("RGB")
+    pl = motor.ejes_del_plano(img, 1.0, ocr)
+    assert pl["x"] and pl["y"], pl
+    x0, y2 = pl["x"][1], pl["y"][0] * 2 + pl["y"][1]
+    assert abs(x0 - 418) <= 2 and abs(y2 - 309) <= 2, pl
