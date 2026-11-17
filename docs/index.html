@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NO LIMIT</title>
-<meta name="description" content="La pregunta se contesta sola. Pon el puntero sobre la pregunta y haz Ctrl + clic (Option + clic en Mac). Para Windows y Mac.">
+<meta name="description" content="La pregunta se contesta sola. Pon el puntero sobre la pregunta y haz Ctrl + clic (Option + clic en Mac): opción múltiple, abiertas, problemas, menús, arrastrar y hasta gráficas. Para Windows y Mac.">
 <meta property="og:title" content="NO LIMIT">
 <meta property="og:description" content="La pregunta se contesta sola. Ctrl + clic y listo. Para Windows y Mac.">
 <meta property="og:image" content="https://santiagoliftss-svj.github.io/NOT-LIMIT/assets/compartir.png">
@@ -166,6 +166,9 @@
   .pagar h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
   .pagar p { margin: 0; color: var(--gris); font-size: 14.5px; line-height: 1.55; }
   .pagar .js-comprar { margin-top: 14px; height: 48px; font-size: 15px; }
+  .final-ig { display: inline-block; margin-top: 18px; color: var(--gris); font-size: 14.5px; text-decoration: none; transition: color .2s ease; }
+  .final-ig:hover { color: var(--tinta); }
+  .final-ig b { color: var(--tinta); }
   .cuenta-pagar { width: 100%; justify-content: center; height: 50px; margin-top: 12px; font-size: 15px; }
   .cuenta-pagar[hidden] { display: none; }
   .pagar-botones { display: grid; gap: 10px; margin-top: 16px; }
@@ -493,10 +496,34 @@
     margin-top: 20px; height: 52px; border-radius: 12px; box-shadow: inset 0 0 0 1px #d2d2d7; padding: 0 16px;
     display: flex; align-items: center; font-size: 17px; color: #1d1d1f; transition: box-shadow .25s ease;
   }
-  .campo.foco { box-shadow: inset 0 0 0 2px #1d1d1f; }
+  .campo.activo { box-shadow: inset 0 0 0 2px #1d1d1f; }
   .campo .ph { color: #a1a1a6; }
   .campo .cursor-t { display: inline-block; width: 1.5px; height: 20px; margin-left: 1px; background: #1d1d1f; animation: parpadeo 1s steps(1) infinite; }
   @keyframes parpadeo { 50% { opacity: 0; } }
+  .campo.largo { height: auto; min-height: 108px; align-items: flex-start; padding: 14px 16px; line-height: 1.5; font-size: 15.5px; }
+  .casillas-demo { margin-top: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; list-style: none; }
+  .casilla-d { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; font-size: 16px;
+    box-shadow: inset 0 0 0 1px #e3e3e8; transition: box-shadow .3s ease, background .3s ease; }
+  .casilla-d .cuadro { position: relative; flex: none; width: 20px; height: 20px; border-radius: 6px; box-shadow: inset 0 0 0 1.6px #a1a1a6;
+    transition: background .25s ease, box-shadow .25s ease; }
+  .casilla-d .cuadro::after { content: ""; position: absolute; left: 7px; top: 3px; width: 5px; height: 10px; border: solid #fff;
+    border-width: 0 2.2px 2.2px 0; transform: rotate(45deg) scale(0); transition: transform .45s var(--rebote); }
+  .casilla-d.marcada { background: #f5f5f7; box-shadow: inset 0 0 0 2px #1d1d1f; }
+  .casilla-d.marcada .cuadro { background: #1d1d1f; box-shadow: none; }
+  .casilla-d.marcada .cuadro::after { transform: rotate(45deg) scale(1); }
+  .plano-demo { margin-top: 14px; display: grid; place-items: center; }
+  .plano-demo svg { width: min(290px, 100%); height: auto; overflow: visible; }
+  .plano-demo .rejilla { stroke: #dcdce1; stroke-width: .8; }
+  .plano-demo .eje { stroke: #1d1d1f; stroke-width: 1.5; }
+  .plano-demo .marca { stroke: #1d1d1f; stroke-width: 1; }
+  .plano-demo text { font: 600 8px "Archivo", system-ui, sans-serif; fill: #48484a; }
+  .plano-demo .punto { fill: #0a84ff; transform-box: fill-box; transform-origin: center; animation: puntoSale .5s var(--rebote); }
+  .plano-demo .recta { stroke: #0a84ff; stroke-width: 2.4; stroke-linecap: round; fill: none; }
+  .plano-demo .halo { fill: none; stroke: #0a84ff; stroke-width: 1.4; transform-box: fill-box; transform-origin: center; animation: haloSale .7s ease-out forwards; }
+  @keyframes puntoSale { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes haloSale { from { transform: scale(.4); opacity: .9; } to { transform: scale(2.6); opacity: 0; } }
+  .nota-cuenta { margin-top: 10px; font-size: 13px; color: #248a3d; font-weight: 650; opacity: 0; transform: translateY(4px); transition: opacity .4s ease, transform .5s var(--curva); }
+  .nota-cuenta.ver { opacity: 1; transform: none; }
   .quiz-pie { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: #6e6e73; min-height: 34px; }
   .siguiente {
     display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px;
@@ -690,6 +717,71 @@
     background: rgba(20,20,22,.9); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); opacity: 0;
   }
 
+  /* ------------------------------------------------ funciones nuevas (2.x) */
+  .bento.bento-2 { margin-top: 16px; grid-template-areas: "i i j j" "i i k l" "m m n n"; }
+  .t-i { grid-area: i; min-height: 520px; } .t-j { grid-area: j; } .t-k { grid-area: k; } .t-l { grid-area: l; }
+  .t-m { grid-area: m; } .t-n { grid-area: n; }
+  .t-i h3 { font-size: clamp(28px, 3vw, 38px); font-weight: 800; letter-spacing: -0.035em; }
+  .mini-plano { align-self: center; width: min(360px, 100%); }
+  .mini-plano svg { width: 100%; height: auto; display: block; }
+  .mini-plano .rj { stroke: rgba(255,255,255,.08); stroke-width: 1; }
+  .mini-plano .ej { stroke: rgba(255,255,255,.75); stroke-width: 1.6; }
+  .mini-plano .mc { stroke: rgba(255,255,255,.75); stroke-width: 1; }
+  .mini-plano text { font: 600 9px "Archivo", system-ui, sans-serif; fill: rgba(255,255,255,.55); }
+  .mini-plano .curva { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 420; stroke-dashoffset: 420; }
+  .mini-plano .pt { fill: #fff; transform-box: fill-box; transform-origin: center; transform: scale(0); }
+  .mini-plano .herr { fill: rgba(255,255,255,.08); stroke: rgba(255,255,255,.22); }
+  .mini-plano .herr.on { fill: #fff; }
+  .anima .mini-plano .curva { animation: mp-curva 6s var(--curva) infinite; }
+  .anima .mini-plano .pt1 { animation: mp-pt 6s var(--rebote) infinite; }
+  .anima .mini-plano .pt2 { animation: mp-pt2 6s var(--rebote) infinite; }
+  .anima .mini-plano .herr.on { animation: mp-herr 6s infinite; }
+  @keyframes mp-herr { 0%, 8% { fill: rgba(255,255,255,.08); } 12%, 92% { fill: #fff; } 100% { fill: rgba(255,255,255,.08); } }
+  @keyframes mp-pt { 0%, 22% { transform: scale(0); } 27%, 90% { transform: scale(1); } 100% { transform: scale(0); } }
+  @keyframes mp-pt2 { 0%, 38% { transform: scale(0); } 43%, 90% { transform: scale(1); } 100% { transform: scale(0); } }
+  @keyframes mp-curva { 0%, 44% { stroke-dashoffset: 420; } 62%, 90% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+  .senala { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 34px 14px 14px; border-radius: 18px; background: #f5f5f7; color: #1d1d1f; }
+  .senala::before { content: "Elige la respuesta de cada operación"; position: absolute; left: 14px; top: 11px; font-size: 12.5px; font-weight: 700; }
+  .sn-caja { padding: 10px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px #e3e3e8; display: grid; gap: 6px; }
+  .sn-caja b { font-size: 15px; }
+  .sn-caja span { padding: 6px 8px; border-radius: 8px; font-size: 13px; box-shadow: inset 0 0 0 1px #e3e3e8; }
+  .anima .sn-caja.a .ok { animation: sn-a 7s infinite; }
+  .anima .sn-caja.b .ok { animation: sn-b 7s infinite; }
+  @keyframes sn-a { 0%, 22% { background: transparent; box-shadow: inset 0 0 0 1px #e3e3e8; } 26%, 94% { background: #ececf0; box-shadow: inset 0 0 0 2px #1d1d1f; } 100% { background: transparent; } }
+  @keyframes sn-b { 0%, 66% { background: transparent; box-shadow: inset 0 0 0 1px #e3e3e8; } 70%, 94% { background: #ececf0; box-shadow: inset 0 0 0 2px #1d1d1f; } 100% { background: transparent; } }
+  .senala .sn-cursor { position: absolute; width: 18px; height: 24px; left: 0; top: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.3)); }
+  .anima .senala .sn-cursor { animation: sn-cursor 7s var(--curva) infinite; }
+  @keyframes sn-cursor { 0% { transform: translate(260px, 150px); opacity: 0; } 8% { opacity: 1; }
+    18%, 30% { transform: translate(60px, 60px); } 48%, 60% { transform: translate(120px, 8px); } 92% { transform: translate(120px, 8px); opacity: 1; } 100% { opacity: 0; } }
+  .calc { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .calc span { color: var(--gris); font-weight: 600; }
+  .calc i { font-style: normal; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #30d158; color: #00320f; font-size: 16px; }
+  .anima .calc i { animation: latido 2.4s var(--curva) infinite; }
+  .candado-btn { display: flex; align-items: center; gap: 10px; }
+  .candado-btn span { height: 42px; padding: 0 18px; border-radius: 999px; display: inline-flex; align-items: center; background: rgba(255,255,255,.08); color: var(--gris); font-weight: 650; font-size: 14.5px; text-decoration: line-through; text-decoration-color: rgba(255,255,255,.4); }
+  .candado-btn svg { width: 22px; height: 22px; color: #fff; }
+  .teclas-os { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; align-items: center; font-size: 15px; }
+  .teclas-os kbd { display: inline-block; min-width: 44px; padding: 5px 10px; border-radius: 9px; background: rgba(255,255,255,.1); box-shadow: inset 0 -2px 0 rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.18); font: 600 13.5px/1.2 "Archivo", system-ui, sans-serif; text-align: center; }
+  .teclas-os small { color: var(--tenue); font-size: 13px; }
+  .revisa { display: flex; gap: 8px; }
+  .revisa i { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); display: grid; place-items: center; font-style: normal; font-size: 15px; }
+  .anima .revisa i { animation: revisa 3.6s var(--curva) infinite; }
+  .anima .revisa i:nth-child(2) { animation-delay: .25s; } .anima .revisa i:nth-child(3) { animation-delay: .5s; } .anima .revisa i:nth-child(4) { animation-delay: .75s; }
+  @keyframes revisa { 0%, 30% { background: rgba(255,255,255,.07); color: transparent; } 40%, 85% { background: #fff; color: #000; } 100% { background: rgba(255,255,255,.07); color: transparent; } }
+  .tipos { margin-top: 64px; }
+  .tipos-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .tipos-cabeza h3 { font-size: clamp(26px, 3vw, 34px); font-weight: 800; letter-spacing: -0.03em; }
+  .tipos-cabeza p { color: var(--gris); font-size: 15px; }
+  .tipos-lista { list-style: none; margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .tipos-lista li { position: relative; padding: 16px 16px 16px 46px; border-radius: 16px; background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    transition: background .25s ease, transform .35s var(--curva); }
+  .tipos-lista li:hover { background: rgba(255,255,255,.07); transform: translateY(-2px); }
+  .tipos-lista li::before { content: ""; position: absolute; left: 16px; top: 18px; width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #b8b8bf 60%, #6e6e73); box-shadow: 0 0 12px rgba(255,255,255,.18); }
+  .tipos-lista b { display: block; font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; }
+  .tipos-lista span { display: block; margin-top: 3px; font-size: 13.5px; color: var(--gris); line-height: 1.45; }
+  .tipos-lista li.nuevo b::after { content: "NUEVO"; margin-left: 8px; padding: 2px 7px; border-radius: 999px; font-size: 10px; letter-spacing: .08em; color: #000; background: linear-gradient(180deg, #fff, #c9c9cf); vertical-align: 2px; }
+
   /* ------------------------------------------------ funciones (bento) */
   .bento {
     margin-top: 64px; display: grid; gap: 16px;
@@ -862,6 +954,8 @@
   /* ------------------------------------------------ pantallas chicas */
   @media (max-width: 1020px) {
     .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "a a" "b c" "d d" "e f" "g h"; }
+    .bento.bento-2 { grid-template-areas: "i i" "j j" "k l" "m n"; }
+    .t-i { min-height: 470px; }
     .t-a { min-height: 470px; }
   }
   @media (max-width: 900px) {
@@ -890,6 +984,8 @@
   @media (max-width: 600px) {
     .envoltura { padding: 0 16px; }
     .bento { grid-template-columns: 1fr; grid-template-areas: "a" "b" "c" "d" "e" "f" "g" "h"; }
+    .bento.bento-2 { grid-template-areas: "i" "j" "k" "l" "m" "n"; }
+    .t-i { min-height: 0; }
     .t-a { min-height: 0; }
     .tarjeta { min-height: 0; }
     .acciones { width: 100%; }
@@ -899,6 +995,129 @@
     .faq-r p { padding-right: 4px; }
     .numero { padding: 30px 12px; }
   }
+
+  /* ------------------------------------------------ ayuda */
+  .ay-buscar { position: relative; max-width: 640px; margin: 48px auto 0; }
+  .ay-buscar svg { position: absolute; left: 18px; top: 50%; width: 18px; height: 18px; margin-top: -9px; color: var(--gris); pointer-events: none; }
+  .ay-buscar input { width: 100%; height: 58px; padding: 0 110px 0 48px; border: 0; border-radius: 999px; color: #fff; font: inherit; font-size: 16.5px;
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); transition: box-shadow .25s ease, background .25s ease; }
+  .ay-buscar input:focus { outline: none; background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.6); }
+  .ay-buscar input::-webkit-search-cancel-button { display: none; }
+  .ay-cuenta { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--tenue); }
+  .ay-temas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px auto 0; max-width: 820px; }
+  .ay-chip { height: 36px; padding: 0 15px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--gris);
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); transition: background .25s ease, color .25s ease, transform .3s var(--rebote); }
+  .ay-chip:hover { color: var(--tinta); }
+  .ay-chip[aria-pressed="true"] { background: #fff; color: #000; box-shadow: none; }
+  .ay-chip:active { transform: scale(.95); }
+  .ay-lista { margin: 34px auto 0; max-width: 860px; display: grid; gap: 10px; }
+  .ay-item { border-radius: 18px; background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); transition: background .3s ease; }
+  .ay-item[hidden] { display: none; }
+  .ay-item.abierto { background: rgba(255,255,255,.06); }
+  .ay-q { width: 100%; display: flex; align-items: center; gap: 12px; padding: 18px 18px 18px 20px; text-align: left; font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; }
+  .ay-q .titulo-q { flex: 1; }
+  .ay-tag { flex: none; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--gris); background: rgba(255,255,255,.07); }
+  .ay-q .mas { position: relative; flex: none; width: 28px; height: 28px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); transition: transform .5s var(--rebote), background .3s ease; }
+  .ay-q .mas::before, .ay-q .mas::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 1.6px; margin: -.8px 0 0 -5.5px; background: #fff; border-radius: 2px; }
+  .ay-q .mas::after { transform: rotate(90deg); }
+  .ay-item.abierto .ay-q .mas { transform: rotate(45deg); background: rgba(255,255,255,.08); }
+  .ay-r { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .55s var(--curva); }
+  .ay-item.abierto .ay-r { grid-template-rows: 1fr; }
+  .ay-r > div { overflow: hidden; }
+  .ay-r ol, .ay-r ul, .ay-r p { margin: 0 22px 20px 20px; color: var(--gris); font-size: 15.5px; line-height: 1.6; }
+  .ay-r ol, .ay-r ul { padding-left: 20px; display: grid; gap: 6px; }
+  .ay-r b { color: var(--tinta); font-weight: 600; }
+  .ay-r code { font-size: 13.5px; padding: 2px 6px; border-radius: 6px; background: rgba(255,255,255,.08); color: #fff; word-break: break-all; }
+  .ay-r .copiar { margin-left: 6px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #fff; color: #000; vertical-align: 1px; }
+  .ay-nada { margin: 26px auto 0; text-align: center; color: var(--gris); }
+  .ay-nada[hidden] { display: none; }
+  .ay-nada a, .ay-mas a { color: var(--tinta); }
+  .ay-mas { margin-top: 26px; text-align: center; color: var(--tenue); font-size: 14.5px; }
+
+  /* ------------------------------------------------ contacto: quejas, valoracion, instagram */
+  .ct-grid { margin-top: 56px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; }
+  .ct-tarjeta { position: relative; border-radius: 26px; padding: 28px; background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.015));
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.09); overflow: hidden; }
+  .ct-tarjeta h3 { font-size: 24px; font-weight: 780; letter-spacing: -0.025em; margin-bottom: 6px; }
+  .ct-tarjeta > p.sub2 { color: var(--gris); font-size: 15px; margin-bottom: 18px; }
+  .ct-tipos { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
+  .ct-tipos button { height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 650; color: var(--gris);
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); transition: background .25s ease, color .25s ease, transform .35s var(--rebote); }
+  .ct-tipos button[aria-checked="true"] { background: #fff; color: #000; box-shadow: none; transform: scale(1.04); }
+  .pago-campo textarea { width: 100%; min-height: 104px; padding: 14px 16px; border-radius: 15px; border: 0; resize: vertical; color: #fff; font: inherit; font-size: 16px; line-height: 1.5;
+    background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); transition: box-shadow .25s ease, background .25s ease; }
+  .pago-campo textarea:focus { outline: none; background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.6); }
+  .pago-campo textarea.mal { box-shadow: inset 0 0 0 1.5px #ff453a; animation: temblar .45s ease; }
+  .ct-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ct-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .ct-botones button { position: relative; height: 52px; border-radius: 999px; font-weight: 720; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform .2s var(--curva), background .25s ease; }
+  .ct-botones button:active { transform: scale(.97); }
+  .ct-botones svg { width: 18px; height: 18px; }
+  .ct-listo { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; text-align: center; padding: 28px; border-radius: inherit;
+    background: rgba(10,12,10,.94); opacity: 0; pointer-events: none; transition: opacity .4s ease; }
+  .ct-listo.ver { opacity: 1; pointer-events: auto; }
+  .ct-listo .sello-ok { width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: #30d158;
+    box-shadow: 0 0 0 10px rgba(48,209,88,.14), 0 18px 60px rgba(48,209,88,.4); transform: scale(.4); transition: transform .7s var(--rebote); }
+  .ct-listo.ver .sello-ok { transform: scale(1); }
+  .ct-listo svg { width: 40px; height: 40px; }
+  .ct-listo path { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 60; stroke-dashoffset: 60; }
+  .ct-listo.ver path { transition: stroke-dashoffset .5s var(--curva) .3s; stroke-dashoffset: 0; }
+  .ct-listo h4 { font-size: 22px; font-weight: 780; letter-spacing: -0.02em; }
+  .ct-listo p { margin-top: 6px; color: var(--gris); font-size: 15px; }
+  .ct-listo button { margin-top: 16px; color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; font-size: 14px; }
+  .vl-estrellas { display: flex; gap: 6px; margin: 16px 0 6px; }
+  .vl-estrellas button { width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); transition: transform .45s var(--rebote), background .25s ease; }
+  .vl-estrellas button:hover { transform: translateY(-3px) scale(1.06); }
+  .vl-estrellas svg { width: 26px; height: 26px; }
+  .vl-estrellas path { fill: transparent; stroke: rgba(255,255,255,.45); stroke-width: 1.6; stroke-linejoin: round; transition: fill .25s ease, stroke .25s ease; }
+  .vl-estrellas button.on { background: rgba(255,214,10,.12); box-shadow: inset 0 0 0 1px rgba(255,214,10,.4); }
+  .vl-estrellas button.on path { fill: #ffd60a; stroke: #ffd60a; }
+  .vl-estrellas button.pop { animation: estrella .6s var(--rebote); }
+  @keyframes estrella { 0% { transform: scale(1); } 35% { transform: scale(1.3) rotate(-8deg); } 100% { transform: scale(1); } }
+  .vl-texto { min-height: 24px; font-size: 15px; font-weight: 650; color: var(--gris); margin-bottom: 14px; transition: color .25s ease; }
+  .vl-texto.on { color: #ffd60a; }
+  .ct-ig { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; text-decoration: none; color: inherit; transition: transform .35s var(--curva), box-shadow .3s ease; }
+  .ct-ig:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+  .ct-ig-icono { flex: none; width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; font-size: 30px; font-weight: 800; color: #000;
+    background: linear-gradient(180deg, #ffffff 15%, #d9d9de 55%, #8f8f96 100%); }
+  .ct-ig div { flex: 1; }
+  .ct-ig h3 { margin: 0; }
+  .ct-ig p { color: var(--gris); font-size: 15px; margin-top: 4px; }
+  .ct-ig-btn { flex: none; height: 46px; padding: 0 20px; border-radius: 999px; display: inline-flex; align-items: center; background: #fff; color: #000; font-weight: 700; font-size: 14.5px; }
+  @media (max-width: 860px) {
+    .ct-grid { grid-template-columns: 1fr; }
+    .ct-ig { flex-wrap: wrap; }
+  }
+  @media (max-width: 520px) {
+    .ct-dos, .ct-botones { grid-template-columns: 1fr; }
+    .vl-estrellas button { width: 46px; height: 46px; }
+  }
+
+  /* ------------------------------------------------ politicas (privacidad, terminos, reembolsos) */
+  .legal { position: fixed; inset: 0; z-index: 230; display: grid; place-items: center; padding: 18px; background: rgba(0,0,0,.66);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; transition: opacity .35s ease; }
+  .legal[hidden] { display: none; }
+  .legal.ver { opacity: 1; }
+  .legal-caja { position: relative; width: min(760px, 100%); max-height: min(86vh, 900px); display: flex; flex-direction: column; border-radius: 26px;
+    background: rgba(20,20,22,.96); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 30px 80px rgba(0,0,0,.6);
+    transform: translateY(24px) scale(.98); transition: transform .6s var(--resorte); }
+  .legal.ver .legal-caja { transform: none; }
+  .legal-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 12px 18px; border-bottom: 1px solid var(--linea); }
+  .legal-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .legal-tabs button { height: 36px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 650; color: var(--gris); background: rgba(255,255,255,.05); }
+  .legal-tabs button[aria-selected="true"] { background: #fff; color: #000; }
+  .legal-cabeza .cuenta-cerrar { position: static; flex: none; }
+  .legal-cuerpo { overflow-y: auto; padding: 22px 26px 28px; overscroll-behavior: contain; }
+  .legal-cuerpo article[hidden] { display: none; }
+  .legal-cuerpo h3 { font-size: 26px; font-weight: 780; letter-spacing: -0.025em; }
+  .legal-cuerpo .fecha { margin-top: 4px; color: var(--tenue); font-size: 13px; }
+  .legal-cuerpo h4 { margin-top: 22px; font-size: 16.5px; font-weight: 700; }
+  .legal-cuerpo p, .legal-cuerpo li { margin-top: 8px; color: var(--gris); font-size: 15px; line-height: 1.6; }
+  .legal-cuerpo ul { padding-left: 20px; }
+  .legal-cuerpo b { color: var(--tinta); font-weight: 600; }
+  .legal-cuerpo a { color: var(--tinta); }
 
   /* ------------------------------------------------ accesibilidad */
   @media (prefers-reduced-motion: reduce) {
@@ -946,9 +1165,9 @@
     <a href="#demo">Pruébalo</a>
     <a href="#como">Cómo funciona</a>
     <a href="#funciones">Funciones</a>
-    <a href="#modelos">Modelos</a>
     <a href="#precio">Precio</a>
-    <a href="#preguntas">Preguntas</a>
+    <a href="#ayuda">Ayuda</a>
+    <a href="#contacto">Contacto</a>
   </div>
   <button class="barra-cuenta" id="btnCuenta" type="button">Entrar</button>
   <a class="barra-descargar descarga" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe">
@@ -964,7 +1183,7 @@
 
     <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
       <span class="vivo" aria-hidden="true"></span>
-      <span>Nuevo: <span class="js-version">v2.1</span> · más lista en Mac y Windows</span>
+      <span>Nuevo: <span class="js-version">v2.2</span> · traza gráficas siguiendo la instrucción</span>
       <span class="flecha" aria-hidden="true">→</span>
     </a>
 
@@ -1142,7 +1361,7 @@
         </article>
 
         <article class="tarjeta t-d" data-revela>
-          <div><h3>Junto al reloj</h3><p>Al tocar INYECTAR se esconde y sigue activa. Escondida no dibuja nada.</p></div>
+          <div><h3>Junto al reloj</h3><p>Al tocar INYECTAR se esconde y sigue activa (en Mac, en la barra de arriba). Escondida no dibuja nada.</p></div>
           <div class="fila-d">
             <div class="cpu">
               <div class="cpu-num"><span id="cpuNum">0</span>%<small>de CPU</small></div>
@@ -1163,7 +1382,7 @@
 
         <article class="tarjeta t-f" data-revela style="--retraso:.06s">
           <div class="clave-falsa" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="2" fill="currentColor"/><path d="M5.2 7V5.4a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>AIza••••••••••Xk2</div>
-          <div><h3>Tu clave, cifrada</h3><p>Se guarda cifrada con tu usuario de Windows, solo en tu compu.</p></div>
+          <div><h3>Tu clave, cifrada</h3><p>Se guarda cifrada solo en tu compu: con tu usuario de Windows o en el llavero de tu Mac.</p></div>
         </article>
 
         <article class="tarjeta t-g" data-revela style="--retraso:.12s">
@@ -1178,6 +1397,87 @@
           <button class="tecla-esc" id="teclaEsc" type="button" aria-label="Tecla Esc">esc</button>
           <div><h3>Esc cancela</h3><p>Si te arrepientes, Esc y se detiene al instante.</p></div>
         </article>
+      </div>
+
+      <div class="bento bento-2" id="bento2">
+        <article class="tarjeta t-i" data-revela>
+          <div>
+            <h3>Gráficas</h3>
+            <p>Sigue la instrucción al pie de la letra: escoge la herramienta, saca los puntos exactos con los números de los ejes y traza rectas, parábolas, círculos, desigualdades y sistemas.</p>
+          </div>
+          <div class="mini-plano" aria-hidden="true">
+            <svg viewBox="0 0 220 200">
+              <g class="rj"><path d="M20 20V180M40 20V180M60 20V180M80 20V180M100 20V180M120 20V180M140 20V180M160 20V180M180 20V180M20 20H180M20 40H180M20 60H180M20 80H180M20 120H180M20 140H180M20 160H180M20 180H180"/></g>
+              <line class="ej" x1="14" y1="100" x2="186" y2="100"/><line class="ej" x1="100" y1="14" x2="100" y2="186"/>
+              <path class="mc" d="M60 96V104M140 96V104M96 60H104M96 140H104"/>
+              <text x="56" y="114">−2</text><text x="137" y="114">2</text><text x="84" y="63">2</text><text x="80" y="143">−2</text>
+              <path class="curva" d="M40 180 L160 20"/>
+              <circle class="pt pt1" cx="100" cy="100" r="5"/><circle class="pt pt2" cx="130" cy="60" r="5"/>
+              <rect class="herr" x="192" y="22" width="22" height="22" rx="6"/><rect class="herr on" x="192" y="50" width="22" height="22" rx="6"/><rect class="herr" x="192" y="78" width="22" height="22" rx="6"/>
+            </svg>
+          </div>
+        </article>
+
+        <article class="tarjeta t-j" data-revela style="--retraso:.06s">
+          <div class="senala" aria-hidden="true">
+            <div class="sn-caja a"><b>7 × 8</b><span>54</span><span class="ok">56</span><span>58</span></div>
+            <div class="sn-caja b"><b>9 × 6</b><span class="ok">54</span><span>56</span><span>63</span></div>
+            <svg class="sn-cursor"><use href="#i-puntero"/></svg>
+          </div>
+          <div><h3>Contesta lo que señalas</h3><p>Pica un cuadro o un inciso y contesta solo ese. Pica la instrucción de arriba y contesta todo.</p></div>
+        </article>
+
+        <article class="tarjeta t-k" data-revela style="--retraso:.12s">
+          <div class="calc" aria-hidden="true"><span>4500 × 0.85</span><b>= 3825</b><i>✓</i></div>
+          <div><h3>Cuentas comprobadas</h3><p>En problemas con números la operación se calcula exacta. Si la IA se equivocó en la cuenta, escribe la correcta.</p></div>
+        </article>
+
+        <article class="tarjeta t-l" data-revela style="--retraso:.18s">
+          <div class="candado-btn" aria-hidden="true"><span>Siguiente →</span><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="2" fill="currentColor"/><path d="M5.2 7V5.4a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></div>
+          <div><h3>No cambia de página</h3><p>Siguiente, Enviar y Terminar los tocas tú. Nunca le pica a un enlace ni escribe fuera de una caja.</p></div>
+        </article>
+
+        <article class="tarjeta t-m" data-revela>
+          <div class="teclas-os" aria-hidden="true">
+            <span><kbd>Ctrl</kbd> + clic</span><small>Windows 10 y 11</small>
+            <span><kbd>⌥ Option</kbd> + clic</span><small>Mac con macOS 15 o más nuevo</small>
+          </div>
+          <div><h3>Windows y Mac</h3><p>En Mac le pregunta a la página qué es cada cosa: cajas, casillas, círculos, menús y enlaces. Así sabe exacto dónde contestar.</p></div>
+        </article>
+
+        <article class="tarjeta t-n" data-revela style="--retraso:.06s">
+          <div class="revisa" aria-hidden="true"><i>✓</i><i>✓</i><i>✓</i><i>✓</i></div>
+          <div><h3>Revisa que quedó</h3><p>Al final vuelve a ver la pregunta. Si falta una casilla o sobra algo, lo corrige. Si un clic no entró, lo repite una vez.</p></div>
+        </article>
+      </div>
+
+      <div class="tipos" id="tipos">
+        <div class="tipos-cabeza" data-revela>
+          <h3 class="plata">Todo lo que contesta</h3>
+          <p>Preguntas o instrucciones, en cualquier página que se vea en tu pantalla.</p>
+        </div>
+        <ul class="tipos-lista" data-revela>
+          <li><b>Opción múltiple</b><span>Una sola respuesta: marca la correcta.</span></li>
+          <li><b>Varias casillas</b><span>"Selecciona todas": ni una de más ni una de menos.</span></li>
+          <li><b>Verdadero o falso</b><span>También sí o no.</span></li>
+          <li><b>Completar espacios</b><span>Llena cada hueco del texto, en orden.</span></li>
+          <li><b>Menús desplegables</b><span>Abre el menú y elige, también dentro de un párrafo.</span></li>
+          <li><b>Relacionar columnas</b><span>Con menús, arrastrando o escribiendo letras.</span></li>
+          <li><b>Preguntas abiertas</b><span>Corta si pide un dato; un párrafo si pide explicar.</span></li>
+          <li><b>Problemas con números</b><span>Aunque los números cambien; cuenta comprobada.</span></li>
+          <li><b>Ecuaciones</b><span>Fracciones, exponentes y raíces en editores de ecuaciones.</span></li>
+          <li class="nuevo"><b>Trazar gráficas</b><span>Rectas, segmentos, rayos, parábolas, círculos, valor absoluto.</span></li>
+          <li class="nuevo"><b>Desigualdades</b><span>Línea continua o punteada y el lado que se sombrea.</span></li>
+          <li class="nuevo"><b>Puntos en el plano</b><span>Lee los números de los ejes y los pone exactos.</span></li>
+          <li><b>Leer gráficas y tablas</b><span>Saca los datos de barras, líneas y tablas.</span></li>
+          <li><b>Clic en una imagen</b><span>Una parte de un mapa, diagrama o dibujo.</span></li>
+          <li><b>Ordenar</b><span>Arrastra la lista hasta que quede en orden.</span></li>
+          <li><b>Arrastrar etiquetas</b><span>A un esquema, mapa o categorías.</span></li>
+          <li><b>Matrices</b><span>Tablas de filas y columnas con círculos o casillas.</span></li>
+          <li class="nuevo"><b>Juegos de preguntas</b><span>Cajas de cualquier color o forma, como las de los juegos.</span></li>
+          <li class="nuevo"><b>Instrucciones</b><span>"Grafica…", "Completa…", "Ordena…": las sigue tal cual.</span></li>
+          <li class="nuevo"><b>Solo una parte</b><span>Señala un cuadro o inciso y contesta solo ese.</span></li>
+        </ul>
       </div>
     </div>
   </section>
@@ -1224,7 +1524,9 @@
         <ul class="lista-chulos">
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tu código (NL-XXXX-XXXX-XXXX) es tu cuenta: lo pegas en la app una vez y con él entras aquí.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se renueva cada mes. Si no pagas, la app se pausa sola hasta que pagues.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Contesta opción múltiple, casillas, completar, menús, relacionar, abiertas, problemas, gráficas, ordenar y arrastrar.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Contesta opción múltiple, casillas, completar, menús, relacionar, abiertas, problemas, ordenar y arrastrar.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Traza gráficas: rectas, parábolas, círculos, puntos y desigualdades, siguiendo la instrucción.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Comprueba las cuentas y revisa que todo quedó antes de terminar.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se actualiza sola en Windows y en Mac.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Gemini Flash funciona con una clave gratis de Google.</span></li>
           <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Con Claude o ChatGPT pagas solo lo que usas, directo a ellos.</span></li>
@@ -1270,6 +1572,186 @@
     </div>
   </section>
 
+  <!-- ============================================================ ayuda -->
+  <section class="seccion" id="ayuda">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Ayuda</span>
+        <h2 class="titulo plata">¿Algo no jala?<br>Aquí se arregla.</h2>
+        <p class="sub">Busca tu problema o elige un tema.</p>
+      </header>
+      <div class="ay-buscar" data-revela>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="ayBuscar" type="search" placeholder="Ej. permisos Mac, no escribe, gráfica, código…" aria-label="Buscar en la ayuda" autocomplete="off">
+        <span class="ay-cuenta" id="ayCuenta"></span>
+      </div>
+      <div class="ay-temas" id="ayTemas" data-revela>
+        <button class="ay-chip" type="button" data-tema="todo" aria-pressed="true">Todo</button>
+        <button class="ay-chip" type="button" data-tema="empezar" aria-pressed="false">Empezar</button>
+        <button class="ay-chip" type="button" data-tema="mac" aria-pressed="false">Mac</button>
+        <button class="ay-chip" type="button" data-tema="windows" aria-pressed="false">Windows</button>
+        <button class="ay-chip" type="button" data-tema="contesta" aria-pressed="false">Si no contesta</button>
+        <button class="ay-chip" type="button" data-tema="graficas" aria-pressed="false">Gráficas</button>
+        <button class="ay-chip" type="button" data-tema="pagos" aria-pressed="false">Pagos y código</button>
+      </div>
+      <div class="ay-lista" id="ayLista">
+        <article class="ay-item" data-tema="empezar" data-claves="instalar descargar empezar codigo clave inyectar primera vez como uso">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Empezar</span><span class="titulo-q">Empezar en 4 pasos</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ol>
+            <li>Toca <b>Entrar</b> arriba, pon tu código y descarga la app para Windows o Mac.</li>
+            <li>Instálala (abajo están los pasos de Windows y de Mac).</li>
+            <li>Ábrela, pega tu código NL-XXXX-XXXX-XXXX y tu clave de IA. La de Gemini es gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</li>
+            <li>Toca <b>INYECTAR</b>. Luego pon el mouse sobre la pregunta y haz <b>Ctrl + clic</b> (en Mac, <b>Option + clic</b>).</li>
+          </ol></div></div>
+        </article>
+        <article class="ay-item" data-tema="mac" data-claves="mac dañada no abre danada apple terminal xattr cuarentena abrir">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Mac</span><span class="titulo-q">La Mac dice que la app está dañada o no la deja abrir</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ol>
+            <li>Arrastra NO LIMIT a <b>Aplicaciones</b>.</li>
+            <li>Abre <b>Terminal</b> (Cmd + espacio, escribe Terminal y Enter).</li>
+            <li>Pega esto y da Enter: <code>xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"</code><button class="copiar" type="button" data-copiar='xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"'>Copiar</button></li>
+            <li>Abre NO LIMIT otra vez.</li>
+          </ol></div></div>
+        </article>
+        <article class="ay-item" data-tema="mac" data-claves="mac permisos accesibilidad grabacion pantalla blanco no aparece hoja tccutil">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Mac</span><span class="titulo-q">No sale NO LIMIT en los permisos o sale en blanco</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ol>
+            <li>Cierra NO LIMIT.</li>
+            <li>En Terminal pega y da Enter: <code>tccutil reset All mx.nolimit.app</code><button class="copiar" type="button" data-copiar="tccutil reset All mx.nolimit.app">Copiar</button></li>
+            <li>Abre NO LIMIT. Te va a pedir <b>Accesibilidad</b> y <b>Grabación de pantalla</b>.</li>
+            <li>En Ajustes del Sistema → Privacidad y seguridad, activa NO LIMIT en las dos. Si no aparece, toca <b>+</b> y búscala en Aplicaciones.</li>
+            <li>Ciérrala y ábrela una vez más.</li>
+          </ol></div></div>
+        </article>
+        <article class="ay-item" data-tema="mac" data-claves="mac actualizar actualice permisos otra vez pide">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Mac</span><span class="titulo-q">Después de actualizar me pide los permisos otra vez</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>Es normal en Mac: como la app no está firmada por Apple, cada versión nueva se ve como otra app. Dale otra vez <b>Accesibilidad</b> y <b>Grabación de pantalla</b> y listo.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="windows" data-claves="windows protegio pc smartscreen ejecutar de todas formas instalar">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Windows</span><span class="titulo-q">"Windows protegió tu PC"</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>Toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>. Sale porque la app es nueva y no tiene un certificado de paga.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="windows" data-claves="windows donde esta reloj escondida bandeja salir detener abrir">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Windows</span><span class="titulo-q">¿Dónde quedó la app?</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>Junto al reloj de Windows (si no la ves, está en la flechita <b>^</b>). Clic para abrirla; clic derecho para <b>Detener</b> o <b>Salir</b>. En Mac está en la barra de arriba.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="contesta" data-claves="no hace nada no contesta ctrl clic option no responde activa">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Si no contesta</span><span class="titulo-q">Hago Ctrl + clic y no pasa nada</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ul>
+            <li>Revisa que esté prendida: después de <b>INYECTAR</b> la app queda activa junto al reloj (o arriba en Mac).</li>
+            <li>Pon el puntero <b>sobre</b> la pregunta, no en un espacio vacío.</li>
+            <li>Con un juego en pantalla completa no hace nada (a propósito).</li>
+            <li>Abre la app y mira su actividad: ahí dice si la clave de IA falló o si no vio la pregunta.</li>
+          </ul></div></div>
+        </article>
+        <article class="ay-item" data-tema="contesta" data-claves="no encontre donde escribir caja respuesta no escribe campo">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Si no contesta</span><span class="titulo-q">Dice "No encontré dónde escribir"</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>La app ya sacó la respuesta y te la deja en su actividad, pero no estaba segura de cuál era la caja, así que no escribió nada para no picar algo mal. Escríbela tú. Si te pasa seguido en una página, mándanos captura en <a href="#contacto">Contacto</a> y la ajustamos.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="contesta" data-claves="solo una parte un cuadro todo completo inciso contesto la mitad">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Si no contesta</span><span class="titulo-q">Solo contestó una parte</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>NO LIMIT contesta lo que señalas: si haces Ctrl + clic en un cuadro o inciso, contesta solo ese. Para que conteste todo, hazlo sobre la <b>instrucción general</b> de arriba.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="contesta" data-claves="saturada error clave ia limite gemini cuota no responde lenta">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Si no contesta</span><span class="titulo-q">"La IA está saturada" o error de clave</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ul>
+            <li>La clave gratis de Gemini tiene un límite por minuto: espera un momento. NO LIMIT prueba solo otro modelo.</li>
+            <li>Revisa que la clave esté completa (sin espacios). En Claude o ChatGPT necesitas saldo en tu cuenta.</li>
+          </ul></div></div>
+        </article>
+        <article class="ay-item" data-tema="graficas" data-claves="grafica graficar recta parabola puntos plano ejes trazar mylab desigualdad">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Gráficas</span><span class="titulo-q">Para que las gráficas salgan perfectas</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ul>
+            <li>Que se vea <b>toda</b> la gráfica con los números de los ejes.</li>
+            <li>Haz el Ctrl + clic sobre la <b>instrucción</b> ("Grafica la recta…"), no adentro de la gráfica.</li>
+            <li>Si la herramienta se escoge en un menú aparte, NO LIMIT la busca; si no la ve, escógela tú antes.</li>
+            <li>Al final revisa que quedó: la app nunca le pica a Enviar.</li>
+          </ul></div></div>
+        </article>
+        <article class="ay-item" data-tema="pagos" data-claves="pagar precio cuanto cuesta efectivo transferencia comprar tarjeta">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Pagos</span><span class="titulo-q">¿Cómo pago y cuánto cuesta?</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p><b>150 pesos al mes.</b> En <a href="#precio">Precio</a> toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar. Cuando se acepta tu pago, se pone en verde.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="pagos" data-claves="codigo vencido bloqueado renovar hasta cuando pagado cuenta">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Pagos</span><span class="titulo-q">Mi código dice vencido o bloqueado</span><i class="mas"></i></button>
+          <div class="ay-r"><div><ul>
+            <li><b>Vencido:</b> se acabó tu mes. Entra con tu código y toca <b>Pagar mi mes</b>.</li>
+            <li><b>Bloqueado:</b> el código se compartió. Es uno por persona; escríbenos para darte uno nuevo.</li>
+            <li>Para ver hasta cuándo tienes, toca <b>Entrar</b> arriba.</li>
+          </ul></div></div>
+        </article>
+        <article class="ay-item" data-tema="empezar" data-claves="actualizar version nueva actualizacion hay">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Empezar</span><span class="titulo-q">¿Cómo la actualizo?</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>Se actualiza sola. Cuando abajo de la app diga <b>Actualizar a vX</b>, tócalo; o ciérrala y ábrela. En Mac te vuelve a pedir los dos permisos.</p></div></div>
+        </article>
+        <article class="ay-item" data-tema="empezar" data-claves="seguro privacidad que ve captura datos clave">
+          <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Empezar</span><span class="titulo-q">¿Qué ve NO LIMIT de mi pantalla?</span><i class="mas"></i></button>
+          <div class="ay-r"><div><p>Solo cuando haces el atajo toma una captura alrededor del puntero y se la manda directo a la IA que elegiste, con tu clave. No pasa por un servidor nuestro. Más detalles en el <a href="#privacidad">aviso de privacidad</a>.</p></div></div>
+        </article>
+      </div>
+      <p class="ay-nada" id="ayNada" hidden>No encontramos eso. <a href="#contacto">Escríbenos</a> y lo vemos.</p>
+      <p class="ay-mas">¿No se arregló? <a href="#contacto">Mándanos un mensaje</a>.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ contacto -->
+  <section class="seccion" id="contacto">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Contacto</span>
+        <h2 class="titulo plata">Te escuchamos.</h2>
+        <p class="sub">Quejas, ideas o tu calificación: llegan directo con nosotros.</p>
+      </header>
+      <div class="ct-grid">
+        <form class="ct-tarjeta" id="ctForm" novalidate data-revela>
+          <h3>Quejas y sugerencias</h3>
+          <p class="sub2">Cuéntanos qué pasó o qué le falta. Lo leemos todo.</p>
+          <div class="ct-tipos" id="ctTipos" role="radiogroup" aria-label="Tipo de mensaje">
+            <button type="button" role="radio" aria-checked="true" data-tipo="Sugerencia">Sugerencia</button>
+            <button type="button" role="radio" aria-checked="false" data-tipo="Queja">Queja</button>
+            <button type="button" role="radio" aria-checked="false" data-tipo="Problema con la app">Problema con la app</button>
+            <button type="button" role="radio" aria-checked="false" data-tipo="Pago">Pago</button>
+          </div>
+          <label class="pago-campo"><span>Tu mensaje</span><textarea id="ctMensaje" maxlength="800"></textarea></label>
+          <div class="ct-dos">
+            <label class="pago-campo"><span>Tu nombre (opcional)</span><input id="ctNombre" maxlength="60" autocomplete="name"></label>
+            <label class="pago-campo"><span>WhatsApp o Instagram (opcional)</span><input id="ctContacto" maxlength="60"></label>
+          </div>
+          <p class="pago-error" id="ctError" role="alert"></p>
+          <div class="ct-botones">
+            <button class="pago-wa" type="button" id="ctWa"><svg aria-hidden="true"><use href="#i-chat"/></svg>Por WhatsApp</button>
+            <button class="pago-mail" type="button" id="ctMail"><svg aria-hidden="true"><use href="#i-correo"/></svg>Por correo</button>
+          </div>
+          <div class="ct-listo" id="ctListo" aria-live="polite">
+            <div><div class="sello-ok"><svg viewBox="0 0 50 50" aria-hidden="true"><path d="M13 26.5l8 8L37.5 17"/></svg></div>
+              <h4>¡Listo!</h4><p>Se abrió tu mensaje ya escrito. Solo dale enviar.</p><button type="button" id="ctOtro">Escribir otro</button></div>
+          </div>
+        </form>
+        <div class="ct-tarjeta" id="vlTarjeta" data-revela style="--retraso:.06s">
+          <h3>Califica NO LIMIT</h3>
+          <p class="sub2">¿Qué tal te ha funcionado?</p>
+          <div class="vl-estrellas" id="vlEstrellas" role="radiogroup" aria-label="Calificación de 1 a 5"></div>
+          <p class="vl-texto" id="vlTexto">Toca una estrella</p>
+          <label class="pago-campo"><span>¿Qué te gustó o qué le falta? (opcional)</span><textarea id="vlComentario" maxlength="500"></textarea></label>
+          <p class="pago-error" id="vlError" role="alert"></p>
+          <div class="ct-botones">
+            <button class="pago-wa" type="button" id="vlWa"><svg aria-hidden="true"><use href="#i-chat"/></svg>Por WhatsApp</button>
+            <button class="pago-mail" type="button" id="vlMail"><svg aria-hidden="true"><use href="#i-correo"/></svg>Por correo</button>
+          </div>
+          <div class="ct-listo" id="vlListo" aria-live="polite">
+            <div><div class="sello-ok"><svg viewBox="0 0 50 50" aria-hidden="true"><path d="M13 26.5l8 8L37.5 17"/></svg></div>
+              <h4>¡Gracias!</h4><p>Tu calificación nos ayuda a mejorar NO LIMIT.</p><button type="button" id="vlOtro">Cambiar calificación</button></div>
+          </div>
+        </div>
+        <a class="ct-tarjeta ct-ig" href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener" data-revela>
+          <span class="ct-ig-icono" aria-hidden="true">@</span>
+          <div><h3>@no.limit.mx77</h3><p>Síguenos en Instagram: novedades, ejemplos y avisos de cada actualización.</p></div>
+          <span class="ct-ig-btn">Abrir Instagram →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- ============================================================ preguntas -->
   <section class="seccion" id="preguntas">
     <div class="envoltura">
@@ -1279,16 +1761,19 @@
       </header>
       <div class="faq" id="faq" data-revela>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Cuesta <b>150 pesos al mes</b>. En <b>Precio</b> toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar y tu código NL-XXXX-XXXX-XXXX. Ahí mismo ves en verde cuando ya se aceptó tu pago. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué tipos de preguntas contesta?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Opción múltiple, varias casillas, verdadero o falso, completar espacios, menús desplegables (también dentro de un párrafo), relacionar columnas, respuesta corta y ensayo, problemas con números (aunque cambien), editores de ecuaciones con fracciones y exponentes, dar clic en una parte de una imagen o diagrama, graficar puntos, leer gráficas y tablas, matrices, ordenar arrastrando y arrastrar etiquetas a un esquema. Lo que no puede: escuchar audio o ver un video completo, ni dibujar a mano.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Contesta gráficas?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí. Lee la instrucción (“Grafica la recta que…”), saca la ecuación o los puntos, escoge la herramienta de la gráfica si hay que escogerla y da clic justo en los puntos, usando los números de los ejes. Traza rectas, segmentos, rayos, parábolas, círculos, valor absoluto, desigualdades (con línea continua o punteada y el lado sombreado) y sistemas. Funciona con cuadrícula punteada o de líneas, números de 1 en 1, de 2 en 2, de 5 en 5 o con decimales.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Puedo hacer que conteste solo una parte?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí: contesta lo que señalas. Si haces Ctrl + clic sobre un cuadro o un inciso, contesta solo ese. Si lo haces sobre la instrucción general, contesta todo.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué tipos de preguntas contesta?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Opción múltiple, varias casillas, verdadero o falso, completar espacios, menús desplegables (también dentro de un párrafo), relacionar columnas, respuesta corta y ensayo, problemas con números (aunque cambien, y comprueba la cuenta), editores de ecuaciones con fracciones y exponentes, dar clic en una parte de una imagen o diagrama, <b>trazar gráficas</b> (rectas, parábolas, círculos, puntos y desigualdades), leer gráficas y tablas, matrices, ordenar arrastrando, arrastrar etiquetas a un esquema y las cajas de los juegos de preguntas. También sigue instrucciones como “Grafica…” o “Completa…”. Lo que no puede: escuchar audio o ver un video completo, ni dibujar a mano libre. <a href="#tipos">Ver la lista completa</a>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué tarda unos segundos?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque lo hace con calma, como tú: primero ubica la pregunta, la lee de cerca, la resuelve, la contesta y al final revisa que haya quedado bien marcada. Tarda de 10 a 30 segundos según la pregunta. Así no se equivoca de casilla.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Le da clic a Siguiente o Enviar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. NO LIMIT marca, escribe, elige o acomoda la respuesta, pero los botones de Siguiente, Enviar o Terminar los tocas tú. Así nunca se cambia de página sola. Si no está segura de dónde contestar, no toca nada y te dice la respuesta.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué necesito para usarla?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Tu código de NO LIMIT y una clave de IA: <b>la de Gemini es gratis</b>; las de Claude y ChatGPT cobran por uso, directo a ellos. Si una IA está saturada, NO LIMIT prueba sola otro modelo.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿“Inyectar” mete algo en mi compu o en la página?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. Es solo el nombre del botón. Cuando haces Ctrl + clic toma una captura cerca del puntero y da el clic o escribe como si fueras tú. <b>No se mete en otros programas ni en la memoria.</b></p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué Windows dice “Windows protegió tu PC”?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque la app es nueva y no tiene un certificado de paga. Toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>. El código está abierto en GitHub.</p></div></div></div>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿A dónde se va cuando toco INYECTAR?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Junto al reloj de Windows (si no la ves, está en la flechita <b>^</b>). Clic para abrirla; clic derecho para <b>Detener</b> o <b>Salir</b>. Si la abres otra vez desde el escritorio, la ventana regresa.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿A dónde se va cuando toco INYECTAR?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Junto al reloj de Windows (si no la ves, está en la flechita <b>^</b>). Clic para abrirla; clic derecho para <b>Detener</b> o <b>Salir</b>. Si la abres otra vez desde el escritorio, la ventana regresa. En Mac se queda en la barra de arriba.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Me va a trabar los juegos?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. Escondida no dibuja nada y casi no usa CPU. Con un juego en pantalla completa, o si dejas Ctrl apretado para agacharte, el Ctrl + clic no hace nada.</p></div></div></div>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Mi clave está segura?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Se guarda cifrada con tu usuario de Windows y solo en tu compu. Las preguntas van directo de tu compu a la IA que elegiste, sin pasar por un servidor nuestro.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Mi clave está segura?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Se guarda cifrada y solo en tu compu: con tu usuario de Windows o en el llavero de tu Mac. Las preguntas van directo de tu compu a la IA que elegiste, sin pasar por un servidor nuestro. Más en el <a href="#privacidad">aviso de privacidad</a>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Se puede equivocar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Como cualquier IA, sí. Por eso el <b>modo preciso</b> viene prendido y la app revisa que el clic caiga en la opción que eligió. Si el quiz tiene la respuesta mal escrita, elige la más cercana a la real.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Dónde dejo una queja o una idea?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>En <a href="#contacto">Contacto</a>: escribe tu queja o sugerencia y se abre WhatsApp o tu correo con el mensaje listo. Ahí mismo puedes calificar NO LIMIT. También estamos en Instagram como <a href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener">@no.limit.mx77</a>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué modelo me conviene?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Para empezar, <b>Gemini Flash</b>, porque la clave es gratis. Lo más rápido es <b>Claude Haiku</b> y lo más listo, <b>Claude Opus</b>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Funciona en Mac?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí, en Mac con macOS 15 o más nuevo (chip M1 a M4 o Intel). Ahí el atajo es <b>Option + clic</b> y se queda en la barra de arriba. Como no está firmada por Apple, la primera vez abre Terminal y pega <code>xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"</code>. Luego te pide dos permisos (Accesibilidad y Grabación de pantalla). Desde la 1.5 se actualiza sola, igual que en Windows; después de actualizar, la app te vuelve a pedir esos dos permisos (es normal en Mac). En el cel todavía no.</p></div></div></div>
       </div>
@@ -1312,6 +1797,7 @@
         </div>
       </div>
       <p class="meta js-meta" data-revela>Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
+      <a class="final-ig" href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener" data-revela>Síguenos en Instagram · <b>@no.limit.mx77</b></a>
     </div>
   </section>
 </main>
@@ -1406,6 +1892,81 @@
   </div>
 </div>
 
+<div class="legal" id="legal" hidden>
+  <div class="legal-caja" role="dialog" aria-modal="true" aria-label="Políticas de NO LIMIT">
+    <div class="legal-cabeza">
+      <div class="legal-tabs" role="tablist">
+        <button type="button" role="tab" data-doc="privacidad" aria-selected="true">Privacidad</button>
+        <button type="button" role="tab" data-doc="terminos" aria-selected="false">Términos</button>
+        <button type="button" role="tab" data-doc="reembolsos" aria-selected="false">Reembolsos</button>
+      </div>
+      <button class="cuenta-cerrar" id="legalCerrar" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <div class="legal-cuerpo" id="legalCuerpo">
+      <article data-doc="privacidad">
+        <h3>Aviso de privacidad</h3>
+        <p class="fecha">Última actualización: 17 de noviembre de 2026</p>
+        <p>NO LIMIT (“nosotros”) es responsable del tratamiento de los datos personales que nos compartes. Para cualquier duda o solicitud escríbenos desde <a href="#contacto">Contacto</a> o por Instagram <a href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener">@no.limit.mx77</a>.</p>
+        <h4>Qué datos usamos</h4>
+        <ul>
+          <li>Los que tú nos mandas al comprar, renovar o escribirnos: nombre, WhatsApp, Instagram o correo, el método de pago y, si lo mandas, tu comprobante.</li>
+          <li>Tu código de NO LIMIT, para activarlo y saber hasta cuándo está pagado.</li>
+        </ul>
+        <h4>Qué NO recibimos</h4>
+        <ul>
+          <li><b>Tus capturas, preguntas y respuestas no pasan por nosotros.</b> Van directo de tu compu a la IA que elegiste (Google, Anthropic u OpenAI) con tu propia clave, y ahí aplican sus propias políticas.</li>
+          <li><b>Tu clave de IA no sale de tu compu:</b> se guarda cifrada con tu usuario de Windows o en el llavero de tu Mac.</li>
+          <li>No usamos cookies de rastreo ni publicidad. Esta página solo guarda en tu navegador tu código y tu pago pendiente, para que no los tengas que volver a escribir.</li>
+        </ul>
+        <h4>Para qué los usamos</h4>
+        <ul><li>Activar y renovar tu código, contestarte y darte soporte, y atender quejas o sugerencias.</li></ul>
+        <h4>Con quién los compartimos</h4>
+        <p>Con nadie, salvo que una autoridad lo pida conforme a la ley. No vendemos tus datos.</p>
+        <h4>Tus derechos</h4>
+        <p>Puedes pedir ver, corregir o borrar tus datos, u oponerte a que los usemos (derechos ARCO), escribiéndonos desde <a href="#contacto">Contacto</a>. Te contestamos en un máximo de 20 días hábiles.</p>
+        <h4>Cambios</h4>
+        <p>Si cambiamos este aviso, lo publicamos aquí con la fecha nueva.</p>
+      </article>
+      <article data-doc="terminos" hidden>
+        <h3>Términos de uso</h3>
+        <p class="fecha">Última actualización: 17 de noviembre de 2026</p>
+        <h4>Qué es NO LIMIT</h4>
+        <p>Una app para Windows y Mac que lee la pregunta que señalas en tu pantalla, la resuelve con la IA que elijas (usando tu propia clave) y la contesta con el mouse y el teclado.</p>
+        <h4>Tu suscripción</h4>
+        <ul>
+          <li>Cuesta 150 MXN al mes. Tu código es personal: uno por persona. Si se comparte, se puede bloquear.</li>
+          <li>Si no renuevas, la app se pausa sola al vencer tu mes. No hay cargos automáticos.</li>
+        </ul>
+        <h4>Tu clave de IA</h4>
+        <p>La clave y lo que cobre tu proveedor de IA son tuyos (la de Gemini es gratis con límites; Claude y ChatGPT cobran por uso, directo a ellos).</p>
+        <h4>La IA se puede equivocar</h4>
+        <p>NO LIMIT revisa cada respuesta, pero ninguna IA es perfecta. Revisa antes de enviar: no garantizamos calificaciones.</p>
+        <h4>Uso responsable</h4>
+        <p>Úsala de forma responsable y respetando las reglas de tu escuela o plataforma; tú decides cuándo usarla. NO LIMIT no está hecha para saltarse supervisores de exámenes, navegadores bloqueados ni herramientas antitrampa, y no lo intenta.</p>
+        <h4>Software de terceros</h4>
+        <p>La app incluye software libre (como Tesseract). Sus licencias están en <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT/blob/main/LICENCIAS.txt" target="_blank" rel="noopener">LICENCIAS.txt</a>.</p>
+        <h4>Cambios</h4>
+        <p>Podemos actualizar estos términos; los publicamos aquí con la fecha nueva.</p>
+      </article>
+      <article data-doc="reembolsos" hidden>
+        <h3>Reembolsos y cancelación</h3>
+        <p class="fecha">Última actualización: 17 de noviembre de 2026</p>
+        <h4>Cancelar</h4>
+        <p>No hay contrato ni cargos automáticos: si ya no quieres NO LIMIT, simplemente no renueves. La app se pausa sola al terminar tu mes.</p>
+        <h4>Si pagaste y no se activó</h4>
+        <p>Escríbenos desde <a href="#contacto">Contacto</a> con tu folio o comprobante. Lo activamos, y si no se puede, te regresamos tu pago.</p>
+        <h4>Si no te funciona</h4>
+        <p>Si en las primeras 48 horas después de pagar NO LIMIT no funciona en tu compu y no lo podemos arreglar contigo, te regresamos tu pago.</p>
+        <h4>Cuándo no aplica</h4>
+        <ul>
+          <li>Cuando el código se bloqueó por compartirlo.</li>
+          <li>Lo que cobra tu proveedor de IA por tu clave (eso es directo con ellos).</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="envoltura pie">
     <img src="assets/marca.webp" alt="NO LIMIT" width="1400" height="592" loading="lazy">
@@ -1413,6 +1974,12 @@
       <a href="#demo">Pruébalo</a>
       <a href="#preguntas">Preguntas</a>
       <a href="#precio">Precio</a>
+      <a href="#ayuda">Ayuda</a>
+      <a href="#contacto">Contacto</a>
+      <a href="#privacidad">Privacidad</a>
+      <a href="#terminos">Términos</a>
+      <a href="#reembolsos">Reembolsos</a>
+      <a href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener">Instagram</a>
       <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT/blob/main/LICENCIAS.txt">Licencias</a>
     </nav>
     <span>© 2026 NO LIMIT · <span class="js-version-corta">v1.3.1</span></span>
@@ -1563,12 +2130,55 @@
   /* ---------------------------------------------------------------- DEMO: Ctrl + clic de verdad */
   var PREGUNTAS = [
     { materia: "Geografía", texto: "¿Cuál es la capital de Australia?", opciones: ["Sídney", "Canberra", "Melbourne", "Perth"], bien: 1 },
+    { materia: "Matemáticas · Gráficas", tipo: "grafica", texto: "Grafica la recta que corta al eje y en 2 y al eje x en −1.", puntos: [[0, 2], [-1, 0]], hecho: "Trazó la recta y = 2x + 2" },
+    { materia: "Inglés", tipo: "abierta", texto: "¿Cómo se dice “gracias” en inglés?", abierta: "Thank you" },
+    { materia: "Biología", tipo: "casillas", texto: "Selecciona todos los mamíferos.", opciones: ["Delfín", "Tiburón", "Murciélago", "Pingüino"], bien: [0, 2] },
+    { materia: "Matemáticas", tipo: "numerica", texto: "Un celular cuesta $4,500 y tiene 15% de descuento. ¿Cuánto pagas?", abierta: "3825", nota: "✓ Cuenta comprobada: 4500 × 0.85 = 3825" },
+    { materia: "Historia", tipo: "larga", texto: "Explica por qué fue importante la Revolución Mexicana.", abierta: "Porque terminó con el gobierno de Porfirio Díaz, buscó repartir la tierra a los campesinos y dio origen a la Constitución de 1917, que reconoció derechos laborales y sociales." },
     { materia: "Química", texto: "¿Cuál es el símbolo químico del oro?", opciones: ["Ag", "Fe", "Au", "Pb"], bien: 2 },
-    { materia: "Matemáticas", texto: "¿Cuánto es 12 × 12?", opciones: ["124", "132", "154", "144"], bien: 3 },
-    { materia: "Inglés", texto: "¿Cómo se dice “gracias” en inglés?", abierta: "Thank you" },
-    { materia: "Literatura", texto: "¿Quién escribió Cien años de soledad?", opciones: ["Gabriel García Márquez", "Octavio Paz", "Julio Cortázar", "Carlos Fuentes"], bien: 0 },
-    { materia: "Geografía", texto: "¿Qué tan alto es el Everest?", opciones: ["8,488 m", "8,611 m", "8,848 m", "7,999 m"], bien: 2 }
+    { materia: "Literatura", texto: "¿Quién escribió Cien años de soledad?", opciones: ["Gabriel García Márquez", "Octavio Paz", "Julio Cortázar", "Carlos Fuentes"], bien: 0 }
   ];
+  function tipoDe(p) { return p.tipo || (p.abierta ? "abierta" : "opcion"); }
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function svg(nombre, atrs, padre) {
+    var e = document.createElementNS(SVGNS, nombre);
+    Object.keys(atrs || {}).forEach(function (k) { e.setAttribute(k, atrs[k]); });
+    if (padre) padre.appendChild(e);
+    return e;
+  }
+  /* plano de -5 a 5: 20 unidades del dibujo por cada una */
+  function px(v) { return 120 + 20 * v; }
+  function py(v) { return 120 - 20 * v; }
+  function dibujarPlano() {
+    var caja = document.createElement("div"); caja.className = "plano-demo";
+    var s = svg("svg", { viewBox: "0 0 240 240", id: "qPlano", "aria-label": "Plano cartesiano de -5 a 5" }, caja);
+    var g = svg("g", { "class": "rejilla" }, s);
+    for (var k = -5; k <= 5; k++) {
+      svg("line", { x1: px(k), y1: py(5.5), x2: px(k), y2: py(-5.5) }, g);
+      svg("line", { x1: px(-5.5), y1: py(k), x2: px(5.5), y2: py(k) }, g);
+    }
+    svg("line", { "class": "eje", x1: px(-5.7), y1: py(0), x2: px(5.7), y2: py(0) }, s);
+    svg("line", { "class": "eje", x1: px(0), y1: py(5.7), x2: px(0), y2: py(-5.7) }, s);
+    for (k = -5; k <= 5; k++) {
+      if (!k) continue;
+      svg("line", { "class": "marca", x1: px(k), y1: py(0) - 3, x2: px(k), y2: py(0) + 3 }, s);
+      svg("line", { "class": "marca", x1: px(0) - 3, y1: py(k), x2: px(0) + 3, y2: py(k) }, s);
+      var tx = svg("text", { x: px(k), y: py(0) + 12, "text-anchor": "middle" }, s); tx.textContent = String(k).replace("-", "−");
+      var ty = svg("text", { x: px(0) - 6, y: py(k) + 3, "text-anchor": "end" }, s); ty.textContent = String(k).replace("-", "−");
+    }
+    svg("g", { id: "qTrazo" }, s);
+    return caja;
+  }
+  function recortarRecta(a, b) {
+    /* la recta que pasa por a y b, recortada al cuadro del plano */
+    var L = 5.5, out = [], dx = b[0] - a[0], dy = b[1] - a[1];
+    if (Math.abs(dx) < 1e-9) return [[a[0], -L], [a[0], L]];
+    var m = dy / dx, c = a[1] - m * a[0];
+    [-L, L].forEach(function (x) { var y = m * x + c; if (y >= -L - 1e-9 && y <= L + 1e-9) out.push([x, y]); });
+    if (Math.abs(m) > 1e-9) [-L, L].forEach(function (y) { var x = (y - c) / m; if (x > -L && x < L) out.push([x, y]); });
+    out.sort(function (p, q) { return p[0] - q[0]; });
+    return [out[0], out[out.length - 1]];
+  }
   var navegador = $("#navegador"), quiz = $("#quiz"), cuerpo = $("#qCuerpo"), respuestas = $("#qRespuestas");
   var captura = $("#captura"), escaneo = $("#escaneo"), puntero = $("#puntero"), burbuja = $("#burbuja");
   var bIcono = $("#bIcono"), bTexto = $("#bTexto"), registro = $("#registro"), miniApp = $("#miniApp");
@@ -1608,10 +2218,22 @@
     $("#qTexto").appendChild(document.createTextNode(p.texto));
     var req = document.createElement("span"); req.className = "req"; req.textContent = "*"; $("#qTexto").appendChild(req);
     respuestas.innerHTML = "";
-    if (p.abierta) {
-      var c = document.createElement("div"); c.className = "campo"; c.id = "qCampo";
-      c.innerHTML = '<span class="ph">Escribe tu respuesta</span>';
+    var tipo = tipoDe(p);
+    if (tipo === "grafica") {
+      respuestas.appendChild(dibujarPlano());
+    } else if (tipo === "casillas") {
+      var lista = document.createElement("ul"); lista.className = "casillas-demo";
+      p.opciones.forEach(function (o) {
+        var li = document.createElement("li"); li.className = "casilla-d";
+        li.innerHTML = '<span class="cuadro"></span><span></span>';
+        li.lastChild.textContent = o; lista.appendChild(li);
+      });
+      respuestas.appendChild(lista);
+    } else if (p.abierta) {
+      var c = document.createElement("div"); c.className = "campo" + (tipo === "larga" ? " largo" : ""); c.id = "qCampo";
+      c.innerHTML = '<span class="ph">' + (tipo === "numerica" ? "Escribe el resultado" : "Escribe tu respuesta") + '</span>';
       respuestas.appendChild(c);
+      if (p.nota) { var n = document.createElement("p"); n.className = "nota-cuenta"; n.id = "qNota"; n.textContent = p.nota; respuestas.appendChild(n); }
     } else {
       var ul = document.createElement("ul"); ul.className = "opciones";
       p.opciones.forEach(function (o) {
@@ -1679,31 +2301,64 @@
       await esperar(reducido ? 250 : 700, f);
       ocultarBurbuja();
       captura.classList.remove("ver");
-      /* 4. mover el puntero solo hasta la respuesta */
-      var p = PREGUNTAS[indice];
-      var destino = p.abierta ? $("#qCampo") : respuestas.querySelectorAll(".opcion")[p.bien];
-      var c = centroDe(destino);
-      var dx = c.x - x, dy = c.y - y, curva = Math.min(80, Math.hypot(dx, dy) * .25);
-      await animar(reducido ? 1 : 650, function (t) {
-        var e = vaiven(t);
-        var px = x + dx * e - dy / Math.max(1, Math.hypot(dx, dy)) * curva * Math.sin(Math.PI * e);
-        var py = y + dy * e + dx / Math.max(1, Math.hypot(dx, dy)) * curva * Math.sin(Math.PI * e) * .4;
-        ponerPuntero(px, py);
-      }, f);
-      puntero.classList.add("clic");
-      await esperar(140, f);
-      puntero.classList.remove("clic");
-      var hecho;
-      if (p.abierta) {
-        $("#miniEstado").textContent = "Escribiendo…";
-        destino.classList.add("foco");
-        destino.innerHTML = '<span class="txt"></span><span class="cursor-t"></span>';
-        var txt = destino.firstChild;
-        for (var i = 1; i <= p.abierta.length; i++) { txt.textContent = p.abierta.slice(0, i); await esperar(reducido ? 0 : 70, f); }
-        hecho = "Escribió: " + p.abierta;
+      /* 4. mover el puntero solo hasta cada respuesta (una opcion, varias casillas, los puntos de la grafica) */
+      var p = PREGUNTAS[indice], tipo = tipoDe(p);
+      var destinos = [];
+      if (tipo === "grafica") {
+        var plano = $("#qPlano"), r = plano.getBoundingClientRect(), esc = r.width / 240;
+        p.puntos.forEach(function (q) {
+          destinos.push({ x: r.left - n.left + px(q[0]) * esc, y: r.top - n.top + py(q[1]) * esc, punto: q });
+        });
+      } else if (tipo === "casillas") {
+        var cs = respuestas.querySelectorAll(".casilla-d");
+        p.bien.forEach(function (k) { var c0 = centroDe(cs[k]); c0.el = cs[k]; destinos.push(c0); });
       } else {
-        destino.classList.add("marcada");
-        hecho = "Marcó: " + p.opciones[p.bien];
+        var el = p.abierta ? $("#qCampo") : respuestas.querySelectorAll(".opcion")[p.bien];
+        var c1 = centroDe(el); c1.el = el; destinos.push(c1);
+      }
+      var desde = { x: x, y: y }, c = destinos[0], hecho;
+      for (var d = 0; d < destinos.length; d++) {
+        c = destinos[d];
+        var dx = c.x - desde.x, dy = c.y - desde.y, largo = Math.max(1, Math.hypot(dx, dy)), curva = Math.min(80, largo * .25);
+        var x0 = desde.x, y0 = desde.y;
+        await animar(reducido ? 1 : (d ? 480 : 650), function (t) {
+          var e = vaiven(t);
+          ponerPuntero(x0 + dx * e - dy / largo * curva * Math.sin(Math.PI * e),
+                       y0 + dy * e + dx / largo * curva * Math.sin(Math.PI * e) * .4);
+        }, f);
+        puntero.classList.add("clic");
+        await esperar(140, f);
+        puntero.classList.remove("clic");
+        if (tipo === "grafica") {
+          var trazo = $("#qTrazo");
+          svg("circle", { "class": "halo", cx: px(c.punto[0]), cy: py(c.punto[1]), r: 5 }, trazo);
+          svg("circle", { "class": "punto", cx: px(c.punto[0]), cy: py(c.punto[1]), r: 4.2 }, trazo);
+          agregarRegistro("Punto (" + c.punto[0] + ", " + c.punto[1] + ")");
+          if (d === destinos.length - 1) {
+            var ext = recortarRecta(p.puntos[0], p.puntos[1]);
+            var recta = svg("line", { "class": "recta", x1: px(ext[0][0]), y1: py(ext[0][1]), x2: px(ext[1][0]), y2: py(ext[1][1]) });
+            trazo.insertBefore(recta, trazo.firstChild);
+            var lr = Math.hypot(px(ext[1][0]) - px(ext[0][0]), py(ext[1][1]) - py(ext[0][1]));
+            recta.style.strokeDasharray = lr; recta.style.strokeDashoffset = lr;
+            await animar(reducido ? 1 : 520, function (t) { recta.style.strokeDashoffset = lr * (1 - suave(t)); }, f);
+          }
+          hecho = p.hecho;
+        } else if (tipo === "casillas") {
+          c.el.classList.add("marcada");
+          hecho = "Marcó " + p.bien.length + ": " + p.bien.map(function (k) { return p.opciones[k]; }).join(" y ");
+        } else if (p.abierta) {
+          $("#miniEstado").textContent = "Escribiendo…";
+          c.el.classList.add("activo");
+          c.el.innerHTML = '<span class="txt"></span><span class="cursor-t"></span>';
+          var txt = c.el.firstChild, vel = tipo === "larga" ? 14 : 70;
+          for (var i = 1; i <= p.abierta.length; i++) { txt.textContent = p.abierta.slice(0, i); await esperar(reducido ? 0 : vel, f); }
+          hecho = tipo === "larga" ? "Escribió la respuesta (" + p.abierta.split(" ").length + " palabras)" : "Escribió: " + p.abierta;
+          if (p.nota && $("#qNota")) $("#qNota").classList.add("ver");
+        } else {
+          c.el.classList.add("marcada");
+          hecho = "Marcó: " + p.opciones[p.bien];
+        }
+        desde = c;
       }
       mostrarBurbuja(hecho, "ok", c.x, c.y);
       agregarRegistro(hecho);
@@ -1897,6 +2552,14 @@
   var bento = $("#bento"), bentoVisible = false;
   new IntersectionObserver(function (es) { bentoVisible = es[0].isIntersecting; bento.classList.toggle("anima", bentoVisible && !reducido); }, { threshold: .05 }).observe(bento);
   if (reducido) { $(".mq li.ok").style.boxShadow = "inset 0 0 0 2px #1d1d1f"; }
+  var bento2 = $("#bento2");
+  if (bento2) {
+    new IntersectionObserver(function (es) { bento2.classList.toggle("anima", es[0].isIntersecting && !reducido); }, { threshold: .05 }).observe(bento2);
+    if (reducido) {
+      $$(".mini-plano .curva").forEach(function (c) { c.style.strokeDashoffset = 0; });
+      $$(".mini-plano .pt").forEach(function (c) { c.style.transform = "scale(1)"; });
+    }
+  }
 
   /* tipeo de respuestas abiertas */
   var FRASES = ["Simón Bolívar", "La mitocondria", "Thank you", "En 1810", "La fotosíntesis convierte la luz en energía"];
@@ -2418,6 +3081,180 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && P.abierto && cuenta.hidden) cerrarPago(false); });
     window.addEventListener("popstate", function () { if (location.hash === "#pago") abrirPago(true); else cerrarPago(true); });
     if (location.hash === "#pago") abrirPago(true);
+  }
+
+  /* ---------------------------------------------------------------- AYUDA: buscar, temas y respuestas */
+  var ayItems = $$(".ay-item"), ayTema = "todo";
+  function sinAcentos(t) { return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  function filtrarAyuda() {
+    var q = sinAcentos($("#ayBuscar").value).trim(), palabras = q ? q.split(/\s+/) : [], vistos = 0;
+    ayItems.forEach(function (it) {
+      var texto = sinAcentos(it.getAttribute("data-claves") + " " + it.textContent);
+      var ok = (ayTema === "todo" || it.getAttribute("data-tema") === ayTema) &&
+               palabras.every(function (w) { return texto.indexOf(w) >= 0; });
+      it.hidden = !ok;
+      if (ok) vistos++;
+    });
+    $("#ayNada").hidden = vistos > 0;
+    $("#ayCuenta").textContent = q ? vistos + (vistos === 1 ? " tema" : " temas") : "";
+  }
+  if ($("#ayLista")) {
+    $("#ayBuscar").addEventListener("input", filtrarAyuda);
+    $$("#ayTemas .ay-chip").forEach(function (b) {
+      b.addEventListener("click", function () {
+        ayTema = b.getAttribute("data-tema");
+        $$("#ayTemas .ay-chip").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+        filtrarAyuda();
+      });
+    });
+    ayItems.forEach(function (it) {
+      var b = $(".ay-q", it);
+      b.addEventListener("click", function () {
+        var abrir = !it.classList.contains("abierto");
+        it.classList.toggle("abierto", abrir);
+        b.setAttribute("aria-expanded", abrir ? "true" : "false");
+      });
+    });
+    $$(".copiar").forEach(function (b) {
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var t = b.getAttribute("data-copiar");
+        function listo() { b.textContent = "¡Copiado!"; setTimeout(function () { b.textContent = "Copiar"; }, 1600); }
+        try { navigator.clipboard.writeText(t).then(listo, function () {}); } catch (x) {}
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- CONTACTO: quejas, sugerencias y valoracion
+     El mensaje se abre ya escrito en WhatsApp o en el correo del dueno (su numero y su correo no se muestran). */
+  function abrirMensaje(via, asunto, texto) {
+    if (via === "wa") abrirFuera("https://wa.me/" + destino("w") + "?text=" + encodeURIComponent(texto));
+    else location.href = "mailto:" + destino("c") + "?subject=" + encodeURIComponent(asunto) + "&body=" + encodeURIComponent(texto);
+  }
+  function marcarMal(el, err, texto) {
+    err.textContent = texto;
+    el.classList.remove("mal"); void el.offsetWidth; el.classList.add("mal");
+    try { el.focus(); } catch (x) {}
+  }
+  if ($("#ctForm")) {
+    var ctTipo = "Sugerencia";
+    $$("#ctTipos button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        ctTipo = b.getAttribute("data-tipo");
+        $$("#ctTipos button").forEach(function (o) { o.setAttribute("aria-checked", o === b ? "true" : "false"); });
+      });
+    });
+    $("#ctMensaje").addEventListener("input", function () { $("#ctMensaje").classList.remove("mal"); $("#ctError").textContent = ""; });
+    function mandarContacto(via) {
+      var msj = $("#ctMensaje").value.trim();
+      if (msj.length < 5) { marcarMal($("#ctMensaje"), $("#ctError"), "Escribe tu mensaje."); return; }
+      var l = ["NO LIMIT · " + ctTipo, "", msj];
+      var nom = $("#ctNombre").value.trim(), con = $("#ctContacto").value.trim();
+      if (nom) l.push("", "Nombre: " + nom);
+      if (con) l.push((nom ? "" : "\n") + "Contacto: " + con);
+      var c = guardado("nolimit_codigo"); if (c) l.push("Código: " + c);
+      abrirMensaje(via, "NO LIMIT · " + ctTipo, l.join("\n"));
+      setTimeout(function () { $("#ctListo").classList.add("ver"); }, via === "wa" ? 250 : 400);
+    }
+    $("#ctWa").addEventListener("click", function () { mandarContacto("wa"); });
+    $("#ctMail").addEventListener("click", function () { mandarContacto("correo"); });
+    $("#ctOtro").addEventListener("click", function () { $("#ctListo").classList.remove("ver"); $("#ctMensaje").value = ""; $("#ctMensaje").focus(); });
+  }
+  if ($("#vlEstrellas")) {
+    var NOMBRES = ["", "Mala", "Regular", "Buena", "Muy buena", "¡Increíble!"], vlNota = 0;
+    for (var k = 1; k <= 5; k++) {
+      var b = document.createElement("button");
+      b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", "false");
+      b.setAttribute("aria-label", k + (k === 1 ? " estrella" : " estrellas")); b.setAttribute("data-n", k);
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.75 5.75 6.3.8-4.6 4.35 1.15 6.25L12 16.9l-5.6 3.05 1.15-6.25L2.95 9.35l6.3-.8z"/></svg>';
+      $("#vlEstrellas").appendChild(b);
+    }
+    var estrellas = $$("#vlEstrellas button");
+    function pintarEstrellas(n, animar) {
+      estrellas.forEach(function (e, i) {
+        var on = i < n;
+        e.classList.toggle("on", on);
+        e.setAttribute("aria-checked", i === n - 1 ? "true" : "false");
+        if (animar && on && !reducido) { e.classList.remove("pop"); void e.offsetWidth; e.style.animationDelay = (i * 0.05) + "s"; e.classList.add("pop"); }
+      });
+      $("#vlTexto").textContent = n ? NOMBRES[n] : "Toca una estrella";
+      $("#vlTexto").classList.toggle("on", n > 0);
+    }
+    estrellas.forEach(function (e) {
+      var n = +e.getAttribute("data-n");
+      e.addEventListener("click", function () { vlNota = n; pintarEstrellas(n, true); $("#vlError").textContent = ""; });
+      e.addEventListener("mouseenter", function () { if (finoPuntero) pintarEstrellas(n, false); });
+      e.addEventListener("mouseleave", function () { if (finoPuntero) pintarEstrellas(vlNota, false); });
+    });
+    function mandarValoracion(via) {
+      if (!vlNota) { $("#vlError").textContent = "Elige de 1 a 5 estrellas."; return; }
+      var com = $("#vlComentario").value.trim();
+      var l = ["Calificación de NO LIMIT: " + "★★★★★".slice(0, vlNota) + "☆☆☆☆☆".slice(0, 5 - vlNota) + " (" + vlNota + "/5, " + NOMBRES[vlNota] + ")"];
+      if (com) l.push("", com);
+      abrirMensaje(via, "Calificación NO LIMIT: " + vlNota + "/5", l.join("\n"));
+      setTimeout(function () { $("#vlListo").classList.add("ver"); }, via === "wa" ? 250 : 400);
+    }
+    $("#vlWa").addEventListener("click", function () { mandarValoracion("wa"); });
+    $("#vlMail").addEventListener("click", function () { mandarValoracion("correo"); });
+    $("#vlOtro").addEventListener("click", function () { $("#vlListo").classList.remove("ver"); });
+  }
+
+  /* ---------------------------------------------------------------- POLITICAS: privacidad, terminos y reembolsos */
+  var legal = $("#legal"), DOCS = ["privacidad", "terminos", "reembolsos"], legalAbierto = false, legalEmpujado = false;
+  function verDoc(doc) {
+    $$(".legal-tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-doc") === doc ? "true" : "false"); });
+    $$("#legalCuerpo article").forEach(function (a) { a.hidden = a.getAttribute("data-doc") !== doc; });
+    $("#legalCuerpo").scrollTop = 0;
+  }
+  function abrirLegal(doc, desdeHistorial) {
+    verDoc(doc);
+    if (!desdeHistorial && location.hash !== "#" + doc) {
+      try { history.pushState({ legal: doc }, "", "#" + doc); legalEmpujado = true; } catch (x) {}
+    }
+    if (legalAbierto) return;
+    legalAbierto = true;
+    legal.hidden = false;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { legal.classList.add("ver"); }); });
+  }
+  function cerrarLegal(desdeHistorial) {
+    if (!legalAbierto) return;
+    legalAbierto = false;
+    legal.classList.remove("ver");
+    setTimeout(function () { if (!legalAbierto) legal.hidden = true; }, reducido ? 30 : 380);
+    if (!desdeHistorial && DOCS.indexOf(location.hash.slice(1)) >= 0) {
+      if (legalEmpujado) { try { history.back(); } catch (x) {} }
+      else { try { history.replaceState(null, "", location.pathname + location.search); } catch (x) {} }
+    }
+    legalEmpujado = false;
+  }
+  if (legal) {
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("a[href^='#']");
+      if (!a) return;
+      var doc = a.getAttribute("href").slice(1);
+      if (DOCS.indexOf(doc) < 0) {
+        if (legalAbierto && !legal.contains(a)) return;
+        if (legalAbierto) { e.preventDefault(); cerrarLegal(false); var dest = $(a.getAttribute("href")); if (dest) setTimeout(function () { dest.scrollIntoView({ behavior: reducido ? "auto" : "smooth" }); }, 420); }
+        return;
+      }
+      e.preventDefault();
+      abrirLegal(doc, false);
+    });
+    $$(".legal-tabs button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var doc = b.getAttribute("data-doc");
+        verDoc(doc);
+        try { history.replaceState(history.state, "", "#" + doc); } catch (x) {}
+      });
+    });
+    $("#legalCerrar").addEventListener("click", function () { cerrarLegal(false); });
+    legal.addEventListener("click", function (e) { if (e.target === legal) cerrarLegal(false); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && legalAbierto) cerrarLegal(false); });
+    window.addEventListener("popstate", function () {
+      var doc = location.hash.slice(1);
+      if (DOCS.indexOf(doc) >= 0) abrirLegal(doc, true); else cerrarLegal(true);
+    });
+    if (DOCS.indexOf(location.hash.slice(1)) >= 0) abrirLegal(location.hash.slice(1), true);
   }
 
   pedirCuadro();
