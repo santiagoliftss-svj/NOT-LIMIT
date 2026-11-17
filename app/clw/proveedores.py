@@ -269,6 +269,7 @@ ALTERNOS = {
     "openai": ["gpt-6-luna", "gpt-6.1-terra"],
 }
 TIEMPO_MAX = 45          # segundos maximos intentando antes de rendirse
+TIEMPO_MAX_LENTO = 150   # si los modelos tardan (Gemini gratis a veces se queda pensando), se prueba otro hasta aqui
 RECORDAR_ALTERNO = 180   # si el elegido estaba saturado, se usa el que si contesto por 3 minutos
 
 
@@ -293,6 +294,7 @@ class ClienteIA:
         inicio = time.time()
         primero = None
         for m in self.modelos_a_probar(proveedor, modelo):
+            lento = False
             for intento in range(2):
                 try:
                     res = self._una(proveedor, m, clave, sistema, b64, mime, texto, preciso)
@@ -302,6 +304,11 @@ class ClienteIA:
                     primero = primero or e
                     if e.tipo == "modelo":
                         break                   # ese modelo no esta para esta cuenta: el siguiente
+                    if e.tipo == "red" and "timed out" in (e.detalle or "").lower():
+                        if time.time() - inicio > TIEMPO_MAX_LENTO:
+                            raise e
+                        lento = True
+                        break                   # ese modelo se tardo demasiado (saturado): el siguiente
                     if time.time() - inicio > TIEMPO_MAX or (e.tipo == "red" and intento):
                         raise primero
                     if intento == 0:
@@ -313,7 +320,7 @@ class ClienteIA:
                     else:
                         self._alterno.pop((proveedor, modelo), None)
                 return res
-            if primero is not None and primero.tipo == "red":
+            if primero is not None and primero.tipo == "red" and not lento:
                 raise primero
         raise primero or ErrorIA("No se pudo hablar con la IA.", "otro")
 
@@ -325,7 +332,7 @@ class ClienteIA:
         ultimo = None
         while i < len(variantes):
             url, cab, cuerpo = _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variantes[i])
-            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 60)
+            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 40)
             if estado == 200:
                 with self._candado:
                     self._recordado[llave] = i

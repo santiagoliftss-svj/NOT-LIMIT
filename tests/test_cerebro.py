@@ -1015,3 +1015,14 @@ def prueba_grafica_real_de_windows_con_cuadricula_encima_de_los_numeros():
     assert pl["x"] and pl["y"], pl
     x0, y2 = pl["x"][1], pl["y"][0] * 2 + pl["y"][1]
     assert abs(x0 - 418) <= 2 and abs(y2 - 309) <= 2, pl
+
+
+def prueba_si_ubicar_no_contesta_sigue_con_lo_del_puntero():
+    class Lenta(Exception):
+        tipo = "red"
+
+    def preguntar(b64, mime, texto, fase=None, esfuerzo=None):
+        raise Lenta("timed out")
+    img = Image.new("RGB", (800, 600), "white")
+    ub = cerebro.ubicar(img, 400, 300, preguntar)
+    assert ub.hay and ub.respaldo and ub.region == (0, 0, 800, 600)

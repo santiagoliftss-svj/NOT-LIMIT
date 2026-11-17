@@ -410,9 +410,15 @@ def ubicar(img, px, py, preguntar, zoom=1.0):
     b64, mime, s, tam = preparar_imagen(img, puntero=(px, py), lado=1568, tokens=1560)
     texto = (f"FASE: UBICAR\nCaptura de {tam[0]}x{tam[1]} px (sin contar las reglas). "
              f"El puntero (circulo rojo) esta en ({int(px * s)},{int(py * s)}).")
-    salida, _ = llamar(preguntar, b64, mime, texto, "ubicar")
-    datos = motor.interpretar(salida)
     todo = (0, 0, img.width, img.height)
+    try:
+        salida, _ = llamar(preguntar, b64, mime, texto, "ubicar")
+    except Exception as e:
+        if getattr(e, "tipo", None) in ("red", "limite", "otro"):
+            # si la IA rapida no contesto (lenta o saturada), se sigue con lo que hay alrededor del puntero
+            return Ubicacion(todo, salida="", respaldo=True)
+        raise
+    datos = motor.interpretar(salida)
     if datos.get("hay_pregunta") is False:
         return Ubicacion(None, hay=False, salida=salida)
     if str(datos.get("tipo") or "").strip().lower() == "ninguna" and not any(k in datos for k in ("caja", "acciones", "ids", "id")):

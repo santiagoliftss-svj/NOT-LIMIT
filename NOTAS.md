@@ -4,6 +4,11 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.2.1**
+
+- Si la IA se tarda demasiado en contestar (pasa con la clave gratis de Gemini cuando está saturada), NO LIMIT prueba sola otro modelo en vez de marcar "No hay conexión".
+- Si la parte que ubica la pregunta no contesta, sigue con lo que hay alrededor del puntero.
+
 **Nuevo en 2.2 (gráficas de todo tipo)**
 
 - Sigue las instrucciones de las gráficas al pie de la letra: rectas, segmentos, rayos, puntos, parábolas, círculos, valor absoluto, rectas verticales y horizontales, desigualdades (línea continua o punteada y el lado que se sombrea) y sistemas.

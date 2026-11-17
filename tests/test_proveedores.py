@@ -246,3 +246,19 @@ def prueba_preciso_piensa_mas():
     assert P.ClienteIA().preguntar("gemini", "gemini-flash-latest", "k", "s", "QUJD", "image/png", "t", preciso=True)[0] == "ok"
     niveles = [b["generationConfig"]["thinkingConfig"]["thinkingLevel"] for _, _, _, b in PEDIDOS]
     assert niveles == ["medium", "low"], niveles
+
+
+def prueba_si_un_modelo_se_tarda_se_pasa_al_siguiente():
+    from clw import proveedores as P
+    c = P.ClienteIA()
+    c.pausa = 0
+    usados = []
+
+    def una(proveedor, modelo, clave, sistema, b64, mime, texto, preciso):
+        usados.append(modelo)
+        if modelo == "gemini-flash-latest":
+            raise P.ErrorIA("No hay conexión a internet (o tardó demasiado).", "red", "The read operation timed out")
+        return ("ok", False)
+    c._una = una
+    assert c.preguntar("gemini", "gemini-flash-latest", "k", "s", "b", "image/png", "t") == ("ok", False)
+    assert usados == ["gemini-flash-latest", "gemini-flash-lite-latest"], usados
