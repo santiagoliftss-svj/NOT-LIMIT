@@ -226,6 +226,7 @@ class Bot:
         cpx, cpy = px - region[0], py - region[1]
         cajas, campos = cerebro.leer(recorte, cpx, cpy, zoom, self.ocr)
         controles = self._controles(left, top, region, (left + px, top + py))
+        plano = cerebro.plano_de(recorte, cajas, zoom, self.ocr)
         t_ubicar = time.time() - t0
         self._cancelado()
 
@@ -234,6 +235,8 @@ class Bot:
         b64, mime, s, tam = cerebro.preparar_imagen(recorte, campos, puntero=(cpx, cpy), cajas=cajas, controles=controles)
         pista = f"Tipo probable: {ub.tipo or 'no se sabe'}. Se contesta con: {ub.controles or 'no se sabe'}.\n"
         texto = "FASE: CONTESTAR\n" + pista + cerebro.texto_cajas(cajas, campos, s, tam, (cpx, cpy), controles)
+        if motor.describir_plano(plano, s):
+            texto += "\n" + motor.describir_plano(plano, s)
         esfuerzo = "alto" if ub.tipo in cerebro.TIPOS_CALCULO else None
         salida, cortado = cerebro.llamar(preguntar, b64, mime, texto, "contestar", esfuerzo)
         t_ia = time.time() - t1
@@ -241,10 +244,11 @@ class Bot:
             self._emitir("actividad", "La IA se quedó sin espacio. Prueba otra vez.", "error")
             return None
         datos = motor.interpretar(salida)
-        plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles, self.ocr)
+        plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles, self.ocr, plano)
         log.info("modelo=%s ubicar=%.1fs ia=%.1fs region=%s tipo=%s/%s cajas=%d campos=%d controles=%d pasos=%d "
-                 "rechazadas=%s salida=%s", id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo, len(cajas), len(campos),
-                 len(controles), len(plan.pasos), [m for _, m in plan.rechazadas][:4], salida[:500])
+                 "rechazadas=%s cuentas=%s plano=%s salida=%s", id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo,
+                 len(cajas), len(campos), len(controles), len(plan.pasos), [m for _, m in plan.rechazadas][:4],
+                 plan.correcciones, plano.get("rango"), salida[:500])
         if self.config["guardar_capturas"]:
             cerebro.guardar_revision(os.path.join(rutas.carpeta_datos(), "revision"), img, region, cajas, campos,
                                      plan.pasos)

@@ -785,9 +785,64 @@ def _ventana_y_e2e(salida):
                 return ent.get().strip() == "8"
             esperar("sin_borde", listo, lambda: {"ok": listo() and not teclas_fondo, "texto": ent.get(),
                                                  "teclas_fondo": teclas_fondo[:10], "diag": diag},
-                    juego_pantalla_completa, top, minimo=2.0)
+                    e2e_grafica, top, minimo=2.0)
         except Exception as e:
             pruebas["sin_borde"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_grafica)
+
+    # -------- E2E 10: grafica tipo MyLab (cuadricula punteada, rayitas, numeros de 2 en 2): "Grafica la recta que
+    # corta al eje y en 2 y al eje x en -1". NO LIMIT lee los ejes y da clic justo en (0, 2) y (-1, 0).
+    def e2e_grafica():
+        try:
+            top = ventana_prueba("Prueba grafica", 820, 660)
+            tk.Label(top, text="10. Grafica la recta que corta al eje y en 2 y al eje x en -1.", font=("Arial", 15),
+                     bg="white", fg="#222").place(x=30, y=14)
+            U, X0, Y0 = 26, 150, 70                        # 26 px por unidad, (-10,10) arriba a la izquierda
+            lienzo = tk.Canvas(top, width=820, height=660, bg="white", highlightthickness=0)
+            lienzo.place(x=0, y=0)
+            lienzo.lower()
+            gx = lambda v: X0 + (v + 10) * U               # noqa: E731
+            gy = lambda v: Y0 + (10 - v) * U               # noqa: E731
+            for k in range(-10, 11):
+                lienzo.create_line(gx(k), gy(10), gx(k), gy(-10), fill="#555", dash=(1, 3))
+                lienzo.create_line(gx(-10), gy(k), gx(10), gy(k), fill="#555", dash=(1, 3))
+            lienzo.create_rectangle(gx(-10) - 6, gy(10) - 6, gx(10) + 6, gy(-10) + 6, outline="#000")
+            lienzo.create_line(gx(-10), gy(0), gx(10), gy(0), fill="#000", width=2)
+            lienzo.create_line(gx(0), gy(10), gx(0), gy(-10), fill="#000", width=2)
+            for k in range(-10, 11):
+                lienzo.create_line(gx(k), gy(0) - 5, gx(k), gy(0) + 5, fill="#000")
+                lienzo.create_line(gx(0) - 5, gy(k), gx(0) + 5, gy(k), fill="#000")
+                if k and k % 2 == 0:
+                    lienzo.create_text(gx(k), gy(0) + 16, text=str(k), font=("Arial", 11), fill="#000")
+                    lienzo.create_text(gx(0) - 9, gy(k), text=str(k), font=("Arial", 11), fill="#000", anchor="e")
+            puntos = []
+
+            def picar(e):
+                puntos.append(((e.x - X0) / U - 10, 10 - (e.y - Y0) / U))
+                lienzo.create_oval(e.x - 4, e.y - 4, e.x + 4, e.y + 4, fill="#1565c0", outline="")
+                if len(puntos) == 2:
+                    (ax, ay), (bx, by) = [(gx(p[0]), gy(p[1])) for p in puntos]
+                    lienzo.create_line(ax, ay, bx, by, fill="#1565c0", width=2)
+            lienzo.bind("<Button-1>", picar)
+            top.update()
+
+            def contestar(t):
+                return {"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [
+                    {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+            _IAFalsa.elegir = _fases(contestar, "graficar", alto=600)
+            lx, ly = top.winfo_rootx(), top.winfo_rooty()
+            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 26), daemon=True).start()
+
+            def listo():
+                return len(puntos) >= 2
+
+            def detalle():
+                bien = len(puntos) == 2 and all(abs(a - b) <= 0.3 for p, q in zip(puntos, ((0, 2), (-1, 0)))
+                                                for a, b in zip(p, q))
+                return {"ok": bien, "puntos": [(round(a, 2), round(b, 2)) for a, b in puntos]}
+            esperar("grafica", listo, detalle, juego_pantalla_completa, top, minimo=2.0)
+        except Exception as e:
+            pruebas["grafica"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, juego_pantalla_completa)
 
     # -------- un "juego" en pantalla completa: Ctrl + clic ahi NO debe hacer nada
@@ -890,7 +945,7 @@ def _ventana_y_e2e(salida):
     def terminar():
         if estado["fin"]:
             return
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 9,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 10,
                              "detalle": pruebas}
         RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         try:
@@ -902,7 +957,7 @@ def _ventana_y_e2e(salida):
         root.after(100, v.salir)
 
     root.after(900, paso_ventana)
-    root.after(330000, terminar)
+    root.after(380000, terminar)
     root.mainloop()
 
 

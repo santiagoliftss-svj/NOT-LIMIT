@@ -230,6 +230,75 @@ class _VistaCaja(NSView):
         camino.stroke()
 
 
+def _px_plano(v):
+    return 150 + (v + 10) * 26
+
+
+def _py_plano(v):
+    return 70 + (10 - v) * 26
+
+
+class _VistaPlano(NSView):
+    """Plano tipo MyLab (cuadricula punteada, rayitas, numeros de 2 en 2) que anota los puntos donde le dan clic."""
+
+    def initWithFrame_(self, marco):
+        self = objc.super(_VistaPlano, self).initWithFrame_(marco)
+        if self is None:
+            return None
+        self.puntos = []
+        return self
+
+    def isFlipped(self):
+        return True
+
+    def acceptsFirstMouse_(self, evento):
+        return True
+
+    def drawRect_(self, rect):
+        from AppKit import NSBezierPath, NSFontAttributeName, NSForegroundColorAttributeName, NSString
+        NSColor.whiteColor().set()
+        NSBezierPath.fillRect_(self.bounds())
+
+        def linea(a, b, ancho, color, punteada=False):
+            c = NSBezierPath.bezierPath()
+            c.setLineWidth_(ancho)
+            if punteada:
+                c.setLineDash_count_phase_([1.0, 3.0], 2, 0.0)
+            c.moveToPoint_(a)
+            c.lineToPoint_(b)
+            color.setStroke()
+            c.stroke()
+        gris, negro = NSColor.colorWithCalibratedWhite_alpha_(0.33, 1.0), NSColor.blackColor()
+        for k in range(-10, 11):
+            x, y = _px_plano(k) + 0.5, _py_plano(k) + 0.5
+            linea((x, _py_plano(10)), (x, _py_plano(-10)), 1.0, gris, True)
+            linea((_px_plano(-10), y), (_px_plano(10), y), 1.0, gris, True)
+        linea((_px_plano(-10), _py_plano(0) + 0.5), (_px_plano(10), _py_plano(0) + 0.5), 2.0, negro)
+        linea((_px_plano(0) + 0.5, _py_plano(10)), (_px_plano(0) + 0.5, _py_plano(-10)), 2.0, negro)
+        atr = {NSFontAttributeName: NSFont.systemFontOfSize_(13), NSForegroundColorAttributeName: negro}
+        for k in range(-10, 11):
+            x, y = _px_plano(k) + 0.5, _py_plano(k) + 0.5
+            linea((x, _py_plano(0) - 5), (x, _py_plano(0) + 5), 1.0, negro)
+            linea((_px_plano(0) - 5, y), (_px_plano(0) + 5, y), 1.0, negro)
+            if k and k % 2 == 0:
+                t = NSString.stringWithString_(str(k))
+                tam = t.sizeWithAttributes_(atr)
+                t.drawAtPoint_withAttributes_((_px_plano(k) - tam.width / 2, _py_plano(0) + 8), atr)
+                t.drawAtPoint_withAttributes_((_px_plano(0) - 9 - tam.width, _py_plano(k) - tam.height / 2), atr)
+        azul = NSColor.colorWithCalibratedRed_green_blue_alpha_(0.08, 0.4, 0.75, 1.0)
+        for gx, gy in self.puntos:
+            azul.setFill()
+            NSBezierPath.bezierPathWithOvalInRect_(NSMakeRect(_px_plano(gx) - 4, _py_plano(gy) - 4, 8, 8)).fill()
+        if len(self.puntos) >= 2:
+            (ax, ay), (bx, by) = self.puntos[:2]
+            linea((_px_plano(ax), _py_plano(ay)), (_px_plano(bx), _py_plano(by)), 2.0, azul)
+
+    def mouseDown_(self, evento):
+        p = self.convertPoint_fromView_(evento.locationInWindow(), None)
+        self.puntos.append(((p.x - 150) / 26 - 10, 10 - (p.y - 70) / 26))
+        self.setNeedsDisplay_(True)
+
+
 def _texto_img(texto, w, h, tam=24, fondo=(255, 255, 255), color=(30, 30, 30), borde=None):
     from PIL import ImageDraw
     from .. import muestras
@@ -678,9 +747,42 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
             def listo():
                 return str(campo.stringValue() or "").strip() == "Roma"
             esperar("juego", w, listo, lambda: {"ok": listo(), "texto": str(campo.stringValue() or ""), "diag": diag},
-                    e2e_ax)
+                    e2e_grafica)
         except Exception as e:
             pruebas["juego"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+            root.after(100, e2e_grafica)
+
+    # -------- E2E: grafica tipo MyLab: "Grafica la recta que corta al eje y en 2 y al eje x en -1".
+    # NO LIMIT lee los ejes y da clic justo en (0, 2) y (-1, 0).
+    def e2e_grafica():
+        try:
+            W_, H_ = 820, 660
+            w = _ventana_prueba(30, 60, W_, H_, "Prueba grafica")
+            vista = _VistaPlano.alloc().initWithFrame_(NSMakeRect(0, 0, W_, H_))
+            w.setContentView_(vista)
+            etiqueta(vista, "10. Grafica la recta que corta al eje y en 2 y al eje x en -1.", 30, 14, w=700, h=30, tam=17)
+            w.makeKeyAndOrderFront_(None)
+            w.orderFrontRegardless()
+            extra["ventanas"].append(w)
+
+            def contestar(t):
+                return {"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [
+                    {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+            IA.elegir = fases(contestar, "graficar", None, 760, 600)
+            ox, oy = _origen_contenido(w)
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 28), daemon=True).start()
+
+            def listo():
+                return len(vista.puntos) >= 2
+
+            def detalle():
+                ps = list(vista.puntos)
+                bien = len(ps) == 2 and all(abs(a - b) <= 0.3 for p, q in zip(ps, ((0, 2), (-1, 0)))
+                                            for a, b in zip(p, q))
+                return {"ok": bien, "puntos": [(round(a, 2), round(b, 2)) for a, b in ps]}
+            esperar("grafica", w, listo, detalle, e2e_ax)
+        except Exception as e:
+            pruebas["grafica"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, e2e_ax)
 
     # -------- E2E 8: accesibilidad: NO LIMIT ve los controles reales (campo, casilla, circulo), sabe que hay en
@@ -774,7 +876,7 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
         if estado["fin"]:
             return
         estado["fin"] = True
-        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 8,
+        RESULTADOS["e2e"] = {"ok": all(p.get("ok") for p in pruebas.values()) and len(pruebas) == 9,
                              "detalle": pruebas}
         RESULTADOS["cpu"] = {"ok": cpu.get("escondida_y_activa", 99) < 5, "detalle": cpu}
         RESULTADOS["permisos"] = {"ok": not extra.get("permisos_faltan"),
@@ -788,5 +890,5 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
         root.after(100, v.salir)
 
     root.after(1200, paso_ventana)
-    root.after(310000, terminar)
+    root.after(350000, terminar)
     root.mainloop()

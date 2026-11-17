@@ -33,12 +33,12 @@ SISTEMA_UBICAR = """Eres la vista de NO LIMIT, un asistente que contesta la preg
 
 Recibes una captura reducida de la pantalla. Un circulo rojo marca el puntero del mouse. Arriba y a la izquierda hay reglas con coordenadas en pixeles de la captura: (0,0) es la esquina de arriba a la izquierda de la captura, sin contar las reglas.
 
-Tu trabajo: encontrar UNA pregunta, la que esta bajo el puntero o la mas cercana a el, y decir donde esta y de que tipo es. NO la contestes.
+Tu trabajo: encontrar UNA pregunta, la que esta bajo el puntero o la mas cercana a el, y decir donde esta y de que tipo es. NO la contestes. Una INSTRUCCION tambien cuenta como pregunta ("Grafica la recta...", "Use the graphing tool to graph...", "Completa la tabla", "Ordena...").
 
 Responde SOLO un JSON en una linea:
 {"hay_pregunta": true, "caja": [x0, y0, x1, y1], "tipo": "<tipo>", "controles": "<como se contesta en pantalla>"}
 
-- "caja" encierra TODA esa pregunta: el enunciado, sus imagenes, graficas o tablas, y TODOS sus controles para contestar (opciones, casillas, campos, menus, elementos para arrastrar y los lugares donde se sueltan, el plano para graficar). El lugar para escribir puede ser de cualquier color o forma (caja delgada azul o gris, angosta, redondeada, con fondo oscuro, solo una raya abajo, la caja de un juego de preguntas) y puede estar abajo o a un lado: tambien va dentro. Si dudas, hazla un poco mas grande, pero no metas otras preguntas.
+- "caja" encierra TODA esa pregunta: el enunciado, sus imagenes, graficas o tablas, y TODOS sus controles para contestar (opciones, casillas, campos, menus, elementos para arrastrar y los lugares donde se sueltan, el plano para graficar CON los numeros de sus ejes y su barra de herramientas: lapiz, recta, punto, parabola, etc.). Si el puntero esta sobre una parte (un cuadro, un inciso), encierra solo esa parte; si esta sobre la instruccion general, encierra todo lo que pide. El lugar para escribir puede ser de cualquier color o forma (caja delgada azul o gris, angosta, redondeada, con fondo oscuro, solo una raya abajo, la caja de un juego de preguntas) y puede estar abajo o a un lado: tambien va dentro. Si dudas, hazla un poco mas grande, pero no metas otras preguntas.
 - "tipo" es uno de: opcion_unica, opcion_multiple, verdadero_falso, completar, desplegable, relacionar, abierta, numerica, matematica, zona_clic, graficar, estadistica, pasos, ordenar, arrastrar, matriz, simulacion, audio_video, otra.
   (opcion_multiple = varias casillas; desplegable = menus para elegir, tambien dentro de un parrafo; matematica = editor de ecuaciones; zona_clic = dar clic en una parte de una imagen; matriz = tabla de filas y columnas con circulos o casillas.)
 - Si no hay ninguna pregunta cerca del puntero: {"hay_pregunta": false}"""
@@ -65,6 +65,7 @@ Trabaja en este orden:
 
 Responde SOLO un JSON en una linea, sin texto antes ni despues:
 {"tipo":"...","pasos":"...","respuesta":"...","donde":"...","acciones":[...],"seguro":"alto"}
+(en preguntas de calcular, agrega "calculo": "operacion" o una lista de operaciones)
 
 Donde contestar:
 - Si hay controles A#, usalos primero: su posicion y su estado son los reales. Para marcar una opcion usa el A# de su circulo o casilla (o el id azul de su texto); para escribir, el A# del campo; para un menu, el A# del menu.
@@ -93,10 +94,16 @@ Por tipo:
 - DESPLEGABLE (menus, tambien dentro de un parrafo): un "elegir" por cada menu, en orden, con el texto exacto de la opcion. "en" es el menu (su id de texto, su campo o el centro del menu).
 - RELACIONAR COLUMNAS: si cada concepto tiene su menu, un "elegir" por concepto. Si se une arrastrando, "arrastrar" de cada elemento a su pareja. Si se escriben letras o numeros, "escribir".
 - ABIERTA, RESPUESTA CORTA O ENSAYO: "escribir" en el campo. Corto y directo si pide un dato, nombre, fecha o numero; si pide explicar, describir, comparar o argumentar, un parrafo de 3 a 6 oraciones naturales en el idioma de la pregunta. Texto plano: sin markdown, sin saltos de linea, sin LaTeX.
-- NUMERICA (aunque los numeros cambien al azar): usa los numeros que se ven en ESTA imagen, comprueba, y escribe solo el valor (con unidad solo si no aparece ya junto al campo). Redondea como lo pida la pregunta; decimales con punto.
+- NUMERICA (aunque los numeros cambien al azar): usa los numeros que se ven en ESTA imagen, comprueba, y escribe solo el valor (con unidad solo si no aparece ya junto al campo). Redondea como lo pida la pregunta; decimales con punto. Ademas pon en "calculo" la operacion completa que da ese valor, solo con numeros (por ejemplo "(12.5*4)/3" o "sqrt(3^2+4^2)"; se vale: + - * / ^ ( ), sqrt, ln, log, exp, abs, pi, e, sin/cos/tan en radianes y sind/cosd/tand en grados). NO LIMIT la calcula exacta y, si tu cuenta no cuadra, escribe la correcta. Si hay varios campos con numeros, "calculo" es una lista en el mismo orden que sus "escribir".
 - MATEMATICA EXACTA (editor de ecuaciones con fracciones, exponentes o raices): escribe con / para fracciones, ^ para exponentes y sqrt para raices, y pon {derecha} para salir de un exponente, del denominador o de una raiz. Ejemplo: x^2{derecha}+3/4{derecha}. En campos normales escribe 3/4, x^2 o √3 tal cual.
 - ZONA DE CLIC (clic sobre una parte de una imagen, mapa o diagrama): un clic en el centro exacto de esa parte; usa las reglas para dar coordenadas precisas.
-- GRAFICAR en un plano cartesiano: da un clic por punto con sus coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT calcula donde cae en la pantalla con los numeros de los ejes. Para TRAZAR una recta, segmento, rayo o parabola con el lapiz o la herramienta de dibujo (MyLab, Pearson, GeoGebra): clics separados en sus puntos, en orden (recta: dos puntos; parabola: el vertice y otro punto). Usa puntos con coordenadas enteras que caigan dentro del plano (por ejemplo donde cruza los ejes). NUNCA arrastres para trazar y NUNCA escribas en una grafica. "arrastrar" con "hasta":{"gx":..,"gy":..} es solo para mover un punto que YA esta dibujado. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
+- GRAFICAR (casi siempre es una INSTRUCCION: "Grafica...", "Traza...", "Use the graphing tool to graph...", "Plot the point..."): sigue la instruccion AL PIE DE LA LETRA.
+  1) Saca la ecuacion o los puntos exactos (pendiente, intersecciones con los ejes, vertice, centro y radio...) y comprueba que cumplen la ecuacion.
+  2) Si la grafica tiene barra de herramientas (recta, segmento, rayo, punto, parabola, circulo, valor absoluto, exponencial, desigualdad, linea continua o punteada...), PRIMERO da clic en la herramienta correcta (su A#, su id de texto o el centro de su icono con {"x","y"}). Si ya esta elegida (resaltada), no la toques.
+  3) Luego da clic en cada punto con coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT los pone exactos con los numeros de los ejes. En orden:
+     punto: el punto | recta: dos puntos de la recta | segmento: sus dos extremos | rayo: el extremo y otro punto hacia donde va | parabola: el vertice y otro punto | valor absoluto: el vertice y otro punto | circulo: el centro y un punto del circulo | recta vertical (x = a) u horizontal (y = b): dos puntos con la misma x o la misma y | exponencial, logaritmo o raiz: los puntos que pida la herramienta (y la asintota si la pide) | desigualdad: traza la frontera (punteada si es < o >, continua si es <= o >=; elige el tipo de linea si hay boton) y luego da clic en un punto del lado que se sombrea (uno que SI cumpla la desigualdad) | sistema: cada recta, una tras otra.
+  4) Usa puntos con coordenadas enteras que se vean DENTRO del plano (mira el "PLANO CARTESIANO detectado"). Si uno se sale, usa otro punto de la misma recta.
+  NUNCA arrastres para trazar y NUNCA escribas en una grafica. "arrastrar" con "hasta":{"gx":..,"gy":..} es solo para mover un punto o una figura que YA esta dibujada. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
 - PASOS GUIADOS: contesta solo los pasos que se ven ahorita.
 - GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la orilla de arriba de cada barra hasta su valor con "hasta":{"x": x de la barra, "gy": valor}, o da clic en cada punto con {"gx","gy"}.
 - ORDENAR: usa "ordenar" con el orden final.
@@ -116,6 +123,7 @@ Revisa si quedo contestada EXACTAMENTE como se queria:
 - campos: con el texto correcto y completo.
 - menus: mostrando la opcion correcta.
 - arrastrar u ordenar: cada elemento en su lugar.
+- graficas: la figura que pide la instruccion (recta, parabola, circulo...) YA trazada, pasando por los puntos correctos, con la linea continua o punteada que pide y el sombreado del lado correcto. Si solo quedaron puntos sueltos, falta elegir la herramienta correcta y volver a dar los clics (con {"gx","gy"}).
 
 Responde SOLO un JSON en una linea:
 {"ok": true}
@@ -499,6 +507,7 @@ class Plan:
         self.no_se_puede = ""
         self.seguro = "alto"
         self.datos = {}
+        self.correcciones = []          # (lo que iba a escribir la IA, lo bien calculado, la operacion)
 
 
 def _campo_en(x, y, campos, radio):
@@ -650,6 +659,90 @@ def _control_en(x, y, controles, margen=0):
     return mejor[1] if mejor else None
 
 
+def _num(v):
+    n = motor._numero(v)
+    if n is None:
+        return "?"
+    return str(int(n)) if float(n).is_integer() else str(round(float(n), 3))
+
+
+def plano_de(img, cajas, zoom=1.0, ocr=None):
+    """El plano cartesiano de la pregunta (si hay): primero por las rayitas de los ejes, si no por el OCR general."""
+    p = ejes(cajas)
+    try:
+        fino = motor.ejes_del_plano(img, zoom, ocr)
+    except Exception:
+        fino = {"x": None, "y": None, "rango": {}}
+    return {"x": fino["x"] or p["x"], "y": fino["y"] or p["y"], "rango": fino.get("rango") or {}}
+
+
+import ast as _ast  # noqa: E402
+import operator as _op  # noqa: E402
+
+_OPERACIONES = {_ast.Add: _op.add, _ast.Sub: _op.sub, _ast.Mult: _op.mul, _ast.Div: _op.truediv, _ast.Pow: _op.pow,
+                _ast.Mod: _op.mod, _ast.FloorDiv: _op.floordiv}
+_FUNCIONES = {"sqrt": math.sqrt, "raiz": math.sqrt, "abs": abs, "log": math.log10, "ln": math.log, "exp": math.exp,
+              "sin": math.sin, "cos": math.cos, "tan": math.tan, "asin": math.asin, "acos": math.acos, "atan": math.atan,
+              "sind": lambda g: math.sin(math.radians(g)), "cosd": lambda g: math.cos(math.radians(g)),
+              "tand": lambda g: math.tan(math.radians(g)), "asind": lambda v: math.degrees(math.asin(v)),
+              "acosd": lambda v: math.degrees(math.acos(v)), "atand": lambda v: math.degrees(math.atan(v)),
+              "floor": math.floor, "ceil": math.ceil, "round": round, "cbrt": lambda v: math.copysign(abs(v) ** (1 / 3), v)}
+_CONSTANTES = {"pi": math.pi, "e": math.e}
+
+
+def calcular(expr):
+    """Calculadora segura para la "calculo" de la IA (sin eval). Devuelve el numero o None."""
+    t = str(expr or "").strip().replace("^", "**").replace("×", "*").replace("·", "*").replace("÷", "/")
+    t = t.replace("√", "sqrt").replace("π", "pi").replace("−", "-")
+    if not t or len(t) > 300:
+        return None
+
+    def ev(n):
+        if isinstance(n, _ast.Expression):
+            return ev(n.body)
+        if isinstance(n, _ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool):
+            return float(n.value)
+        if isinstance(n, _ast.BinOp) and type(n.op) in _OPERACIONES:
+            a, b = ev(n.left), ev(n.right)
+            if isinstance(n.op, _ast.Pow) and (abs(b) > 64 or abs(a) > 1e12):
+                raise ValueError("potencia muy grande")
+            return _OPERACIONES[type(n.op)](a, b)
+        if isinstance(n, _ast.UnaryOp) and isinstance(n.op, (_ast.USub, _ast.UAdd)):
+            v = ev(n.operand)
+            return -v if isinstance(n.op, _ast.USub) else v
+        if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name) and n.func.id in _FUNCIONES and not n.keywords:
+            return float(_FUNCIONES[n.func.id](*[ev(x) for x in n.args]))
+        if isinstance(n, _ast.Name) and n.id in _CONSTANTES:
+            return _CONSTANTES[n.id]
+        raise ValueError("no permitido")
+    try:
+        v = ev(_ast.parse(t, mode="eval"))
+    except Exception:
+        return None
+    if isinstance(v, complex) or v != v or v in (float("inf"), float("-inf")):
+        return None
+    return v
+
+
+def _corregir_numero(texto, expr):
+    """Si 'texto' es un numero y la operacion da otra cosa (no solo por redondeo), el numero bien calculado con
+    los mismos decimales. Si no, None."""
+    m = re.fullmatch(r"\s*(-?\d+)(?:\.(\d+))?\s*", str(texto or ""))
+    if not m:
+        return None
+    v = calcular(expr)
+    if v is None:
+        return None
+    decimales = len(m.group(2) or "")
+    ia = float(m.group(0))
+    if abs(v - ia) <= max(0.6 * 10 ** -decimales, 0.005 * abs(v)):
+        return None
+    nuevo = f"{v:.{decimales}f}"
+    if nuevo in ("-0", "-0.0", "-0.00"):
+        nuevo = nuevo[1:]
+    return nuevo
+
+
 def _usa_plano(datos):
     """True si alguna accion de la IA usa coordenadas del plano (gx / gy)."""
     def tiene(o):
@@ -753,7 +846,29 @@ def _corregir_id(i, texto, cajas):
     return i
 
 
-def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=None):
+def _comprobar_cuentas(acciones, datos, plan):
+    """La IA a veces se equivoca en la cuenta final: con su "calculo" se saca el valor exacto y se corrige."""
+    calc = datos.get("calculo")
+    if not calc:
+        return
+    numericas = [a for a in acciones if str(a.get("hacer") or "").strip().lower() in ("escribir", "teclear", "write", "type")
+                 and re.fullmatch(r"\s*-?\d+(?:\.\d+)?\s*", str(a.get("texto") or ""))]
+    if isinstance(calc, list):
+        pares = list(zip(numericas, calc))
+    elif len(numericas) == 1:
+        pares = [(numericas[0], calc)]
+    else:
+        return
+    for a, expr in pares:
+        nuevo = _corregir_numero(a.get("texto"), expr)
+        if nuevo is not None:
+            plan.correcciones.append((str(a.get("texto")).strip(), nuevo, str(expr)[:120]))
+            if plan.respuesta and str(a.get("texto")).strip() in plan.respuesta:
+                plan.respuesta = plan.respuesta.replace(str(a.get("texto")).strip(), nuevo, 1)
+            a["texto"] = nuevo
+
+
+def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=None, plano=None):
     """Revisa cada accion de la IA contra el candado. Puntos en pixeles de la region (la imagen recortada)."""
     plan = Plan()
     plan.datos = datos
@@ -764,7 +879,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
     W, H = region_img.size
     vistos = set()
     ax_usados = set()
-    plano = ejes(cajas)
+    plano = plano if plano is not None else ejes(cajas)
     if (not plano["x"] or not plano["y"]) and _usa_plano(datos):
         # graficas tipo MyLab: los numeros de los ejes se leen rayita por rayita (el OCR general se confunde
         # con la cuadricula punteada). Sin numeros no se adivina donde va un punto.
@@ -780,7 +895,9 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
     def rechazar(a, motivo):
         plan.rechazadas.append((a, motivo))
 
-    for a in _a_lista_de_acciones(datos)[:MAX_ACCIONES]:
+    acciones = _a_lista_de_acciones(datos)[:MAX_ACCIONES]
+    _comprobar_cuentas(acciones, datos, plan)
+    for a in acciones:
         hacer = str(a.get("hacer") or a.get("accion") or "").strip().lower()
         if hacer in ("marcar", "seleccionar", "click"):
             hacer = "clic"
@@ -819,9 +936,13 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
             if clave in vistos:
                 continue                 # el mismo clic dos veces desmarcaria la casilla
             vistos.add(clave)
-            plan.pasos.append({"hacer": "clic", "p": (x, y), "desc": texto_caja or a.get("texto") or "punto",
-                               "caja": cajas[i]["caja"] if i is not None else None,
-                               "control": controles[ic] if ic is not None else None})
+            del_plano = isinstance(obj, dict) and ("gx" in obj or "gy" in obj)
+            plan.pasos.append({"hacer": "clic", "p": (x, y),
+                               "desc": (f"({_num(obj.get('gx'))}, {_num(obj.get('gy'))})" if del_plano else
+                                        texto_caja or a.get("texto") or "punto"),
+                               "caja": cajas[i]["caja"] if i is not None and not del_plano else None,
+                               "control": controles[ic] if ic is not None else None,
+                               "plano": del_plano})
 
         elif hacer == "escribir":
             texto = motor.limpiar_respuesta(str(a.get("texto") or ""))
@@ -1043,7 +1164,8 @@ class Ejecutor:
         self.a.clic(X, Y)
         time.sleep(self.pausa)
         despues = self.foto()
-        if antes is not None and despues is not None and not hubo_cambio(antes, despues):
+        # (en una grafica no se repite: dos clics en el mismo lugar arruinan la recta)
+        if antes is not None and despues is not None and not paso.get("plano") and not hubo_cambio(antes, despues):
             # no cambio NADA en toda la pregunta: el clic no se registro (la pagina iba lenta); otra vez
             self._revisar_cancelar()
             self.a.clic(X, Y)

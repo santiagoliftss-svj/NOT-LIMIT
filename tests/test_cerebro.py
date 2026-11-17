@@ -856,3 +856,149 @@ def prueba_campo_vacio_no_selecciona_todo():
 
 def prueba_las_instrucciones_no_arrastran_para_trazar():
     assert "NUNCA arrastres para trazar" in cerebro.SISTEMA_CONTESTAR
+
+
+# ---------------------------------------------------------------- 2.2: graficas de muchos estilos
+
+def _plano_estilo(zoom=1.0, xr=(-10, 10), yr=(-10, 10), cada=1, etiqueta=2, unidad=28, rayitas="cruz", grilla="puntos",
+          origen_borde=False, tam_letra=15, halo=False, fmt=None, cruz=None):
+    z = lambda v: v * zoom
+    nx, ny = round((xr[1] - xr[0]) / cada), round((yr[1] - yr[0]) / cada)
+    u = z(unidad)
+    x0, y0 = z(60), z(30)
+    W, H = int(x0 + nx * u + z(60)), int(y0 + ny * u + z(60))
+    img = Image.new("RGB", (W, H), "white"); d = ImageDraw.Draw(img)
+    f = __import__('PIL.ImageFont', fromlist=['x']).load_default(size=int(z(tam_letra)))
+    px = lambda g: x0 + (g - xr[0]) / cada * u
+    py = lambda g: y0 + (yr[1] - g) / cada * u
+    ax_y = 0 if xr[0] <= 0 <= xr[1] and not origen_borde else xr[0]     # columna del eje y (valor de x)
+    ax_x = 0 if yr[0] <= 0 <= yr[1] and not origen_borde else yr[0]
+    for k in range(nx + 1):
+        g = xr[0] + k * cada; X = px(g)
+        if grilla == "puntos":
+            for t in range(int(y0), int(py(yr[0])), int(z(4))): d.point((X, t), fill=(60, 60, 60))
+        elif grilla == "lineas":
+            d.line([X, y0, X, py(yr[0])], fill=(225, 225, 225) if round(g / cada) % 2 else (190, 190, 190), width=max(1, int(z(1))))
+    for k in range(ny + 1):
+        g = yr[0] + k * cada; Y = py(g)
+        if grilla == "puntos":
+            for t in range(int(x0), int(px(xr[1])), int(z(4))): d.point((t, Y), fill=(60, 60, 60))
+        elif grilla == "lineas":
+            d.line([x0, Y, px(xr[1]), Y], fill=(225, 225, 225) if round(g / cada) % 2 else (190, 190, 190), width=max(1, int(z(1))))
+    w = max(1, int(z(1.5)))
+    d.line([px(xr[0]) - z(8), py(ax_x), px(xr[1]) + z(8), py(ax_x)], fill=(0, 0, 0), width=w)
+    d.line([px(ax_y), py(yr[1]) - z(8), px(ax_y), py(yr[0]) + z(8)], fill=(0, 0, 0), width=w)
+    fmt = fmt or (lambda v: str(int(v)) if float(v).is_integer() else str(v))
+    for k in range(nx + 1):
+        g = xr[0] + k * cada
+        if rayitas == "cruz": d.line([px(g), py(ax_x) - z(5), px(g), py(ax_x) + z(5)], fill=(0, 0, 0), width=max(1, int(z(1))))
+        elif rayitas == "abajo": d.line([px(g), py(ax_x), px(g), py(ax_x) + z(6)], fill=(0, 0, 0), width=max(1, int(z(1))))
+        if abs(round(g / etiqueta) * etiqueta - g) < 1e-9 and g != ax_y:
+            t = fmt(g); bw = d.textlength(t, font=f)
+            if halo: d.rectangle([px(g) - bw / 2 - z(2), py(ax_x) + z(9), px(g) + bw / 2 + z(2), py(ax_x) + z(9) + z(tam_letra) + z(2)], fill="white")
+            d.text((px(g) - bw / 2, py(ax_x) + z(10)), t, fill=(0, 0, 0), font=f)
+    for k in range(ny + 1):
+        g = yr[0] + k * cada
+        if rayitas == "cruz": d.line([px(ax_y) - z(5), py(g), px(ax_y) + z(5), py(g)], fill=(0, 0, 0), width=max(1, int(z(1))))
+        elif rayitas == "abajo": d.line([px(ax_y) - z(6), py(g), px(ax_y), py(g)], fill=(0, 0, 0), width=max(1, int(z(1))))
+        if abs(round(g / etiqueta) * etiqueta - g) < 1e-9 and g != ax_x:
+            t = fmt(g); bw = d.textlength(t, font=f)
+            if halo: d.rectangle([px(ax_y) - bw - z(12), py(g) - z(tam_letra) / 2 - z(1), px(ax_y) - z(8), py(g) + z(tam_letra) / 2 + z(2)], fill="white")
+            d.text((px(ax_y) - bw - z(10), py(g) - z(tam_letra) * 0.55), t, fill=(0, 0, 0), font=f)
+    if cruz:
+        d.line([x0, py(cruz[1]), px(xr[1]), py(cruz[1])], fill=(0, 0, 0), width=int(z(2)))
+        d.line([px(cruz[0]), y0, px(cruz[0]), py(yr[0])], fill=(0, 0, 0), width=int(z(2)))
+    return img, px, py
+
+
+ESTILOS_GRAFICA = {
+    "mylab": dict(cruz=(0, 5)),
+    "cada_rayita_-5a5": dict(xr=(-5, 5), yr=(-5, 5), etiqueta=1, unidad=50, grilla="lineas"),
+    "de_5_en_5": dict(xr=(-20, 20), yr=(-20, 20), cada=5, etiqueta=5, unidad=30, tam_letra=16),
+    "desmos": dict(rayitas="ninguna", grilla="lineas", halo=True, etiqueta=2, unidad=30),
+    "primer_cuadrante": dict(xr=(0, 10), yr=(0, 10), etiqueta=1, unidad=40, rayitas="abajo", grilla="lineas", origen_borde=True),
+    "y_de_10_en_10": dict(xr=(0, 10), yr=(0, 100), cada=1, etiqueta=1, unidad=36, rayitas="abajo", grilla="lineas", origen_borde=True),
+    "decimales": dict(xr=(-2, 2), yr=(-2, 2), cada=0.5, etiqueta=0.5, unidad=60, grilla="lineas"),
+}
+
+
+def prueba_ejes_de_graficas_de_muchos_estilos():
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        print("    (sin OCR en esta maquina: se salta)")
+        return
+    malas = []
+    for nombre, op in ESTILOS_GRAFICA.items():
+        for zoom in (1.0, 2.0):
+            img, px, py = _plano_estilo(zoom, **op)
+            pl = motor.ejes_del_plano(img, zoom, ocr)
+            if not (pl["x"] and pl["y"]):
+                malas.append((nombre, zoom, "no leyo los ejes"))
+                continue
+            xr, yr = op.get("xr", (-10, 10)), op.get("yr", (-10, 10))
+            for g in ((xr[0], yr[0]), (xr[1], yr[1]), ((xr[0] + xr[1]) / 2, (yr[0] + yr[1]) / 2)):
+                X, Y = pl["x"][0] * g[0] + pl["x"][1], pl["y"][0] * g[1] + pl["y"][1]
+                if max(abs(X - px(g[0])), abs(Y - py(g[1]))) > 2 * zoom:
+                    malas.append((nombre, zoom, g, (round(X), round(Y)), (round(px(g[0])), round(py(g[1])))))
+    assert not malas, malas
+
+
+def prueba_sin_grafica_no_inventa_ejes():
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        return
+    for zoom in (1.0, 2.0):
+        pl = motor.ejes_del_plano(_escena_campos(zoom), zoom, ocr)
+        assert not pl["x"] and not pl["y"], pl
+
+
+def prueba_grafica_elige_herramienta_y_no_repite_clics_del_plano():
+    img = Image.new("RGB", (700, 640), "white")
+    plano = {"x": (28.0, 320.0), "y": (-28.0, 300.0), "rango": {"x": (-10, 10, 1), "y": (-10, 10, 1)}}
+    cajas = [caja(600, 20, 660, 44, "Recta")]
+    datos = {"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [
+        {"hacer": "clic", "en": 0, "texto": "Recta"},
+        {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+    plan = cerebro.planear(datos, cajas, [], 1.0, img, 1.0, plano=plano)
+    assert [p["p"] for p in plan.pasos] == [(630, 32), (320, 244), (292, 300)], plan.pasos
+    assert [p.get("plano") for p in plan.pasos] == [False, True, True]
+    p = Pantalla(w=700, h=640, perder=5)          # (la pagina no cambia al dar clic)
+    ej = cerebro.Ejecutor(p, 0, 0, (0, 0, 700, 640), foto=lambda: p.foto(0, 0, 700, 640), pausa=0)
+    ej.correr(plan.pasos)
+    clics = p.clics()
+    assert clics.count(("clic", 320, 244)) == 1 and clics.count(("clic", 292, 300)) == 1, clics   # sin repetir
+    assert "PLANO CARTESIANO" in motor.describir_plano(plano, 1.0)
+
+
+# ---------------------------------------------------------------- 2.2: la calculadora corrige cuentas mal hechas
+
+def prueba_calculadora_segura():
+    assert cerebro.calcular("6*8") == 48
+    assert abs(cerebro.calcular("sqrt(3^2+4^2)") - 5) < 1e-9
+    assert abs(cerebro.calcular("sind(30)") - 0.5) < 1e-9
+    assert abs(cerebro.calcular("2*pi*3") - 18.849555921538759) < 1e-9
+    for malo in ("__import__('os').system('x')", "open('a')", "9**9**9", "a+1", "", "1/0"):
+        assert cerebro.calcular(malo) is None, malo
+
+
+def prueba_si_la_cuenta_no_cuadra_escribe_la_correcta():
+    img = Image.new("RGB", (900, 650), "white")
+    datos = {"tipo": "numerica", "respuesta": "47", "calculo": "6*8",
+             "acciones": [{"hacer": "escribir", "en": "C0", "texto": "47"}]}
+    plan = cerebro.planear(datos, CAJAS, [campo(150, 300, 650, 344)], 1.0, img)
+    assert plan.pasos[0]["texto"] == "48" and plan.respuesta == "48", (plan.pasos, plan.correcciones)
+    # con decimales: respeta los decimales que uso la IA
+    datos = {"tipo": "numerica", "calculo": "100/7", "acciones": [{"hacer": "escribir", "en": "C0", "texto": "14.82"}]}
+    plan = cerebro.planear(datos, CAJAS, [campo(150, 300, 650, 344)], 1.0, img)
+    assert plan.pasos[0]["texto"] == "14.29", plan.pasos
+    # si solo es redondeo (la pregunta pedia redondear antes), no se toca
+    datos = {"tipo": "numerica", "calculo": "100/7", "acciones": [{"hacer": "escribir", "en": "C0", "texto": "14.3"}]}
+    plan = cerebro.planear(datos, CAJAS, [campo(150, 300, 650, 344)], 1.0, img)
+    assert plan.pasos[0]["texto"] == "14.3" and not plan.correcciones, plan.pasos
+    # varios campos: una operacion por campo, en orden
+    datos = {"tipo": "numerica", "calculo": ["2+2", "3*3"], "acciones": [
+        {"hacer": "escribir", "en": "C0", "texto": "4"}, {"hacer": "escribir", "en": "C1", "texto": "6"}]}
+    plan = cerebro.planear(datos, CAJAS, [campo(150, 300, 650, 344), campo(150, 400, 650, 444)], 1.0, img)
+    assert [p["texto"] for p in plan.pasos] == ["4", "9"], plan.pasos

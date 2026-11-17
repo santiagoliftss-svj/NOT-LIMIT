@@ -4,6 +4,14 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.2 (gráficas de todo tipo)**
+
+- Sigue las instrucciones de las gráficas al pie de la letra: rectas, segmentos, rayos, puntos, parábolas, círculos, valor absoluto, rectas verticales y horizontales, desigualdades (línea continua o punteada y el lado que se sombrea) y sistemas.
+- Primero elige la herramienta correcta de la gráfica (recta, punto, parábola...) y luego da clic en los puntos exactos.
+- Lee los ejes de casi cualquier gráfica: con rayitas o solo cuadrícula, números de 1 en 1, de 2 en 2, de 5 en 5, con decimales, solo el primer cuadrante o de 0 a 100. Le dice a la IA qué parte del plano se ve para que use puntos que sí caben.
+- En una gráfica nunca da dos clics en el mismo punto (eso arruinaba la recta).
+- Calculadora: en problemas con números, la IA da la operación y NO LIMIT la calcula exacta. Si la cuenta de la IA no cuadra, escribe el resultado correcto.
+
 **Nuevo en 2.1.1**
 
 - Gráficas tipo MyLab / Pearson: lee los números de los ejes rayita por rayita (la cuadrícula punteada ya no la confunde) y traza la recta dando clic en sus puntos exactos.

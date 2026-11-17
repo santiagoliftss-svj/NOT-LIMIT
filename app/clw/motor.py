@@ -437,53 +437,23 @@ def subrayados(img, zoom=1.0):
 
 
 # ================================================================ planos cartesianos (MyLab, GeoGebra, Desmos...)
+# Todo se busca como lineas horizontales en un "buffer" de 1 byte por pixel; para el eje y se usa la imagen
+# transpuesta (asi el mismo codigo sirve para los dos ejes).
 
-def _rayitas(oscuro, W, H, linea, horizontal, zoom):
-    """Posiciones de las rayitas (marcas) que cruzan un eje: trazos cortos y continuos hacia afuera de la linea.
-    linea = (desde, hasta, a, b): la linea ocupa filas (o columnas) a..b entre 'desde' y 'hasta'."""
-    desde, hasta, a, b = linea
-    largo = max(3, int(3 * zoom))
-    marcas = []
-    for c in range(desde, hasta):
-        def osc(k):
-            return (oscuro[k * W + c] if horizontal else oscuro[c * W + k]) if 0 <= k < (H if horizontal else W) else 0
-        arriba = all(osc(a - 1 - t) for t in range(largo))
-        abajo = all(osc(b + 1 + t) for t in range(largo))
-        if arriba or abajo:
-            marcas.append(c)
-    centros, grupo = [], []
-    for c in marcas + [None]:
-        if c is not None and grupo and c - grupo[-1] <= 1:
-            grupo.append(c)
-            continue
-        if grupo and len(grupo) <= max(3, int(3 * zoom)):
-            centros.append(sum(grupo) / len(grupo))
-        grupo = [c] if c is not None else []
-    return centros
+_REDONDOS = (0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000)
 
 
-def _lineas_largas(oscuro, W, H, horizontal, zoom):
-    """Lineas oscuras largas (posibles ejes): [(desde, hasta, a, b)]."""
-    largo = int(0.35 * (W if horizontal else H))
-    n = H if horizontal else W
-    m = W if horizontal else H
+def _lineas_largas(buf, W, H, zoom):
+    """Lineas oscuras largas (posibles ejes): [(desde, hasta, fila0, fila1)]."""
+    patron = re.compile(rb"\x01{%d,}" % max(20, int(0.35 * W)))
     filas = []
-    for k in range(n):
-        if horizontal:
-            fila = oscuro[k * W:(k + 1) * W]
-        else:
-            fila = bytes(oscuro[j * W + k] for j in range(H))
-        mejor, ini = (0, 0, 0), None
-        for j in range(m + 1):
-            if j < m and fila[j]:
-                if ini is None:
-                    ini = j
-            elif ini is not None:
-                if j - ini > mejor[0]:
-                    mejor = (j - ini, ini, j)
-                ini = None
-        if mejor[0] >= largo:
-            filas.append((k, mejor[1], mejor[2]))
+    for k in range(H):
+        mejor = None
+        for m in patron.finditer(buf, k * W, (k + 1) * W):
+            if mejor is None or m.end() - m.start() > mejor[1] - mejor[0]:
+                mejor = (m.start() - k * W, m.end() - k * W)
+        if mejor:
+            filas.append((k, mejor[0], mejor[1]))
     lineas = []
     for k, d, h in filas:
         if lineas and k - lineas[-1][3] <= 1 and abs(d - lineas[-1][0]) < 12 * zoom:
@@ -494,6 +464,43 @@ def _lineas_largas(oscuro, W, H, horizontal, zoom):
     return [l for l in lineas if l[3] - l[2] <= max(4, int(4 * zoom))]
 
 
+def _agrupar(cols, zoom):
+    centros, grupo = [], []
+    for c in list(cols) + [None]:
+        if c is not None and grupo and c - grupo[-1] <= 1:
+            grupo.append(c)
+            continue
+        if grupo and len(grupo) <= max(3, int(3 * zoom)):
+            centros.append(sum(grupo) / len(grupo))
+        grupo = [c] if c is not None else []
+    return centros
+
+
+def _rayitas(buf, W, H, linea, zoom):
+    """Rayitas (marcas) que cruzan el eje: trazos cortos y continuos hacia afuera de la linea."""
+    desde, hasta, a, b = linea
+    largo = max(3, int(3 * zoom))
+    cols = []
+    for c in range(desde, hasta):
+        arriba = a - largo >= 0 and all(buf[(a - 1 - t) * W + c] for t in range(largo))
+        abajo = b + largo < H and all(buf[(b + 1 + t) * W + c] for t in range(largo))
+        if arriba or abajo:
+            cols.append(c)
+    return _agrupar(cols, zoom)
+
+
+def _cuadricula(gbuf, W, H, linea, zoom):
+    """Si el eje no tiene rayitas (como en Desmos): donde lo cruzan las lineas de la cuadricula."""
+    desde, hasta, a, b = linea
+    alto = int(40 * zoom)
+    filas = list(range(max(0, a - alto), max(0, a - 2))) + list(range(min(H, b + 3), min(H, b + alto)))
+    if len(filas) < 10:
+        return []
+    minimo = 0.7 * len(filas)
+    cols = [c for c in range(desde, hasta) if sum(1 for y in filas if gbuf[y * W + c] < 236) >= minimo]
+    return _agrupar(cols, zoom)
+
+
 def _limpiar_numeros(img, zoom):
     """Sin los puntitos de la cuadricula ni lineas largas, y mas grande (asi el OCR lee bien los numeros)."""
     gris = ImageOps.grayscale(img)
@@ -502,7 +509,8 @@ def _limpiar_numeros(img, zoom):
     negro = [[px[x, y] < 140 for x in range(W)] for y in range(H)]
     visto = [[False] * W for _ in range(H)]
     chico = max(2, int(2.5 * zoom))
-    borrar = []
+    delgado = max(3, int(4 * zoom))
+    comps = []
     for y in range(H):
         for x in range(W):
             if not negro[y][x] or visto[y][x]:
@@ -517,36 +525,104 @@ def _limpiar_numeros(img, zoom):
                         visto[ny][nx] = True
                         pila.append((nx, ny))
             xs, ys = [c[0] for c in comp], [c[1] for c in comp]
-            w, h = max(xs) - min(xs), max(ys) - min(ys)
-            if (w < chico and h < chico) or w > 46 * zoom or h > 30 * zoom:
-                borrar.extend(comp)                      # puntito de la cuadricula, o una linea larga
+            comps.append((comp, min(xs), min(ys), max(xs), max(ys)))
+    letras = [c for c in comps if c[4] - c[2] >= 6 * zoom and c[3] - c[1] <= 30 * zoom]
+
+    def es_punto_decimal(c):
+        # un punto pegado abajo entre dos numeros (1.5) NO es de la cuadricula
+        _, x0, y0, x1, y1 = c
+        izq = any(0 <= x0 - l[3] <= 4 * zoom and abs(l[4] - y1) <= 2.5 * zoom for l in letras)
+        der = any(0 <= l[1] - x1 <= 4 * zoom and abs(l[4] - y1) <= 2.5 * zoom for l in letras)
+        return izq and der
+
+    borrar = []
+    for c in comps:
+        comp, x0, y0, x1, y1 = c
+        w, h = x1 - x0, y1 - y0
+        if (w < chico and h < chico and not es_punto_decimal(c)) or (w > 46 * zoom and h <= delgado) \
+                or (h > 30 * zoom and w <= delgado):
+            borrar.extend(comp)                          # puntito de la cuadricula, o una linea larga
+    borrados = set(borrar)
     for x, y in borrar:
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 if 0 <= x + dx < W and 0 <= y + dy < H:
                     px[x + dx, y + dy] = 255
+    # las lineas claras de la cuadricula (Desmos) tambien estorban: todo lo claro se vuelve blanco
+    gris = gris.point(lambda v: 255 if v > 200 else v)
+    quedan = [c[1:] for c in comps if c[0][0] not in borrados]
+    return gris, quedan
+
+
+def _agrandar(gris, zoom):
     f = 3.0 / zoom
-    out = gris.resize((max(1, int(W * f)), max(1, int(H * f))), Image.LANCZOS)
+    out = gris.resize((max(1, int(gris.width * f)), max(1, int(gris.height * f))), Image.LANCZOS)
     return ImageOps.expand(out, border=20, fill=255), f
 
 
 def _numeros_de(img, zoom, ocr):
-    """[(valor, cx, cy)] de los numeros en la imagen (solo digitos y signo menos). Se lee de dos formas (texto
-    suelto y en bloque) y se juntan: la recta robusta despues descarta lo mal leido."""
-    limpia, f = _limpiar_numeros(img, zoom)
+    """[(valor, cx, cy)] de los numeros en la imagen (solo digitos, punto y signo menos). Se lee de dos formas
+    (texto suelto y en bloque) y se juntan: la recta robusta despues descarta lo mal leido."""
+    limpia, f = _agrandar(_limpiar_numeros(img, zoom)[0], zoom)
     out = []
     for psm in (11, 6):
         try:
-            d = ocr.datos(limpia, psm=psm, solo="-0123456789")
+            d = ocr.datos(limpia, psm=psm, solo="-0123456789.")
         except Exception:
             continue
         for i, t in enumerate(d.get("text", [])):
-            t = (t or "").strip()
-            if not re.fullmatch(r"-?\d{1,4}", t):
+            t = (t or "").strip().strip(".")
+            if not re.fullmatch(r"-?\d{1,4}(?:\.\d{1,3})?", t):
                 continue
             cx = (d["left"][i] + d["width"][i] / 2 - 20) / f
             cy = (d["top"][i] + d["height"][i] / 2 - 20) / f
             out.append((float(t), cx, cy))
+    return out
+
+
+def _numeros_por_rayita(img, zoom, ocr, marcas, paso, horizontal):
+    """Cuando los numeros vienen muy pegados ('-20-15-10'): se junta lo que hay alrededor de cada rayita y cada
+    numero se pone en su propio renglon, con mucho espacio, para leerlos de una vez.
+    Devuelve [(valor, posicion_de_la_rayita)] (en la imagen)."""
+    gris, letras = _limpiar_numeros(img, zoom)
+    grupos = {}
+    for x0, y0, x1, y1 in letras:
+        if x1 - x0 <= max(3, 4 * zoom) and y1 - y0 >= 20 * zoom:
+            continue                                     # pedazo de una linea (el otro eje), no un numero
+        centro = (x0 + x1) / 2 if horizontal else (y0 + y1) / 2
+        m = min(marcas, key=lambda t: abs(t - centro)) if marcas else None
+        if m is None or abs(m - centro) > 0.5 * paso:
+            continue
+        g = grupos.setdefault(m, [x0, y0, x1, y1])
+        g[0], g[1], g[2], g[3] = min(g[0], x0), min(g[1], y0), max(g[2], x1), max(g[3], y1)
+    if not grupos:
+        return []
+    hueco = int(20 * zoom)
+    trozos = [(m, gris.crop((g[0] - 1, g[1] - 1, g[2] + 2, g[3] + 2))) for m, g in sorted(grupos.items())]
+    ancho = max(t.width for _, t in trozos) + 2 * hueco
+    alto = sum(t.height for _, t in trozos) + hueco * (len(trozos) + 1)
+    hoja = Image.new("L", (ancho, alto), 255)
+    lugares, y = [], hueco
+    for m, t in trozos:
+        hoja.paste(t, (hueco, y))
+        lugares.append((y, y + t.height, m))
+        y += t.height + hueco
+    grande, f = _agrandar(hoja, zoom)
+    out = []
+    for psm in (6, 4):
+        try:
+            d = ocr.datos(grande, psm=psm, solo="-0123456789.")
+        except Exception:
+            continue
+        for i, t in enumerate(d.get("text", [])):
+            t = (t or "").strip().strip(".")
+            if not re.fullmatch(r"-?\d{1,4}(?:\.\d{1,3})?", t):
+                continue
+            cy = (d["top"][i] + d["height"][i] / 2 - 20) / f
+            for y0, y1, m in lugares:
+                if y0 - 4 <= cy <= y1 + 4:
+                    out.append((float(t), m))
+                    break
     return out
 
 
@@ -575,56 +651,72 @@ def _recta_robusta(pares, paso):
     return a, (sp - a * sv) / n
 
 
-_REDONDOS = (0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000)
-
-
-def ejes_del_plano(img, zoom=1.0, ocr=None):
-    """Plano cartesiano en la imagen: encuentra los ejes por sus rayitas (no se confunde con las lineas que siguen
-    al mouse ni con el marco) y lee el numero de cada rayita. Devuelve {"x": (a, b) o None, "y": (a, b) o None}
-    con pixel = a * valor + b."""
-    out = {"x": None, "y": None}
-    if ocr is None or not getattr(ocr, "disponible", False):
-        return out
-    gris = ImageOps.grayscale(img)
-    W, H = gris.size
-    oscuro = bytes(1 if v < 120 else 0 for v in gris.tobytes())
-    candidatos = {}
-    for horizontal in (True, False):
-        mejor = None
-        for linea in _lineas_largas(oscuro, W, H, horizontal, zoom):
-            marcas = _rayitas(oscuro, W, H, linea, horizontal, zoom)
+def _ejes_candidatos(buf, gbuf, W, H, zoom):
+    """Lineas que pueden ser un eje (con rayitas o cruzadas por la cuadricula), las mejores primero."""
+    out = []
+    for linea in _lineas_largas(buf, W, H, zoom):
+        for marcas in (_rayitas(buf, W, H, linea, zoom), None):
+            if marcas is None:
+                marcas = _cuadricula(gbuf, W, H, linea, zoom)
             if len(marcas) < 5:
                 continue
             pasos = sorted(b - a for a, b in zip(marcas, marcas[1:]))
             paso = pasos[len(pasos) // 2]
             parejas = sum(1 for d in pasos if abs(d - paso) <= max(2, 0.15 * paso))
             if paso < 4 * zoom or parejas < 0.6 * len(pasos):
-                continue                 # rayitas disparejas: no es un eje
-            if mejor is None or len(marcas) > len(mejor[1]):
-                mejor = (linea, marcas, paso)
-        candidatos[horizontal] = mejor
-    for horizontal, eje in ((True, "x"), (False, "y")):
-        c = candidatos.get(horizontal)
-        if not c:
-            continue
-        (desde, hasta, a, b), marcas, paso = c
-        try:
+                continue
+            out.append((linea, marcas, paso))
+            break
+    out.sort(key=lambda c: -len(c[1]))
+    return out[:3]
+
+
+def ejes_del_plano(img, zoom=1.0, ocr=None):
+    """Plano cartesiano en la imagen: encuentra los ejes por sus rayitas (o por la cuadricula) y lee el numero de
+    cada una con OCR de solo numeros. No se confunde con la cruz que sigue al mouse ni con el marco.
+    Devuelve {"x": (a, b) o None, "y": (a, b) o None, "rango": {"x": (min, max, paso), "y": ...}}
+    con pixel = a * valor + b."""
+    out = {"x": None, "y": None, "rango": {}}
+    if ocr is None or not getattr(ocr, "disponible", False):
+        return out
+    gris = ImageOps.grayscale(img)
+    W, H = gris.size
+    if W < 60 or H < 60:
+        return out
+    oscuro = gris.point(lambda v: 1 if v < 120 else 0)
+    vistas = {"x": (oscuro.tobytes(), gris.tobytes(), W, H),
+              "y": (oscuro.transpose(Image.Transpose.TRANSPOSE).tobytes(),
+                    gris.transpose(Image.Transpose.TRANSPOSE).tobytes(), H, W)}
+    usados = {}
+    for eje, (buf, gbuf, w, h) in vistas.items():
+        horizontal = eje == "x"
+        for linea, marcas, paso in _ejes_candidatos(buf, gbuf, w, h, zoom):
+            desde, hasta, a, b = linea
             r7, r14 = int(7 * zoom), int(14 * zoom)       # (sin las rayitas; un poco mas alla de las puntas)
-            d0, d1 = max(0, desde - r14), (min(W, hasta + r14) if horizontal else min(H, hasta + r14))
+            d0, d1 = max(0, desde - r14), min(w, hasta + r14)
             if horizontal:          # numeros abajo del eje x (si no, arriba)
                 bandas = [(d0, b + r7, d1, min(H, b + int(34 * zoom))), (d0, max(0, a - int(34 * zoom)), d1, a - r7)]
             else:                   # numeros a la izquierda del eje y (si no, a la derecha)
                 bandas = [(max(0, a - int(50 * zoom)), d0, a - r7, d1), (b + r7, d0, min(W, b + int(50 * zoom)), d1)]
+            hecho = False
             for banda in bandas:
                 if banda[2] - banda[0] < 6 or banda[3] - banda[1] < 6:
                     continue
-                nums = _numeros_de(img.crop(banda), zoom, ocr)
                 pares = []
-                for v, cx, cy in nums:
-                    pos = (cx + banda[0]) if horizontal else (cy + banda[1])
-                    m = min(marcas, key=lambda t: abs(t - pos))
-                    if abs(m - pos) <= 0.6 * paso:
-                        pares.append((v, m))
+                try:
+                    trozo = img.crop(banda)
+                    for v, cx, cy in _numeros_de(trozo, zoom, ocr):
+                        pos = (cx + banda[0]) if horizontal else (cy + banda[1])
+                        m = min(marcas, key=lambda t: abs(t - pos))
+                        if abs(m - pos) <= 0.6 * paso:
+                            pares.append((v, m))
+                    r = _recta_robusta(pares, paso)
+                    if not r or len(pares) < 4:
+                        base = banda[0] if horizontal else banda[1]
+                        rel = [m - base for m in marcas]
+                        pares += [(v, m + base) for v, m in _numeros_por_rayita(trozo, zoom, ocr, rel, paso, horizontal)]
+                except Exception:
+                    continue
                 r = _recta_robusta(pares, paso)
                 if not r or not ((horizontal and r[0] > 0) or (not horizontal and r[0] < 0)):
                     continue
@@ -632,17 +724,40 @@ def ejes_del_plano(img, zoom=1.0, ocr=None):
                 por_rayita = paso / abs(r[0])
                 if not any(abs(por_rayita - n) <= 0.08 * n for n in _REDONDOS):
                     continue
-                # y el cero cae donde se cruzan los ejes (si el otro eje se ve)
-                otro = candidatos.get(not horizontal)
-                if otro:
-                    cruce = (otro[0][2] + otro[0][3]) / 2
-                    if abs(r[1] - cruce) > max(4.0 * zoom, 0.35 * paso):
-                        continue
                 out[eje] = r
+                usados[eje] = (linea, por_rayita)
+                vals = sorted(((desde - r[1]) / r[0], (hasta - r[1]) / r[0]))
+                out["rango"][eje] = (round(vals[0], 3), round(vals[1], 3), round(por_rayita, 3))
+                hecho = True
                 break
-        except Exception:
-            continue
+            if hecho:
+                break
+    # el otro eje cruza en un numero de la cuadricula (casi siempre el 0): si no, algo se leyo mal
+    for eje, otro in (("x", "y"), ("y", "x")):
+        if out[eje] and otro in usados:
+            linea = usados[otro][0]
+            cruce = (linea[2] + linea[3]) / 2
+            v = (cruce - out[eje][1]) / out[eje][0]
+            paso = usados[eje][1]
+            if abs(v / paso - round(v / paso)) > 0.3:
+                out[eje] = None
+                out["rango"].pop(eje, None)
     return out
+
+
+def describir_plano(plano, s=1.0):
+    """Texto para la IA: que plano se detecto (asi elige puntos que si se ven)."""
+    r = plano.get("rango") or {}
+    if not (plano.get("x") and plano.get("y")):
+        return ""
+    def num(v):
+        return str(int(v)) if float(v).is_integer() else str(v)
+    x0, x1, px = r.get("x", (None, None, None))
+    y0, y1, py = r.get("y", (None, None, None))
+    o = (plano["x"][1] * s, plano["y"][1] * s)
+    return (f"PLANO CARTESIANO detectado: x de {num(x0)} a {num(x1)} (cada rayita {num(px)}), y de {num(y0)} a "
+            f"{num(y1)} (cada rayita {num(py)}). El origen (0,0) esta en la imagen en ({int(o[0])},{int(o[1])}). "
+            "Para puntos del plano usa {\"gx\":..,\"gy\":..}: NO LIMIT los pone exactos.")
 
 
 def quitar_orillas(subs, rects, zoom=1.0):
