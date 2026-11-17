@@ -800,7 +800,7 @@ def _ventana_y_e2e(salida):
             U, X0, Y0 = 26, 150, 70                        # 26 px por unidad, (-10,10) arriba a la izquierda
             lienzo = tk.Canvas(top, width=820, height=660, bg="white", highlightthickness=0)
             lienzo.place(x=0, y=0)
-            lienzo.lower()
+            tk.Misc.lower(lienzo)                          # (el lienzo abajo de la instruccion)
             gx = lambda v: X0 + (v + 10) * U               # noqa: E731
             gy = lambda v: Y0 + (10 - v) * U               # noqa: E731
             for k in range(-10, 11):
