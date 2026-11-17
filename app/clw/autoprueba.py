@@ -18,6 +18,7 @@ RESULTADOS = {}
 OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
 if sys.platform == "darwin":
     OBLIGATORIAS += ("red",)       # en Mac los certificados de internet vienen dentro de la app
+    OBLIGATORIAS += ("e2e",)       # la Mac es lo mas importante: si no contesta de punta a punta, no se publica
 # se reportan aparte (dependen de la barra de tareas y del escritorio de la maquina de pruebas):
 # bandeja, juego, reabrir, e2e, cpu, rendimiento
 
