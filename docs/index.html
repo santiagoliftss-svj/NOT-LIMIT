@@ -166,6 +166,170 @@
   .pagar h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
   .pagar p { margin: 0; color: var(--gris); font-size: 14.5px; line-height: 1.55; }
   .pagar .js-comprar { margin-top: 14px; height: 48px; font-size: 15px; }
+  .cuenta-pagar { width: 100%; justify-content: center; height: 50px; margin-top: 12px; font-size: 15px; }
+  .cuenta-pagar[hidden] { display: none; }
+  .pagar-botones { display: grid; gap: 10px; margin-top: 16px; }
+  .pagar-botones .pagar-tarjeta, .pagar-botones .js-comprar { width: 100%; justify-content: center; height: 52px; font-size: 15.5px; }
+  .pagar-tarjeta { position: relative; display: inline-flex; align-items: center; gap: 10px; padding: 0 22px; border-radius: 999px;
+    border: 0; background: #fff; color: #000; font-weight: 700; text-decoration: none; cursor: pointer;
+    transition: transform .2s var(--curva), opacity .2s ease; }
+  .pagar-tarjeta:active { transform: scale(.97); }
+  .pagar-tarjeta[aria-disabled="true"] { background: rgba(255,255,255,.1); color: var(--gris); cursor: default; }
+  .pagar-tarjeta[aria-disabled="true"]:active { transform: none; }
+  .pagar-tarjeta .pronto { margin-left: 4px; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; color: #000; background: linear-gradient(180deg, #fff, #c9c9cf); }
+  .pagar-botones .js-comprar svg, .pagar-tarjeta svg { width: 18px; height: 18px; flex: none; }
+
+  /* ------------------------------------------------ pagar en efectivo o transferencia (su propia pantalla) */
+  .pago { position: fixed; inset: 0; z-index: 240; overflow: hidden; }
+  .pago[hidden] { display: none; }
+  .pago-velo { position: absolute; inset: 0; background: rgba(0,0,0,.55); opacity: 0; transition: opacity .5s ease; }
+  .pago-pantalla { position: absolute; inset: 0; display: flex; flex-direction: column; background: #050506;
+    transform: translateX(100%); transition: transform .75s var(--resorte); overflow: hidden; }
+  .pago.abierta .pago-velo { opacity: 1; }
+  .pago.abierta .pago-pantalla { transform: none; }
+  .pago-pantalla::before { content: ""; position: absolute; left: 50%; top: -30vh; width: 120vmax; height: 80vh; translate: -50% 0;
+    border-radius: 50%; pointer-events: none; opacity: .5; transition: background .8s ease, opacity .8s ease;
+    background: radial-gradient(closest-side, rgba(255,255,255,.10), rgba(255,255,255,0)); }
+  .pago[data-tono="verde"] .pago-pantalla::before { background: radial-gradient(closest-side, rgba(48,209,88,.32), rgba(48,209,88,0)); opacity: .9; }
+  .pago[data-tono="rojo"] .pago-pantalla::before { background: radial-gradient(closest-side, rgba(255,69,58,.28), rgba(255,69,58,0)); opacity: .9; }
+  body.pago-abierto { overflow: hidden; }
+  body.pago-abierto main, body.pago-abierto footer, body.pago-abierto .barra { transition: transform .75s var(--resorte), filter .6s ease;
+    transform: translateX(-8%) scale(.97); filter: brightness(.4) blur(2px); }
+  .pago-cabeza { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: max(16px, env(safe-area-inset-top)) 18px 10px; }
+  .pago-cabeza button { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); transition: background .2s ease, opacity .3s ease, transform .2s var(--curva); }
+  .pago-cabeza button:hover { background: rgba(255,255,255,.13); }
+  .pago-cabeza button:active { transform: scale(.92); }
+  .pago-cabeza button[disabled] { opacity: 0; pointer-events: none; }
+  .pago-cabeza svg { width: 18px; height: 18px; }
+  .pago-pasos { display: flex; gap: 6px; }
+  .pago-pasos i { width: 7px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.2);
+    transition: width .5s var(--rebote), background .4s ease; }
+  .pago-pasos i.hecho { background: rgba(255,255,255,.55); }
+  .pago-pasos i.on { width: 26px; background: #fff; }
+  .pago-cuerpo { position: relative; z-index: 1; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+  .pago-paso { position: absolute; top: 0; left: 0; right: 0; min-height: 100%; box-sizing: border-box;
+    padding: 18px 22px calc(28px + env(safe-area-inset-bottom)); display: flex;
+    flex-direction: column; justify-content: center; width: min(520px, 100%); margin: 0 auto;
+    opacity: 0; transform: translateX(56px); pointer-events: none; visibility: hidden;
+    transition: opacity .45s ease, transform .7s var(--resorte), visibility 0s .7s; }
+  .pago-paso.antes { transform: translateX(-56px); }
+  .pago-paso.activo { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition: opacity .5s ease .08s, transform .8s var(--resorte) .04s, visibility 0s; }
+  .pago-paso h3 { margin: 10px 0 8px; font-size: clamp(30px, 6vw, 40px); line-height: 1.04; font-weight: 760; letter-spacing: -.035em; }
+  .pago-sub { margin: 0 0 22px; color: var(--gris); font-size: 15.5px; line-height: 1.5; }
+  .pago-opciones { display: grid; gap: 12px; margin-top: 18px; }
+  .pago-opcion { position: relative; display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto auto; column-gap: 14px;
+    align-items: center; text-align: left; padding: 18px 54px 18px 18px; border-radius: 22px;
+    background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    transition: background .25s ease, box-shadow .35s ease, transform .5s var(--rebote); }
+  .pago-opcion:hover { background: rgba(255,255,255,.08); }
+  .pago-opcion:active { transform: scale(.975); }
+  .pago-opcion[aria-checked="true"] { background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 2px #fff, 0 18px 50px rgba(255,255,255,.08); transform: scale(1.015); }
+  .pago-ic { grid-row: 1 / 3; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
+    background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+  .pago-ic svg { width: 26px; height: 26px; }
+  .pago-opcion b { font-size: 18px; font-weight: 720; letter-spacing: -.01em; }
+  .pago-opcion small { color: var(--gris); font-size: 14px; }
+  .pago-chulo { position: absolute; right: 18px; top: 50%; width: 26px; height: 26px; margin-top: -13px; border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.3); transition: background .3s ease, box-shadow .3s ease; }
+  .pago-chulo::after { content: ""; position: absolute; left: 9px; top: 5px; width: 6px; height: 11px; border: solid #000;
+    border-width: 0 2.4px 2.4px 0; transform: rotate(45deg) scale(0); transition: transform .45s var(--rebote); }
+  .pago-opcion[aria-checked="true"] .pago-chulo { background: #fff; box-shadow: none; }
+  .pago-opcion[aria-checked="true"] .pago-chulo::after { transform: rotate(45deg) scale(1); }
+  .pago-tipo { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; margin: 14px 0 18px; border-radius: 16px;
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  .pago-tipo button { position: relative; z-index: 1; height: 42px; border-radius: 12px; font-weight: 650; font-size: 15px; color: var(--gris); transition: color .3s ease; }
+  .pago-tipo button[aria-checked="true"] { color: #000; }
+  .pago-tipo-fondo { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 12px;
+    background: #fff; transition: transform .55s var(--rebote); }
+  .pago-tipo[data-tipo="renovar"] .pago-tipo-fondo { transform: translateX(100%); }
+  .pago-campo { display: block; margin-bottom: 12px; }
+  .pago-campo[hidden] { display: none; }
+  .pago-campo > span { display: block; margin: 0 0 6px 4px; font-size: 13px; font-weight: 650; color: var(--gris); }
+  .pago-campo input { width: 100%; height: 52px; padding: 0 16px; border-radius: 15px; border: 0; color: #fff; font: inherit; font-size: 16.5px;
+    background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); transition: box-shadow .25s ease, background .25s ease; }
+  .pago-campo input:focus { outline: none; background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.6); }
+  .pago-campo input.mal { box-shadow: inset 0 0 0 1.5px #ff453a; animation: temblar .45s ease; }
+  .pago-campo small { display: block; margin: 6px 0 0 4px; color: var(--tenue); font-size: 13px; }
+  .pago-campo .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
+  .pago-error { min-height: 20px; margin: 2px 0 10px 4px; color: #ff6b61; font-size: 14px; }
+  .pago-seguir, .pago-revisar button, .pago-mandar button { height: 56px; border-radius: 999px; font-weight: 720; font-size: 16.5px;
+    transition: transform .2s var(--curva), background .25s ease, opacity .25s ease; }
+  .pago-seguir { width: 100%; background: #fff; color: #000; }
+  .pago-seguir:active, .pago-mandar button:active, .pago-revisar button:active { transform: scale(.97); }
+  .pago-burbuja { position: relative; margin: 4px 0 22px; padding: 16px 18px; border-radius: 20px 20px 20px 6px; white-space: pre-line;
+    background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); font-size: 15px; line-height: 1.55; color: #e9e9ee;
+    transform-origin: 0 100%; }
+  .pago-paso.activo .pago-burbuja { animation: burbuja .7s var(--rebote) .15s both; }
+  @keyframes burbuja { from { opacity: 0; transform: scale(.85) translateY(10px); } to { opacity: 1; transform: none; } }
+  .pago-mandar { display: grid; gap: 10px; }
+  .pago-mandar button { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; overflow: hidden; }
+  .pago-mandar svg { width: 20px; height: 20px; transition: transform .6s var(--curva), opacity .4s ease; }
+  .pago-wa { background: #25d366; color: #04140a; }
+  .pago-wa:hover { background: #2fe072; }
+  .pago-mail { background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); color: var(--tinta); }
+  .pago-mail:hover { background: rgba(255,255,255,.12); }
+  .pago-mandar button.volando svg { animation: volar .9s var(--curva) forwards; }
+  @keyframes volar { 0% { transform: none; } 35% { transform: translate(-4px, 3px) rotate(-8deg); }
+    100% { transform: translate(140px, -70px) rotate(18deg); opacity: 0; } }
+  .pago-nota { margin: 14px 4px 0; color: var(--tenue); font-size: 13.5px; line-height: 1.5; text-align: center; }
+  .pago-estado { text-align: center; }
+  .pago-sello { position: relative; width: 112px; height: 112px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.22); transition: background .5s ease, box-shadow .5s ease, transform .6s var(--rebote); }
+  .pago-sello svg { position: relative; z-index: 1; width: 50px; height: 50px; overflow: visible; }
+  .pago-sello .reloj { transition: opacity .3s ease; }
+  .pago-sello .chulo, .pago-sello .tache { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 70; stroke-dashoffset: 70; opacity: 0; }
+  .pago-sello .onda { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255,255,255,.35); opacity: 0; }
+  .pago-estado[data-estado="esperando"] .onda { animation: onda 2.4s ease-out infinite; }
+  .pago-estado[data-estado="esperando"] .onda + .onda { animation-delay: 1.2s; }
+  @keyframes onda { from { transform: scale(1); opacity: .9; } to { transform: scale(1.9); opacity: 0; } }
+  .pago-estado[data-estado="revisando"] .pago-sello { box-shadow: none; background: conic-gradient(from 0deg, rgba(255,255,255,0), rgba(255,255,255,.75)); animation: girar 1s linear infinite; }
+  .pago-estado[data-estado="revisando"] .pago-sello::before { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: #0b0b0d; }
+  .pago-estado[data-estado="revisando"] .pago-sello svg { animation: girar 1s linear infinite reverse; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .pago-estado[data-estado="aceptado"] .pago-sello { background: #30d158; box-shadow: 0 0 0 10px rgba(48,209,88,.14), 0 20px 70px rgba(48,209,88,.45); animation: sello .8s var(--rebote); }
+  .pago-estado[data-estado="pendiente"] .pago-sello { background: #ff453a; box-shadow: 0 0 0 10px rgba(255,69,58,.14), 0 20px 70px rgba(255,69,58,.4); animation: temblar .55s ease; }
+  .pago-estado[data-estado="aceptado"] .reloj, .pago-estado[data-estado="pendiente"] .reloj { opacity: 0; }
+  .pago-estado[data-estado="aceptado"] .chulo { opacity: 1; animation: trazo .55s var(--curva) .25s forwards; }
+  .pago-estado[data-estado="pendiente"] .tache { opacity: 1; animation: trazo .45s var(--curva) .15s forwards; }
+  .pago-estado[data-estado="aceptado"] .onda { box-shadow: 0 0 0 2px rgba(48,209,88,.7); animation: onda 1.1s ease-out 2; }
+  @keyframes trazo { to { stroke-dashoffset: 0; } }
+  @keyframes sello { 0% { transform: scale(.6); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+  @keyframes temblar { 0%, 100% { transform: none; } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+  .pago-estado h3 { margin-top: 0; transition: color .4s ease; }
+  .pago-estado[data-estado="aceptado"] h3 { color: #30d158; }
+  .pago-estado[data-estado="pendiente"] h3 { color: #ff6b61; }
+  .pago-estado p { margin: 0 auto 22px; max-width: 420px; color: var(--gris); font-size: 15.5px; line-height: 1.55; }
+  .pago-estado p b { color: #fff; }
+  .pago-revisar { display: flex; gap: 10px; }
+  .pago-revisar[hidden], .pago-listo[hidden] { display: none; }
+  .pago-revisar input { flex: 1; min-width: 0; height: 56px; padding: 0 16px; border-radius: 16px; border: 0; color: #fff;
+    background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+    font: 600 16px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase; }
+  .pago-revisar input:focus { outline: none; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.6); }
+  .pago-revisar button { padding: 0 22px; background: #fff; color: #000; }
+  .pago-revisar button[disabled] { opacity: .5; }
+  .pago-listo { display: grid; gap: 10px; animation: burbuja .7s var(--rebote) .35s both; }
+  .pago-listo a { display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; border-radius: 999px;
+    text-decoration: none; font-weight: 700; color: #000; background: #fff; }
+  .pago-listo a + a { color: var(--tinta); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+  .pago-listo svg { width: 17px; height: 17px; }
+  .pago-otra { margin: 16px auto 0; display: block; color: var(--tenue); font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; }
+  @media (max-width: 560px) {
+    .pago-paso { justify-content: flex-start; padding-top: 8px; }
+    .pago-paso[data-paso="4"] { justify-content: center; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .pago-paso h3 { font-size: 31px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pago-pantalla, .pago-paso, .pago-paso.activo { transition: opacity .3s ease; transform: none; }
+    body.pago-abierto main, body.pago-abierto footer, body.pago-abierto .barra { transform: none; transition: none; }
+    .pago-sello, .pago-sello svg, .onda, .pago-burbuja, .pago-listo, .pago-campo input.mal { animation: none !important; }
+    .pago-sello .chulo, .pago-sello .tache { animation: none !important; stroke-dashoffset: 0; }
+  }
   .barra-descargar:active { transform: scale(.96); }
   .barra-descargar svg { width: 15px; height: 15px; }
 
@@ -763,6 +927,13 @@
       <feComposite in="SourceGraphic" in2="liquido" operator="atop"/>
     </filter>
     <symbol id="i-puntero" viewBox="0 0 22 30"><path d="M2 2 L2 24 L7.6 18.6 L11.4 27.4 L15 25.8 L11.3 17.2 L19 17.2 Z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-atras" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cerrar" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-banco" viewBox="0 0 24 24"><path d="M3 9.2L12 4l9 5.2M5.2 10.5v7M9.7 10.5v7M14.3 10.5v7M18.8 10.5v7M3 20h18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-efectivo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.6v4.8M18 9.6v4.8"/></g></symbol>
+    <symbol id="i-tarjeta" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.6"/><path d="M2.5 10h19M6 15h4"/></g></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 4.5h14a2 2 0 0 1 2 2v8.2a2 2 0 0 1-2 2h-8.6L6 20.2v-3.5H5a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-correo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.6"/><path d="M4 7.2l8 5.8 8-5.8"/></g></symbol>
     <symbol id="i-bajar" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-chulo" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9.2" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/><path d="M6 10.4l2.6 2.6L14.2 7.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
@@ -793,7 +964,7 @@
 
     <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
       <span class="vivo" aria-hidden="true"></span>
-      <span>Nuevo: <span class="js-version">v2.0</span> · contesta casi cualquier pregunta</span>
+      <span>Nuevo: <span class="js-version">v2.1</span> · más lista en Mac y Windows</span>
       <span class="flecha" aria-hidden="true">→</span>
     </a>
 
@@ -1071,9 +1242,12 @@
         </div>
         <p class="nota-clave js-meta">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
         <div class="pagar" id="pagar">
-          <h3>Cómo pagar</h3>
-          <p>Por transferencia, depósito en OXXO o en efectivo con tu vendedor. Al pagar te da tu código (o te renueva el mes) y entras con él aquí arriba en <b>Entrar</b>. Pronto también con tarjeta aquí mismo.</p>
-          <a class="vidrio-btn js-comprar" href="#pagar">Comprar o renovar</a>
+          <h3>Paga tu mes</h3>
+          <p>150 pesos al mes. Al pagar te llega tu código NL-XXXX-XXXX-XXXX (o se renueva el tuyo) y entras con él en <b>Entrar</b>.</p>
+          <div class="pagar-botones">
+            <button class="pagar-tarjeta js-tarjeta" type="button" aria-disabled="true"><svg aria-hidden="true"><use href="#i-tarjeta"/></svg>Pagar con tarjeta<span class="pronto">Muy pronto</span></button>
+            <button class="vidrio-btn js-comprar" type="button"><svg aria-hidden="true"><use href="#i-efectivo"/></svg>Pagar en efectivo o transferencia</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1104,7 +1278,7 @@
         <h2 class="titulo plata">Lo que todos preguntan.</h2>
       </header>
       <div class="faq" id="faq" data-revela>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Cuesta <b>150 pesos al mes</b>. Le pagas a tu vendedor (transferencia, OXXO o efectivo) y te da tu código NL-XXXX-XXXX-XXXX. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Cuesta <b>150 pesos al mes</b>. En <b>Precio</b> toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar y tu código NL-XXXX-XXXX-XXXX. Ahí mismo ves en verde cuando ya se aceptó tu pago. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué tipos de preguntas contesta?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Opción múltiple, varias casillas, verdadero o falso, completar espacios, menús desplegables (también dentro de un párrafo), relacionar columnas, respuesta corta y ensayo, problemas con números (aunque cambien), editores de ecuaciones con fracciones y exponentes, dar clic en una parte de una imagen o diagrama, graficar puntos, leer gráficas y tablas, matrices, ordenar arrastrando y arrastrar etiquetas a un esquema. Lo que no puede: escuchar audio o ver un video completo, ni dibujar a mano.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué tarda unos segundos?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque lo hace con calma, como tú: primero ubica la pregunta, la lee de cerca, la resuelve, la contesta y al final revisa que haya quedado bien marcada. Tarda de 10 a 30 segundos según la pregunta. Así no se equivoca de casilla.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Le da clic a Siguiente o Enviar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>No. NO LIMIT marca, escribe, elige o acomoda la respuesta, pero los botones de Siguiente, Enviar o Terminar los tocas tú. Así nunca se cambia de página sola. Si no está segura de dónde contestar, no toca nada y te dice la respuesta.</p></div></div></div>
@@ -1152,6 +1326,7 @@
       <button type="submit" id="cuentaEntrar">ENTRAR</button>
     </form>
     <p class="cuenta-msg" id="cuentaMsg" role="status"></p>
+    <button class="cuenta-pagar vidrio-btn" id="cuentaPagar" type="button" hidden>Pagar mi mes</button>
     <div class="cuenta-ok" id="cuentaOk" hidden>
       <p class="cuenta-estado" id="cuentaEstado"></p>
       <div class="cuenta-descargas" id="cuentaDescargas">
@@ -1159,6 +1334,74 @@
         <a class="js-bajar-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
       </div>
       <button class="cuenta-salir" id="cuentaSalir" type="button">Salir</button>
+    </div>
+  </div>
+</div>
+
+<div class="pago" id="pago" hidden>
+  <div class="pago-velo" aria-hidden="true"></div>
+  <div class="pago-pantalla" role="dialog" aria-modal="true" aria-label="Pagar en efectivo o transferencia">
+    <header class="pago-cabeza">
+      <button id="pagoAtras" type="button" aria-label="Atrás"><svg aria-hidden="true"><use href="#i-atras"/></svg></button>
+      <div class="pago-pasos" id="pagoPuntos" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+      <button id="pagoCerrar" type="button" aria-label="Cerrar"><svg aria-hidden="true"><use href="#i-cerrar"/></svg></button>
+    </header>
+    <div class="pago-cuerpo">
+      <section class="pago-paso activo" data-paso="1">
+        <span class="ojo">NO LIMIT · 150 MXN al mes</span>
+        <h3>¿Cómo vas a pagar?</h3>
+        <p class="pago-sub">Eliges cómo, mandas un mensaje y te contestamos con los datos para pagar. Cuando se confirma, tu código se activa y aquí se pone en verde.</p>
+        <div class="pago-opciones" role="radiogroup" aria-label="Forma de pago">
+          <button class="pago-opcion" type="button" role="radio" aria-checked="false" data-metodo="Transferencia"><span class="pago-ic"><svg aria-hidden="true"><use href="#i-banco"/></svg></span><b>Transferencia</b><small>Desde la app de tu banco</small><span class="pago-chulo" aria-hidden="true"></span></button>
+          <button class="pago-opcion" type="button" role="radio" aria-checked="false" data-metodo="Efectivo"><span class="pago-ic"><svg aria-hidden="true"><use href="#i-efectivo"/></svg></span><b>Efectivo</b><small>En persona o depósito en OXXO</small><span class="pago-chulo" aria-hidden="true"></span></button>
+        </div>
+      </section>
+      <section class="pago-paso" data-paso="2">
+        <span class="ojo" id="pagoMetodoOjo">Transferencia</span>
+        <h3>Tus datos</h3>
+        <div class="pago-tipo" id="pagoTipo" role="radiogroup" aria-label="Qué vas a pagar" data-tipo="nuevo">
+          <span class="pago-tipo-fondo" aria-hidden="true"></span>
+          <button type="button" role="radio" aria-checked="true" data-tipo="nuevo">Primer mes</button>
+          <button type="button" role="radio" aria-checked="false" data-tipo="renovar">Renovar mi mes</button>
+        </div>
+        <form id="pagoForm" novalidate>
+          <label class="pago-campo"><span>Tu nombre</span><input id="pagoNombre" name="nombre" autocomplete="name" maxlength="60"></label>
+          <label class="pago-campo"><span>Tu WhatsApp o Instagram</span><input id="pagoContacto" name="contacto" maxlength="60" autocomplete="tel"><small>Ahí te mandamos tu código.</small></label>
+          <label class="pago-campo" id="pagoCampoCodigo" hidden><span>Tu código</span><input id="pagoCodigo" class="mono" placeholder="NL-XXXX-XXXX-XXXX" maxlength="24" spellcheck="false" autocapitalize="characters" autocomplete="off"></label>
+          <label class="pago-campo"><span>Algo más (opcional)</span><input id="pagoNota" name="nota" maxlength="120" autocomplete="off"></label>
+          <p class="pago-error" id="pagoError" role="alert"></p>
+          <button class="pago-seguir" id="pagoSeguir" type="submit">Seguir</button>
+        </form>
+      </section>
+      <section class="pago-paso" data-paso="3">
+        <span class="ojo">Folio <b id="pagoFolio"></b></span>
+        <h3>Manda tu mensaje</h3>
+        <p class="pago-sub">Se abre ya escrito. Solo dale enviar y te contestamos con los datos para pagar.</p>
+        <div class="pago-burbuja" id="pagoVista"></div>
+        <div class="pago-mandar">
+          <button class="pago-wa" type="button" id="pagoWa"><svg aria-hidden="true"><use href="#i-chat"/></svg>Mandar por WhatsApp</button>
+          <button class="pago-mail" type="button" id="pagoMail"><svg aria-hidden="true"><use href="#i-correo"/></svg>Mandar por correo</button>
+        </div>
+        <p class="pago-nota">Paga solo con los datos que te mandemos en ese chat o correo.</p>
+      </section>
+      <section class="pago-paso" data-paso="4">
+        <div class="pago-estado" id="pagoEstado" data-estado="esperando" aria-live="polite">
+          <div class="pago-sello"><i class="onda"></i><i class="onda"></i>
+            <svg viewBox="0 0 50 50" aria-hidden="true"><g class="reloj" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="25" cy="25" r="15"/><path d="M25 16.5v9.5l6 3.6"/></g><path class="chulo" d="M13 26.5l8 8L37.5 17"/><path class="tache" d="M16.5 16.5l17 17M33.5 16.5l-17 17"/></svg>
+          </div>
+          <h3 id="pagoEstadoTitulo">Esperando tu pago</h3>
+          <p id="pagoEstadoTexto"></p>
+        </div>
+        <form class="pago-revisar" id="pagoRevisar" autocomplete="off">
+          <input id="pagoCodigoRevisar" placeholder="NL-XXXX-XXXX-XXXX" maxlength="24" spellcheck="false" autocapitalize="characters" aria-label="Tu código">
+          <button type="submit" id="pagoRevisarBtn">Revisar</button>
+        </form>
+        <div class="pago-listo" id="pagoListo" hidden>
+          <a class="js-bajar-win" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Windows</a>
+          <a class="js-bajar-mac" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/download/mac-beta/NO-LIMIT-Mac-Intel.dmg"><svg aria-hidden="true"><use href="#i-bajar"/></svg>Descargar para Mac</a>
+        </div>
+        <button class="pago-otra" type="button" id="pagoOtra">Hacer otro pago</button>
+      </section>
     </div>
   </div>
 </div>
@@ -1775,8 +2018,7 @@
   /* ---------------------------------------------------------------- Mi cuenta: entrar con el codigo
      El codigo es la cuenta. La pagina calcula su huella (PBKDF2, igual que la app) y la busca en licencias.json,
      donde dice hasta cuando esta pagado cada codigo. Para descargar hay que entrar con un codigo al corriente. */
-  var CONTACTO = { whatsapp: "", instagram: "" };      // <- numero (52...) o usuario para el boton "Comprar o renovar"
-  var CUENTA = { estado: null, pendiente: null };
+  var CUENTA = { estado: null, pendiente: null, porPagar: null };
   var ALFA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
   var MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   var cuenta = $("#cuenta"), cMsg = $("#cuentaMsg"), cOk = $("#cuentaOk"), cForm = $("#cuentaForm"),
@@ -1869,11 +2111,14 @@
           ? "Tu mes venció el " + fechaCorta(e.vence) + ". Paga tu renovación (150 pesos) y vuelve a entrar."
           : TEXTOS[e.motivo] || TEXTOS.codigo;
         if (e.motivo === "vencido") guardado("nolimit_codigo", e.codigo);
+        CUENTA.porPagar = (e.motivo === "vencido" || e.motivo === "sin_activar") ? e.codigo : null;
+        $("#cuentaPagar").hidden = !CUENTA.porPagar;
       }
     } catch (err) {
       if (!callado) { cMsg.className = "cuenta-msg mal"; cMsg.textContent = TEXTOS.red; }
     }
     cEntrar.disabled = false;
+    if (CUENTA.estado && CUENTA.estado.motivo === "ok") $("#cuentaPagar").hidden = true;
   }
   if (cuenta && window.crypto && crypto.subtle) {
     $("#btnCuenta").addEventListener("click", function () { abrirCuenta(null); });
@@ -1896,20 +2141,284 @@
   } else if (cuenta) {
     $("#btnCuenta").hidden = true;          // navegador muy viejo: las descargas quedan directas
   }
-  // boton de comprar o renovar
-  $$(".js-comprar").forEach(function (b) {
-    if (CONTACTO.whatsapp) {
-      b.href = "https://wa.me/" + CONTACTO.whatsapp + "?text=" + encodeURIComponent("Hola, quiero comprar o renovar NO LIMIT");
-      b.target = "_blank"; b.rel = "noopener";
-    } else if (CONTACTO.instagram) {
-      b.href = "https://instagram.com/" + CONTACTO.instagram; b.target = "_blank"; b.rel = "noopener";
-    } else {
-      b.addEventListener("click", function (e) {
-        e.preventDefault();
-        b.textContent = "Pídeselo a quien te pasó NO LIMIT";
-      });
+  /* ---------------------------------------------------------------- Pagar en efectivo o transferencia
+     Tiene su propia pantalla (#pago): eliges como pagas, pones tus datos y se abre WhatsApp o el correo con el
+     mensaje ya escrito para el dueno (su numero y su correo NO se muestran en la pagina). Despues, con tu codigo,
+     ves en vivo si ya se acepto tu pago: verde = aceptado, rojo = todavia no (se revisa solo cada 30 segundos). */
+  var PAGO_TARJETA = "";      // <- link de pago con tarjeta (Stripe) cuando este listo
+  var DESTINO = { w: "NzE5MzYxNDM0NDI1", c: "bW9jLmxpYW1nQHNzdGZpbC5vZ2FpdG5hcw==" };
+  function destino(k) { try { return atob(DESTINO[k]).split("").reverse().join(""); } catch (e) { return ""; } }
+  var pago = $("#pago");
+  var P = { paso: 1, metodo: "", tipo: "nuevo", folio: "", venceAntes: null, via: "", reloj: null, abierto: false, empujado: false };
+  var pPasos = $$(".pago-paso", pago), pPuntos = $$("#pagoPuntos i");
+
+  function nuevoFolio() {
+    var t = "", a = new Uint8Array(6);
+    try { crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < 6; i++) a[i] = Math.random() * 256; }
+    for (var k = 0; k < 6; k++) t += ALFA[a[k] % 32];
+    return "P-" + t;
+  }
+  function guardarPago() {
+    guardado("nolimit_pago", JSON.stringify({ folio: P.folio, metodo: P.metodo, tipo: P.tipo, venceAntes: P.venceAntes,
+      via: P.via, codigo: $("#pagoCodigoRevisar").value || "", t: Date.now() }));
+  }
+  function leerPago() {
+    try {
+      var g = JSON.parse(guardado("nolimit_pago") || "null");
+      if (g && g.folio && Date.now() - (g.t || 0) < 1000 * 60 * 60 * 24 * 21) return g;
+    } catch (e) {}
+    return null;
+  }
+  function irPaso(n) {
+    P.paso = n;
+    pPasos.forEach(function (el) {
+      var k = +el.getAttribute("data-paso");
+      el.classList.toggle("activo", k === n);
+      el.classList.toggle("antes", k < n);
+      el.setAttribute("aria-hidden", k === n ? "false" : "true");
+      if ("inert" in el) el.inert = k !== n;
+    });
+    pPuntos.forEach(function (d, i) { d.classList.toggle("on", i === n - 1); d.classList.toggle("hecho", i < n - 1); });
+    $("#pagoAtras").disabled = n === 1 || (n === 4 && $("#pagoEstado").getAttribute("data-estado") === "aceptado");
+    if (n !== 4) { pago.removeAttribute("data-tono"); clearTimeout(P.reloj); }
+    $(".pago-cuerpo", pago).scrollTop = 0;
+    if (finoPuntero) {
+      setTimeout(function () {
+        var paso = pPasos[n - 1], f = paso && paso.querySelector(n === 2 ? "#pagoNombre" : n === 4 ? "#pagoCodigoRevisar" : "button");
+        if (f && P.abierto && !f.closest("[hidden]")) try { f.focus({ preventScroll: true }); } catch (e) {}
+      }, reducido ? 30 : 480);
     }
-  });
+  }
+  function abrirPago(desdeHistorial) {
+    if (!pago || P.abierto) return;
+    P.abierto = true;
+    pago.hidden = false;
+    document.body.classList.add("pago-abierto");
+    requestAnimationFrame(function () { requestAnimationFrame(function () { pago.classList.add("abierta"); }); });
+    if (!desdeHistorial) {
+      try { history.pushState({ pago: 1 }, "", "#pago"); P.empujado = true; } catch (e) {}
+    }
+    var g = leerPago();
+    if (g) {
+      P.folio = g.folio; P.metodo = g.metodo || ""; P.tipo = g.tipo || "nuevo"; P.venceAntes = g.venceAntes || null; P.via = g.via || "";
+      $("#pagoCodigoRevisar").value = g.codigo || (P.tipo === "renovar" ? guardado("nolimit_codigo") || "" : "");
+      irPaso(4);
+      estadoPago("esperando");
+      if (normalizar($("#pagoCodigoRevisar").value).length === 12) revisarPago(true);
+    } else {
+      irPaso(P.paso > 1 && P.paso < 4 ? P.paso : 1);
+    }
+  }
+  function cerrarPago(desdeHistorial) {
+    if (!P.abierto) return;
+    P.abierto = false;
+    clearTimeout(P.reloj);
+    pago.classList.remove("abierta");
+    document.body.classList.remove("pago-abierto");
+    setTimeout(function () { if (!P.abierto) pago.hidden = true; }, reducido ? 60 : 720);
+    if (!desdeHistorial && location.hash === "#pago") {
+      if (P.empujado) { try { history.back(); } catch (e) {} }
+      else { try { history.replaceState(null, "", location.pathname + location.search + "#precio"); } catch (e) {} }
+    }
+    P.empujado = false;
+  }
+  function ponerTipo(t) {
+    P.tipo = t;
+    $("#pagoTipo").setAttribute("data-tipo", t);
+    $$("#pagoTipo button").forEach(function (o) { o.setAttribute("aria-checked", o.getAttribute("data-tipo") === t ? "true" : "false"); });
+    $("#pagoCampoCodigo").hidden = t !== "renovar";
+    if (t === "renovar" && !$("#pagoCodigo").value) $("#pagoCodigo").value = guardado("nolimit_codigo") || "";
+  }
+  function mensajePago() {
+    var l = ["Hola, quiero pagar NO LIMIT (150 MXN, 1 mes) por " + P.metodo.toLowerCase() + ".",
+             "Folio: " + P.folio,
+             "Es: " + (P.tipo === "renovar" ? "renovación" : "primer mes"),
+             "Nombre: " + $("#pagoNombre").value.trim(),
+             "Contacto: " + $("#pagoContacto").value.trim()];
+    if (P.tipo === "renovar") l.push("Código: " + formatear(normalizar($("#pagoCodigo").value)));
+    var nota = $("#pagoNota").value.trim();
+    if (nota) l.push("Nota: " + nota);
+    return l.join("\n");
+  }
+  function campoMal(input, texto) {
+    var err = $("#pagoError");
+    err.textContent = texto;
+    input.classList.remove("mal");
+    void input.offsetWidth;
+    input.classList.add("mal");
+    try { input.focus(); } catch (e) {}
+    return false;
+  }
+  var TITULOS_PAGO = { esperando: "Esperando tu pago", revisando: "Revisando…", aceptado: "¡Pago aceptado!", pendiente: "Todavía no se acepta" };
+  function textoEsperando() {
+    var por = P.via ? " por " + P.via : "";
+    return P.tipo === "renovar"
+      ? "Ya casi. Paga con los datos que te mandemos" + por + ". Cuando se confirme tu pago, tu código se renueva y esto se pone <b>verde</b> solo."
+      : "Ya casi. Paga con los datos que te mandemos" + por + " y te llega tu código. Ponlo aquí: cuando tu pago esté aceptado se pone <b>verde</b>.";
+  }
+  function estadoPago(estado, texto, titulo) {
+    var caja = $("#pagoEstado"), antes = caja.getAttribute("data-estado");
+    if (antes !== estado) {
+      caja.setAttribute("data-estado", "");
+      void caja.offsetWidth;                      // (para que la animacion vuelva a empezar)
+      caja.setAttribute("data-estado", estado);
+    }
+    if (estado === "aceptado") pago.setAttribute("data-tono", "verde");
+    else if (estado === "pendiente") pago.setAttribute("data-tono", "rojo");
+    else pago.removeAttribute("data-tono");
+    $("#pagoEstadoTitulo").textContent = titulo || TITULOS_PAGO[estado];
+    $("#pagoEstadoTexto").innerHTML = texto || (estado === "esperando" ? textoEsperando() : estado === "revisando" ? "Un segundo." : "");
+    $("#pagoListo").hidden = estado !== "aceptado";
+    $("#pagoRevisar").hidden = estado === "aceptado";
+    $("#pagoAtras").disabled = estado === "aceptado" || P.paso === 1;
+  }
+  function programarRevision() {
+    clearTimeout(P.reloj);
+    if (P.abierto && P.paso === 4) P.reloj = setTimeout(function () { revisarPago(true); }, 30000);
+  }
+  async function revisarPago(callado) {
+    clearTimeout(P.reloj);
+    var cod = $("#pagoCodigoRevisar").value;
+    if (normalizar(cod).length !== 12) {
+      if (!callado) estadoPago("pendiente", "Pon el código que te mandamos (NL-XXXX-XXXX-XXXX).", "Falta tu código");
+      return;
+    }
+    if (!callado) estadoPago("revisando");
+    $("#pagoRevisarBtn").disabled = true;
+    var e;
+    try { e = await revisarCodigo(cod); } catch (x) { e = { motivo: "red" }; }
+    $("#pagoRevisarBtn").disabled = false;
+    if (!P.abierto) return;
+    guardarPago();
+    if (e.motivo === "ok" && (!P.venceAntes || e.vence > P.venceAntes)) {
+      estadoPago("aceptado", "Tu código <b>" + e.codigo + "</b> está activo hasta el <b>" + fechaCorta(e.vence) + "</b>. Ya puedes descargar y usar NO LIMIT.");
+      CUENTA.estado = e;
+      guardado("nolimit_codigo", e.codigo);
+      guardado("nolimit_pago", null);
+      pintarCuenta();
+      return;
+    }
+    if (e.motivo === "red") {
+      if (callado) { programarRevision(); return; }
+      estadoPago("pendiente", TEXTOS.red, "Sin conexión");
+      return;
+    }
+    var texto = {
+      ok: "Tu mes sigue activo hasta el <b>" + fechaCorta(e.vence) + "</b>. Cuando se registre tu pago esa fecha cambia y esto se pone verde.",
+      sin_activar: "Tu código todavía no está activo. En cuanto se confirme tu pago se pone verde (se revisa solo cada 30 segundos).",
+      vencido: "Tu mes venció el <b>" + fechaCorta(e.vence) + "</b> y el pago todavía no se registra. En cuanto se confirme se pone verde solo.",
+      codigo: TEXTOS.codigo,
+      bloqueado: TEXTOS.bloqueado
+    }[e.motivo] || TEXTOS.codigo;
+    estadoPago("pendiente", texto, e.motivo === "codigo" ? "Ese código no existe" : e.motivo === "bloqueado" ? "Código bloqueado" : null);
+    if (e.motivo !== "codigo" && e.motivo !== "bloqueado") programarRevision();
+  }
+  function abrirFuera(url) {
+    var a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  function mandarPago(boton, via, abrir) {
+    boton.classList.remove("volando");
+    void boton.offsetWidth;
+    boton.classList.add("volando");
+    P.via = via;
+    if (P.tipo === "renovar" && !$("#pagoCodigoRevisar").value) $("#pagoCodigoRevisar").value = formatear(normalizar($("#pagoCodigo").value));
+    guardarPago();
+    abrir();
+    setTimeout(function () {
+      boton.classList.remove("volando");
+      irPaso(4);
+      estadoPago("esperando");
+      if (P.tipo === "renovar") programarRevision();
+    }, reducido ? 200 : 1000);
+  }
+
+  if (pago) {
+    $$(".js-comprar").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); abrirPago(false); }); });
+    $$(".js-tarjeta").forEach(function (b) {
+      if (PAGO_TARJETA) {
+        b.setAttribute("aria-disabled", "false");
+        var pronto = b.querySelector(".pronto"); if (pronto) pronto.remove();
+        b.addEventListener("click", function () { abrirFuera(PAGO_TARJETA); });
+      } else {
+        b.addEventListener("click", function () {
+          var otro = $(".pagar .js-comprar");
+          if (otro) { otro.animate && otro.animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }],
+                                                    { duration: 450, easing: "ease-out" }); otro.focus(); }
+        });
+      }
+    });
+    $("#cuentaPagar").addEventListener("click", function () {
+      var cod = CUENTA.porPagar;
+      cerrarCuenta();
+      guardado("nolimit_pago", null);
+      P.paso = 1;
+      abrirPago(false);
+      ponerTipo("renovar");
+      if (cod) $("#pagoCodigo").value = cod;
+    });
+    $("#pagoCerrar").addEventListener("click", function () { cerrarPago(false); });
+    $("#pagoAtras").addEventListener("click", function () { if (P.paso > 1) irPaso(P.paso - 1); });
+    $$(".pago-opcion", pago).forEach(function (b) {
+      b.addEventListener("click", function () {
+        $$(".pago-opcion", pago).forEach(function (o) { o.setAttribute("aria-checked", o === b ? "true" : "false"); });
+        P.metodo = b.getAttribute("data-metodo");
+        $("#pagoMetodoOjo").textContent = P.metodo;
+        setTimeout(function () { if (P.abierto && P.paso === 1) irPaso(2); }, reducido ? 0 : 420);
+      });
+    });
+    $$("#pagoTipo button").forEach(function (b) { b.addEventListener("click", function () { ponerTipo(b.getAttribute("data-tipo")); }); });
+    $$("#pagoForm input").forEach(function (i) { i.addEventListener("input", function () { i.classList.remove("mal"); $("#pagoError").textContent = ""; }); });
+    $("#pagoForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var nombre = $("#pagoNombre"), contacto = $("#pagoContacto"), codigo = $("#pagoCodigo"), seguir = $("#pagoSeguir");
+      $("#pagoError").textContent = "";
+      if (!P.metodo) { irPaso(1); return; }
+      if (nombre.value.trim().length < 2) return campoMal(nombre, "Pon tu nombre.");
+      if (contacto.value.trim().length < 3) return campoMal(contacto, "Pon tu WhatsApp o tu Instagram para mandarte tu código.");
+      P.venceAntes = null;
+      if (P.tipo === "renovar") {
+        if (normalizar(codigo.value).length !== 12) return campoMal(codigo, "Pon tu código completo (NL-XXXX-XXXX-XXXX).");
+        seguir.disabled = true;
+        try {
+          var r = await revisarCodigo(codigo.value);
+          if (r.motivo === "codigo") { seguir.disabled = false; return campoMal(codigo, TEXTOS.codigo); }
+          if (r.motivo === "bloqueado") { seguir.disabled = false; return campoMal(codigo, TEXTOS.bloqueado); }
+          P.venceAntes = r.vence || null;
+          codigo.value = r.codigo;
+        } catch (x) { /* sin internet: se sigue igual */ }
+        seguir.disabled = false;
+      }
+      P.folio = P.folio || nuevoFolio();
+      $("#pagoFolio").textContent = P.folio;
+      $("#pagoVista").textContent = mensajePago();
+      $("#pagoCodigoRevisar").value = P.tipo === "renovar" ? codigo.value : ($("#pagoCodigoRevisar").value || "");
+      irPaso(3);
+    });
+    $("#pagoWa").addEventListener("click", function () {
+      var url = "https://wa.me/" + destino("w") + "?text=" + encodeURIComponent(mensajePago());
+      mandarPago(this, "WhatsApp", function () { abrirFuera(url); });
+    });
+    $("#pagoMail").addEventListener("click", function () {
+      var url = "mailto:" + destino("c") + "?subject=" + encodeURIComponent("Pago NO LIMIT · " + P.metodo + " · " + P.folio) +
+                "&body=" + encodeURIComponent(mensajePago());
+      mandarPago(this, "correo", function () { location.href = url; });
+    });
+    $("#pagoRevisar").addEventListener("submit", function (e) { e.preventDefault(); revisarPago(false); });
+    $("#pagoOtra").addEventListener("click", function () {
+      clearTimeout(P.reloj);
+      guardado("nolimit_pago", null);
+      P.folio = ""; P.metodo = ""; P.venceAntes = null; P.via = "";
+      $$(".pago-opcion", pago).forEach(function (o) { o.setAttribute("aria-checked", "false"); });
+      $("#pagoCodigoRevisar").value = "";
+      estadoPago("esperando");
+      irPaso(1);
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && P.abierto && cuenta.hidden) cerrarPago(false); });
+    window.addEventListener("popstate", function () { if (location.hash === "#pago") abrirPago(true); else cerrarPago(true); });
+    if (location.hash === "#pago") abrirPago(true);
+  }
 
   pedirCuadro();
 })();
