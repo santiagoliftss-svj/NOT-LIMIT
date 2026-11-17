@@ -653,7 +653,7 @@ def _escena_campos(zoom=1.0):
     from PIL import ImageFont
     z = lambda v: int(v * zoom)                       # noqa: E731
     try:
-        f = ImageFont.truetype("DejaVuSans.ttf", z(15))
+        f = ImageFont.load_default(size=z(15))      # (la misma letra en Windows, Mac y Linux)
     except Exception:
         f = ImageFont.load_default()
     img = Image.new("RGB", (z(900), z(700)), "white")

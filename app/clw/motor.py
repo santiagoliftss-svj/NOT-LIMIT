@@ -414,8 +414,10 @@ def subrayados(img, zoom=1.0):
             continue                  # algo pegado a la raya (letras con colita): texto subrayado
         paso = max(1, int(zoom))
         cols = range(a, b, paso)
-        con_tinta = sum(1 for c in cols if tinta(c, y0 - int(16 * zoom), y0 - int(2 * zoom)) > 0)
-        if con_tinta / len(cols) > 0.6:
+        marcadas = [c for c in cols if tinta(c, y0 - int(16 * zoom), y0 - int(2 * zoom)) > 0]
+        cubre = len(marcadas) / len(cols)
+        tramo = (marcadas[-1] - marcadas[0] + 1) / ancho if marcadas else 0.0
+        if cubre > 0.6 or (tramo >= 0.75 and cubre >= 0.35):
             continue                  # renglon de texto subrayado (un enlace), no un espacio para escribir
         lados = {}
         for nombre, rango in (("abajo", (y1 + 1, y1 + 1 + lado)), ("arriba", (y0 - lado, y0))):
