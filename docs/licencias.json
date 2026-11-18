@@ -1,10 +1,13 @@
 {
- "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). bloqueadas: huellas bloqueadas.",
- "precio": "150 MXN al mes",
+ "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). planes: numero -> basico | pro | premium (si no esta, es pro). bloqueadas: huellas bloqueadas.",
+ "precio": "Basico 99, Pro 199, Premium 449 MXN al mes",
  "vencen": {
   "1": "2026-12-13",
   "300": "2099-12-31",
   "2": "2026-12-13"
+ },
+ "planes": {
+  "300": "premium"
  },
  "bloqueadas": [],
  "extra": {},

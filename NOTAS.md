@@ -4,6 +4,14 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.3 (planes)**
+
+- Ahora hay 3 planes: **Básico**, **Pro** y **Premium**. Abajo de la app ves cuál tienes y hasta cuándo.
+- Básico: opción múltiple, casillas, verdadero/falso y preguntas abiertas. Si picas una gráfica, un problema con números, un menú o algo de arrastrar, te dice la respuesta y que eso es del plan Pro.
+- Pro: todo lo que contesta NO LIMIT, con modo preciso.
+- Premium: todo lo del Pro, instalación por videollamada, soporte directo por WhatsApp, 2 compus y primero en probar lo nuevo.
+- Si ya tenías NO LIMIT, tu código sigue igual y queda como Pro.
+
 **Nuevo en 2.2.1**
 
 - Si la IA se tarda demasiado en contestar (pasa con la clave gratis de Gemini cuando está saturada), NO LIMIT prueba sola otro modelo en vez de marcar "No hay conexión".

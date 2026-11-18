@@ -250,3 +250,19 @@ def prueba_bot_se_apaga_si_se_vence_el_mes():
         while not b.eventos.empty():
             ev.append(b.eventos.get_nowait())
         assert not b.activo and any(e[0] == "actividad" and "venció" in e[1] for e in ev), ev
+
+
+def prueba_planes_basico_pro_y_premium():
+    with _Sin(vence=_dia(20)):
+        e = licencia.estado_codigo(CODIGO)
+        assert e.plan == "pro" and "Plan Pro" in e.mensaje             # sin plan en la lista = Pro (los de antes)
+        licencia._aplicar({"codigos": {}, "vencen": {str(NUM): _dia(20)}, "planes": {str(NUM): "basico"}})
+        e = licencia.estado_codigo(CODIGO)
+        assert e.activa and e.plan == "basico" and "Plan Básico" in e.mensaje, e.mensaje
+        licencia._aplicar({"vencen": {str(NUM): _dia(20)}, "planes": {str(NUM): "premium"}})
+        assert licencia.estado_codigo(CODIGO).plan == "premium"
+        licencia._aplicar({"vencen": {str(NUM): _dia(20)}, "planes": {str(NUM): "lo que sea"}})
+        assert licencia.estado_codigo(CODIGO).plan == "pro"
+    assert licencia.permite("basico", "opcion_unica") and licencia.permite("basico", "abierta")
+    assert not licencia.permite("basico", "graficar") and not licencia.permite("basico", "numerica")
+    assert licencia.permite("pro", "graficar") and licencia.permite("premium", "arrastrar")

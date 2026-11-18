@@ -185,7 +185,8 @@ class Bot:
     def _preguntador(self):
         m, id_real = self.modelo()
         clave = self.config.clave(m.proveedor)
-        preciso = bool(self.config["modo_preciso"])
+        # el modo preciso es del plan Pro y Premium
+        preciso = bool(self.config["modo_preciso"]) and licencia.estado(self.config).plan != "basico"
         # ubicar y revisar van con el modelo ligero del mismo proveedor: es rapido y (en Gemini gratis) usa
         # otro cupo, asi el del modelo que contesta alcanza para mas preguntas
         ligero = self.config["modelos_propios"].get(LIGEROS.get(m.proveedor, ""), LIGEROS.get(m.proveedor)) or id_real
@@ -245,6 +246,14 @@ class Bot:
             return None
         datos = motor.interpretar(salida)
         plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles, self.ocr, plano)
+        lic = licencia.estado(self.config)
+        if not licencia.permite(lic.plan, plan.tipo or ub.tipo):
+            # el plan Basico contesta lo esencial; lo demas solo se dice (sin tocar nada)
+            log.info("plan basico: tipo %s no incluido", plan.tipo or ub.tipo)
+            r = _corto(plan.respuesta, 70)
+            self._emitir("actividad", "Esa es del plan Pro (gráficas, problemas, menús, arrastrar). "
+                         + (f"Respuesta: {r}" if r else "Sube a Pro para que la conteste sola."), "info")
+            return None
         log.info("modelo=%s ubicar=%.1fs ia=%.1fs region=%s tipo=%s/%s cajas=%d campos=%d controles=%d pasos=%d "
                  "rechazadas=%s cuentas=%s plano=%s salida=%s", id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo,
                  len(cajas), len(campos), len(controles), len(plan.pasos), [m for _, m in plan.rechazadas][:4],

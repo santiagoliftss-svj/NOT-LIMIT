@@ -78,7 +78,7 @@ class Parche:
         self.antes = {}
         for nombre, valor in self.cambios.items():
             mod, attr = nombre.split("__")
-            m = {"cerebro": cerebro, "motor": motor}[mod]
+            m = {"cerebro": cerebro, "motor": motor, "licencia": __import__("clw.licencia", fromlist=["x"])}[mod]
             self.antes[(m, attr)] = getattr(m, attr)
             setattr(m, attr, valor)
         return self
@@ -1026,3 +1026,22 @@ def prueba_si_ubicar_no_contesta_sigue_con_lo_del_puntero():
     img = Image.new("RGB", (800, 600), "white")
     ub = cerebro.ubicar(img, 400, 300, preguntar)
     assert ub.hay and ub.respaldo and ub.region == (0, 0, 800, 600)
+
+
+def prueba_plan_basico_no_contesta_graficas_solo_avisa():
+    from clw import licencia
+    p = Pantalla()
+    cajas = _quiz(p)
+    cli = ClienteFases(
+        ubicar=lambda t: {"hay_pregunta": True, "caja": [60, 20, 900, 660], "tipo": "graficar"},
+        contestar=lambda t: {"tipo": "graficar", "respuesta": "y = 2x + 2",
+                             "acciones": [{"hacer": "clic", "en": {"x": 300, "y": 300}}]})
+    b, c = _bot(cli, p)
+
+    class Est:
+        activa, plan, nombre_plan, motivo, mensaje = True, "basico", "Básico", "ok", ""
+    with Parche(cerebro__leer=lambda img, px, py, zoom, ocr: (cajas, []), motor__capturar_zona=p.foto,
+                licencia__estado=lambda config: Est()):
+        b.contestar(p.img.copy(), 0, 0, 150, 125, 1.0)
+    assert p.log == [], p.log
+    assert any("plan Pro" in e[1] and "y = 2x + 2" in e[1] for e in _eventos(b) if e[0] == "actividad"), _eventos(b)

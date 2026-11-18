@@ -28,12 +28,17 @@ VUELTAS = 120_000                                   # huella lenta: probar codig
 ALFABETO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"      # sin I, L, O ni U (no se confunden al escribirlo)
 LARGO = 12
 URL = version.PAGINA + "licencias.json"
-PRECIO = "150 pesos al mes"
+PRECIO = "desde 99 pesos al mes"
+# Planes: Basico (lo esencial), Pro (todo) y Premium (todo + atencion 1 a 1). Los codigos que no dicen plan son Pro.
+PLANES = {"basico": "Básico", "pro": "Pro", "premium": "Premium"}
+PLAN_NORMAL = "pro"
+# Lo que contesta el plan Basico; lo demas (graficas, problemas, menus, arrastrar...) es del Pro
+TIPOS_BASICO = {"opcion_unica", "opcion_multiple", "verdadero_falso", "abierta", "opcion", "otra", ""}
 REVISAR_CADA = 3 * 3600                             # la app vuelve a ver la lista cada 3 horas
 SIN_REVISAR_MAX = 3 * 24 * 3600                     # sin poder revisarla en 3 dias: pide internet
 PRUEBA = False                                       # (solo las pruebas automaticas)
 
-_remoto = {"extra": {}, "bloqueadas": set(), "vencen": {}, "hoy": "", "revisado": 0.0}
+_remoto = {"extra": {}, "bloqueadas": set(), "vencen": {}, "planes": {}, "hoy": "", "revisado": 0.0}
 _cargado = False
 _candado = threading.Lock()
 _memo = {}
@@ -94,6 +99,10 @@ def _aplicar(datos, hoy=None, revisado=None):
             if isinstance(h, str) and len(h) == 64 and str(n).isdigit():
                 extra.setdefault(h.lower(), int(n))
     bloq = {str(h).lower() for h in datos.get("bloqueadas", []) if isinstance(h, str)}
+    planes = {}
+    for n, pl in (datos.get("planes") or {}).items():
+        if str(n).isdigit() and str(pl).lower() in PLANES:
+            planes[int(n)] = str(pl).lower()
     vencen = {}
     for n, f in (datos.get("vencen") or {}).items():
         try:
@@ -102,6 +111,7 @@ def _aplicar(datos, hoy=None, revisado=None):
             continue
     with _candado:
         _remoto["extra"], _remoto["bloqueadas"], _remoto["vencen"] = extra, bloq, vencen
+        _remoto["planes"] = planes
         if hoy:
             _remoto["hoy"] = hoy
         if revisado is not None:
@@ -169,16 +179,22 @@ def refrescar_en_fondo(al_terminar=None):
 # ---------------------------------------------------------------- el estado de un codigo
 
 class Estado:
-    def __init__(self, activa, motivo, numero=None, vence=None):
+    def __init__(self, activa, motivo, numero=None, vence=None, plan=PLAN_NORMAL):
         self.activa = activa
         self.motivo = motivo          # ok | sin_codigo | codigo | bloqueado | sin_activar | vencido | sin_revisar
         self.numero = numero
         self.vence = vence            # "AAAA-MM-DD" o None
+        self.plan = plan if plan in PLANES else PLAN_NORMAL
+
+    @property
+    def nombre_plan(self):
+        return PLANES[self.plan]
 
     @property
     def mensaje(self):
         if self.motivo == "ok":
-            return f"Activa hasta el {fecha_corta(self.vence)}." if self.vence else "Activa."
+            p = f"Plan {self.nombre_plan} · "
+            return p + (f"activa hasta el {fecha_corta(self.vence)}." if self.vence else "activa.")
         if self.motivo == "sin_codigo":
             return "Pega tu código de NO LIMIT para empezar."
         if self.motivo == "codigo":
@@ -189,7 +205,7 @@ class Estado:
         if self.motivo == "sin_activar":
             return "Tu código todavía no está activado. Paga tu mes y pídele a tu vendedor que lo active."
         if self.motivo == "vencido":
-            return (f"Tu mes venció el {fecha_corta(self.vence)}. Paga tu renovación ({PRECIO}) y vuelve a "
+            return (f"Tu mes venció el {fecha_corta(self.vence)}. Renueva tu plan y vuelve a "
                     "tocar GUARDAR.")
         if self.motivo == "sin_revisar":
             return "Conéctate a internet para revisar tu suscripción y vuelve a tocar GUARDAR."
@@ -230,6 +246,7 @@ def estado_codigo(texto, ahora=None):
         bloqueado = h in _remoto["bloqueadas"]
         vence = _remoto["vencen"].get(num)
         revisado = _remoto["revisado"]
+        plan = _remoto["planes"].get(num, PLAN_NORMAL)
     if bloqueado:
         return Estado(False, "bloqueado", num, vence)
     if not revisado or ahora - revisado > SIN_REVISAR_MAX:
@@ -237,8 +254,15 @@ def estado_codigo(texto, ahora=None):
     if not vence:
         return Estado(False, "sin_activar", num)
     if vence < hoy():
-        return Estado(False, "vencido", num, vence)
-    return Estado(True, "ok", num, vence)
+        return Estado(False, "vencido", num, vence, plan)
+    return Estado(True, "ok", num, vence, plan)
+
+
+def permite(plan, tipo):
+    """True si ese plan contesta ese tipo de pregunta (el Basico solo lo esencial)."""
+    if plan != "basico":
+        return True
+    return str(tipo or "").strip().lower() in TIPOS_BASICO
 
 
 def estado(config):

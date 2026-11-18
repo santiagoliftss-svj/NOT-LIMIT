@@ -865,7 +865,22 @@ class Interfaz:
             l.texto_centrado_v(356 - ancho / 2, PIE_Y, txt, "mini", TEXTO, ancla="ma")
             l.zona("actualizar", 352 - ancho, PIE_Y - 16, ancho + 8, 32)
         else:
-            l.texto_centrado_v(354, PIE_Y, f"v{version.VERSION}", "mini", TENUE, ancla="ra")
+            l.texto_centrado_v(354, PIE_Y, f"{self._plan_texto()}v{version.VERSION}", "mini", TENUE, ancla="ra")
+
+    def _plan_texto(self):
+        """'Pro · ' (el plan del codigo), revisado cuando mucho cada 20 segundos (la huella del codigo es lenta)."""
+        ahora = time.time()
+        cache = getattr(self, "_plan_cache", None)
+        codigo = self.config.get("licencia") or ""
+        if cache and cache[0] == codigo and ahora - cache[1] < 20:
+            return cache[2]
+        try:
+            est = licencia.estado(self.config)
+            txt = f"{est.nombre_plan} · " if est.activa else ""
+        except Exception:
+            txt = ""
+        self._plan_cache = (codigo, ahora, txt)
+        return txt
 
     def _fila(self, l, i, fila, p):
         hora, texto, tipo = fila

@@ -911,6 +911,64 @@
   .precio .acciones { margin-top: 38px; }
   .precio .nota-clave { margin-top: 22px; font-size: 13.5px; color: var(--tenue); }
 
+  /* ------------------------------------------------ planes (Basico · Pro · Premium) */
+  .periodo { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin: 56px auto 0; padding: 4px; border-radius: 999px;
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .periodo-centro { text-align: center; }
+  .periodo button { position: relative; z-index: 1; height: 42px; padding: 0 22px; border-radius: 999px; font-weight: 700; font-size: 14.5px; color: var(--gris); transition: color .3s ease; white-space: nowrap; }
+  .periodo button[aria-pressed="true"] { color: #000; }
+  .periodo button small { margin-left: 6px; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 800; background: #30d158; color: #00320f; }
+  .periodo .fondo { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 999px; background: #fff; transition: transform .55s var(--rebote); }
+  .periodo[data-periodo="3"] .fondo { transform: translateX(100%); }
+  .planes { margin: 34px auto 0; max-width: 1080px; display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 16px; align-items: center; }
+  .plan { position: relative; border-radius: 28px; padding: 30px 26px 26px; text-align: left; display: flex; flex-direction: column; min-height: 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.012)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+    transition: transform .45s var(--curva), box-shadow .3s ease; }
+  .plan:hover { transform: translateY(-4px); }
+  .plan h3 { font-size: 20px; font-weight: 780; letter-spacing: -0.02em; }
+  .plan .para { margin-top: 4px; color: var(--gris); font-size: 14.5px; min-height: 42px; }
+  .plan .monto { margin-top: 18px; display: flex; align-items: baseline; gap: 6px; }
+  .plan .monto b { font-size: 52px; font-weight: 860; letter-spacing: -0.05em; line-height: 1; }
+  .plan .monto b small { font-size: .42em; vertical-align: .75em; margin-right: 2px; font-weight: 700; }
+  .plan .monto span { color: var(--gris); font-size: 14.5px; }
+  .plan .ahorro { min-height: 20px; margin-top: 6px; font-size: 13px; font-weight: 700; color: #30d158; opacity: 0; transition: opacity .3s ease; }
+  .planes[data-periodo="3"] .ahorro { opacity: 1; }
+  .plan ul { list-style: none; margin: 20px 0 24px; display: grid; gap: 10px; flex: 1; }
+  .plan li { display: flex; gap: 10px; font-size: 14.5px; line-height: 1.45; }
+  .plan li svg { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+  .plan li.no { color: var(--tenue); }
+  .plan li.no svg { opacity: .35; }
+  .plan .elegir { height: 52px; border-radius: 999px; font-weight: 750; font-size: 15.5px; width: 100%;
+    background: rgba(255,255,255,.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); color: var(--tinta); transition: transform .2s var(--curva), background .25s ease; }
+  .plan .elegir:hover { background: rgba(255,255,255,.14); }
+  .plan .elegir:active { transform: scale(.97); }
+  .plan.pro { padding: 40px 30px 30px; background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.55), 0 30px 90px rgba(255,255,255,.08); }
+  .plan.pro .monto b { font-size: 64px; }
+  .plan.pro .elegir { background: #fff; color: #000; box-shadow: 0 10px 40px rgba(255,255,255,.18); }
+  .plan.pro .elegir:hover { background: #f2f2f2; }
+  .plan .insignia { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; white-space: nowrap;
+    font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #000; background: linear-gradient(180deg, #fff, #c9c9cf);
+    box-shadow: 0 8px 26px rgba(255,255,255,.2); }
+  .plan.premium .insignia { background: linear-gradient(180deg, #f5d98a, #b8933a); color: #2a1d00; box-shadow: none; }
+  .plan.premium h3 { background: linear-gradient(180deg, #f8e3a6, #c9a24a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .anima-precio { animation: precioSalta .5s var(--rebote); }
+  @keyframes precioSalta { 0% { transform: translateY(6px); opacity: .3; } 100% { transform: none; opacity: 1; } }
+  .planes-nota { margin: 22px auto 0; max-width: 640px; text-align: center; color: var(--tenue); font-size: 13.5px; line-height: 1.55; }
+  @media (max-width: 920px) {
+    .planes { grid-template-columns: 1fr; max-width: 460px; }
+    .plan.pro { order: -1; }
+  }
+  .pago-plan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 10px; }
+  .pago-plan button { padding: 12px 6px; border-radius: 14px; text-align: center; background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    transition: background .25s ease, box-shadow .25s ease, transform .35s var(--rebote); }
+  .pago-plan button b { display: block; font-size: 14.5px; }
+  .pago-plan button span { display: block; margin-top: 2px; font-size: 12.5px; color: var(--gris); }
+  .pago-plan button[aria-checked="true"] { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 2px #fff; transform: scale(1.03); }
+  .pago-periodo { display: flex; gap: 8px; margin: 0 0 16px; }
+  .pago-periodo button { flex: 1; height: 38px; border-radius: 999px; font-size: 13.5px; font-weight: 650; color: var(--gris); background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  .pago-periodo button[aria-checked="true"] { background: #fff; color: #000; box-shadow: none; }
+
   /* ------------------------------------------------ instalar */
   .linea-tiempo { position: relative; margin-top: 72px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
   .linea-tiempo::before { content: ""; position: absolute; left: 24px; right: calc((100% - 72px) / 4 - 24px); top: 23px; height: 2px; background: rgba(255,255,255,.1); }
@@ -1183,7 +1241,7 @@
 
     <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
       <span class="vivo" aria-hidden="true"></span>
-      <span>Nuevo: <span class="js-version">v2.2</span> · traza gráficas siguiendo la instrucción</span>
+      <span>Nuevo: <span class="js-version">v2.3</span> · planes Básico, Pro y Premium</span>
       <span class="flecha" aria-hidden="true">→</span>
     </a>
 
@@ -1518,20 +1576,64 @@
         <div class="numero"><b class="plata"><span class="cuenta" data-desde="0" data-hasta="2">2</span></b><span>sistemas: Windows y Mac</span></div>
       </div>
 
+      <div class="periodo-centro" data-revela>
+        <div class="periodo" id="periodo" data-periodo="1" role="group" aria-label="Cada cuánto pagas">
+          <span class="fondo" aria-hidden="true"></span>
+          <button type="button" data-periodo="1" aria-pressed="true">Cada mes</button>
+          <button type="button" data-periodo="3" aria-pressed="false">3 meses<small>AHORRA</small></button>
+        </div>
+      </div>
+      <div class="planes" id="planes" data-periodo="1">
+        <article class="plan basico" data-revela>
+          <h3>Básico</h3>
+          <p class="para">Lo esencial para tareas sencillas.</p>
+          <div class="monto"><b class="js-monto" data-1="99" data-3="259"><small>$</small>99</b><span class="js-per">/ mes</span></div>
+          <p class="ahorro" data-ahorro="38">Ahorras $38</p>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Opción múltiple, casillas y verdadero o falso</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Preguntas abiertas</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Windows o Mac</span></li>
+            <li class=no><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Gráficas y problemas con números</span></li>
+            <li class=no><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Menús, relacionar, ordenar y arrastrar</span></li>
+            <li class=no><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Modo preciso</span></li>
+          </ul>
+          <button class="elegir js-plan" type="button" data-plan="basico">Elegir Básico</button>
+        </article>
+        <article class="plan pro" data-revela style="--retraso:.06s">
+          <span class="insignia">Recomendado</span>
+          <h3>Pro</h3>
+          <p class="para">Todo lo que contesta NO LIMIT, sin límite.</p>
+          <div class="monto"><b class="js-monto" data-1="199" data-3="499"><small>$</small>199</b><span class="js-per">/ mes</span></div>
+          <p class="ahorro" data-ahorro="98">Ahorras $98</p>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>Todo lo del Básico</b></span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Gráficas: rectas, parábolas, círculos y desigualdades</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Problemas con números con la cuenta comprobada</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Menús, relacionar, ordenar, arrastrar, ecuaciones y matrices</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Modo preciso: piensa más en lo difícil</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Contesta solo lo que señalas, o todo</span></li>
+          </ul>
+          <button class="elegir js-plan" type="button" data-plan="pro">Elegir Pro</button>
+        </article>
+        <article class="plan premium" data-revela style="--retraso:.12s">
+          <span class="insignia">Atención VIP</span>
+          <h3>Premium</h3>
+          <p class="para">Pro, más alguien que te ayuda 1 a 1.</p>
+          <div class="monto"><b class="js-monto" data-1="449" data-3="1199"><small>$</small>449</b><span class="js-per">/ mes</span></div>
+          <p class="ahorro" data-ahorro="148">Ahorras $148</p>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>Todo lo del Pro</b></span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Te la instalamos y configuramos por videollamada</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Soporte directo por WhatsApp, primero en la fila</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Úsala en 2 compus (por ejemplo Windows y Mac)</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Primero en probar lo nuevo</span></li>
+          </ul>
+          <button class="elegir js-plan" type="button" data-plan="premium">Elegir Premium</button>
+        </article>
+      </div>
+      <p class="planes-nota">Todos los planes: tu código es tu cuenta, se actualiza sola en Windows y Mac, Gemini funciona con una clave gratis de Google y tus preguntas no pasan por ningún servidor nuestro. Puedes cambiar de plan cuando quieras.</p>
+
       <div class="precio" data-revela>
-        <div class="cero plata"><small>$</small>150</div>
-        <p class="nunca">MXN al mes · preguntas sin límite</p>
-        <ul class="lista-chulos">
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tu código (NL-XXXX-XXXX-XXXX) es tu cuenta: lo pegas en la app una vez y con él entras aquí.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se renueva cada mes. Si no pagas, la app se pausa sola hasta que pagues.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Contesta opción múltiple, casillas, completar, menús, relacionar, abiertas, problemas, ordenar y arrastrar.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Traza gráficas: rectas, parábolas, círculos, puntos y desigualdades, siguiendo la instrucción.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Comprueba las cuentas y revisa que todo quedó antes de terminar.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Se actualiza sola en Windows y en Mac.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Gemini Flash funciona con una clave gratis de Google.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Con Claude o ChatGPT pagas solo lo que usas, directo a ellos.</span></li>
-          <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Tus preguntas no pasan por ningún servidor nuestro.</span></li>
-        </ul>
         <div class="acciones">
           <div class="par-descargas">
           <a class="liquido descarga" href="https://github.com/santiagoliftss-svj/NOT-LIMIT/releases/latest/download/NO-LIMIT-Setup.exe">
@@ -1544,8 +1646,8 @@
         </div>
         <p class="nota-clave js-meta">Windows 10 y 11 · Mac con macOS 15 o más nuevo</p>
         <div class="pagar" id="pagar">
-          <h3>Paga tu mes</h3>
-          <p>150 pesos al mes. Al pagar te llega tu código NL-XXXX-XXXX-XXXX (o se renueva el tuyo) y entras con él en <b>Entrar</b>.</p>
+          <h3>Paga tu plan</h3>
+          <p>Elige tu plan arriba o aquí mismo. Al pagar te llega tu código NL-XXXX-XXXX-XXXX (o se renueva el tuyo) y entras con él en <b>Entrar</b>.</p>
           <div class="pagar-botones">
             <button class="pagar-tarjeta js-tarjeta" type="button" aria-disabled="true"><svg aria-hidden="true"><use href="#i-tarjeta"/></svg>Pagar con tarjeta<span class="pronto">Muy pronto</span></button>
             <button class="vidrio-btn js-comprar" type="button"><svg aria-hidden="true"><use href="#i-efectivo"/></svg>Pagar en efectivo o transferencia</button>
@@ -1670,7 +1772,7 @@
         </article>
         <article class="ay-item" data-tema="pagos" data-claves="pagar precio cuanto cuesta efectivo transferencia comprar tarjeta">
           <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Pagos</span><span class="titulo-q">¿Cómo pago y cuánto cuesta?</span><i class="mas"></i></button>
-          <div class="ay-r"><div><p><b>150 pesos al mes.</b> En <a href="#precio">Precio</a> toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar. Cuando se acepta tu pago, se pone en verde.</p></div></div>
+          <div class="ay-r"><div><p><b>Básico 99, Pro 199 o Premium 449 pesos al mes</b> (o 3 meses con descuento). En <a href="#precio">Precio</a> elige tu plan y toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar. Cuando se acepta tu pago, se pone en verde.</p></div></div>
         </article>
         <article class="ay-item" data-tema="pagos" data-claves="codigo vencido bloqueado renovar hasta cuando pagado cuenta">
           <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Pagos</span><span class="titulo-q">Mi código dice vencido o bloqueado</span><i class="mas"></i></button>
@@ -1760,7 +1862,7 @@
         <h2 class="titulo plata">Lo que todos preguntan.</h2>
       </header>
       <div class="faq" id="faq" data-revela>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Cuesta <b>150 pesos al mes</b>. En <b>Precio</b> toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar y tu código NL-XXXX-XXXX-XXXX. Ahí mismo ves en verde cuando ya se aceptó tu pago. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Hay tres planes: <b>Básico 99</b>, <b>Pro 199</b> y <b>Premium 449</b> pesos al mes, o 3 meses con descuento. En <b>Precio</b> elige tu plan y toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar y tu código NL-XXXX-XXXX-XXXX. Ahí mismo ves en verde cuando ya se aceptó tu pago. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Contesta gráficas?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí. Lee la instrucción (“Grafica la recta que…”), saca la ecuación o los puntos, escoge la herramienta de la gráfica si hay que escogerla y da clic justo en los puntos, usando los números de los ejes. Traza rectas, segmentos, rayos, parábolas, círculos, valor absoluto, desigualdades (con línea continua o punteada y el lado sombreado) y sistemas. Funciona con cuadrícula punteada o de líneas, números de 1 en 1, de 2 en 2, de 5 en 5 o con decimales.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Puedo hacer que conteste solo una parte?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí: contesta lo que señalas. Si haces Ctrl + clic sobre un cuadro o un inciso, contesta solo ese. Si lo haces sobre la instrucción general, contesta todo.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué tipos de preguntas contesta?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Opción múltiple, varias casillas, verdadero o falso, completar espacios, menús desplegables (también dentro de un párrafo), relacionar columnas, respuesta corta y ensayo, problemas con números (aunque cambien, y comprueba la cuenta), editores de ecuaciones con fracciones y exponentes, dar clic en una parte de una imagen o diagrama, <b>trazar gráficas</b> (rectas, parábolas, círculos, puntos y desigualdades), leer gráficas y tablas, matrices, ordenar arrastrando, arrastrar etiquetas a un esquema y las cajas de los juegos de preguntas. También sigue instrucciones como “Grafica…” o “Completa…”. Lo que no puede: escuchar audio o ver un video completo, ni dibujar a mano libre. <a href="#tipos">Ver la lista completa</a>.</p></div></div></div>
@@ -1834,7 +1936,7 @@
     </header>
     <div class="pago-cuerpo">
       <section class="pago-paso activo" data-paso="1">
-        <span class="ojo">NO LIMIT · 150 MXN al mes</span>
+        <span class="ojo" id="pagoOjoPlan">NO LIMIT · Plan Pro · $199 al mes</span>
         <h3>¿Cómo vas a pagar?</h3>
         <p class="pago-sub">Eliges cómo, mandas un mensaje y te contestamos con los datos para pagar. Cuando se confirma, tu código se activa y aquí se pone en verde.</p>
         <div class="pago-opciones" role="radiogroup" aria-label="Forma de pago">
@@ -1845,6 +1947,15 @@
       <section class="pago-paso" data-paso="2">
         <span class="ojo" id="pagoMetodoOjo">Transferencia</span>
         <h3>Tus datos</h3>
+        <div class="pago-plan" id="pagoPlan" role="radiogroup" aria-label="Plan">
+          <button type="button" role="radio" aria-checked="false" data-plan="basico"><b>Básico</b><span>$99</span></button>
+          <button type="button" role="radio" aria-checked="true" data-plan="pro"><b>Pro</b><span>$199</span></button>
+          <button type="button" role="radio" aria-checked="false" data-plan="premium"><b>Premium</b><span>$449</span></button>
+        </div>
+        <div class="pago-periodo" id="pagoPeriodo" role="radiogroup" aria-label="Cada cuánto">
+          <button type="button" role="radio" aria-checked="true" data-periodo="1">1 mes</button>
+          <button type="button" role="radio" aria-checked="false" data-periodo="3">3 meses (ahorra)</button>
+        </div>
         <div class="pago-tipo" id="pagoTipo" role="radiogroup" aria-label="Qué vas a pagar" data-tipo="nuevo">
           <span class="pago-tipo-fondo" aria-hidden="true"></span>
           <button type="button" role="radio" aria-checked="true" data-tipo="nuevo">Primer mes</button>
@@ -1934,7 +2045,7 @@
         <p>Una app para Windows y Mac que lee la pregunta que señalas en tu pantalla, la resuelve con la IA que elijas (usando tu propia clave) y la contesta con el mouse y el teclado.</p>
         <h4>Tu suscripción</h4>
         <ul>
-          <li>Cuesta 150 MXN al mes. Tu código es personal: uno por persona. Si se comparte, se puede bloquear.</li>
+          <li>Hay tres planes: Básico (99 MXN al mes), Pro (199) y Premium (449), o 3 meses por adelantado con descuento. Tu código es personal: uno por persona (Premium: hasta 2 compus tuyas). Si se comparte, se puede bloquear.</li>
           <li>Si no renuevas, la app se pausa sola al vencer tu mes. No hay cargos automáticos.</li>
         </ul>
         <h4>Tu clave de IA</h4>
@@ -2771,7 +2882,7 @@
         CUENTA.estado = null;
         cMsg.className = "cuenta-msg mal";
         cMsg.textContent = e.motivo === "vencido"
-          ? "Tu mes venció el " + fechaCorta(e.vence) + ". Paga tu renovación (150 pesos) y vuelve a entrar."
+          ? "Tu mes venció el " + fechaCorta(e.vence) + ". Renueva tu plan y vuelve a entrar."
           : TEXTOS[e.motivo] || TEXTOS.codigo;
         if (e.motivo === "vencido") guardado("nolimit_codigo", e.codigo);
         CUENTA.porPagar = (e.motivo === "vencido" || e.motivo === "sin_activar") ? e.codigo : null;
@@ -2804,6 +2915,22 @@
   } else if (cuenta) {
     $("#btnCuenta").hidden = true;          // navegador muy viejo: las descargas quedan directas
   }
+  /* ---------------------------------------------------------------- PLANES: cada mes o 3 meses */
+  var periodoPlanes = 1;
+  $$("#periodo button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      periodoPlanes = +b.getAttribute("data-periodo");
+      $("#periodo").setAttribute("data-periodo", periodoPlanes);
+      $("#planes").setAttribute("data-periodo", periodoPlanes);
+      $$("#periodo button").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      $$("#planes .js-monto").forEach(function (m) {
+        m.innerHTML = "<small>$</small>" + (+m.getAttribute("data-" + periodoPlanes)).toLocaleString("es-MX");
+        if (!reducido) { m.classList.remove("anima-precio"); void m.offsetWidth; m.classList.add("anima-precio"); }
+      });
+      $$("#planes .js-per").forEach(function (e) { e.textContent = periodoPlanes === 3 ? "/ 3 meses" : "/ mes"; });
+    });
+  });
+
   /* ---------------------------------------------------------------- Pagar en efectivo o transferencia
      Tiene su propia pantalla (#pago): eliges como pagas, pones tus datos y se abre WhatsApp o el correo con el
      mensaje ya escrito para el dueno (su numero y su correo NO se muestran en la pagina). Despues, con tu codigo,
@@ -2812,7 +2939,24 @@
   var DESTINO = { w: "NzE5MzYxNDM0NDI1", c: "bW9jLmxpYW1nQHNzdGZpbC5vZ2FpdG5hcw==" };
   function destino(k) { try { return atob(DESTINO[k]).split("").reverse().join(""); } catch (e) { return ""; } }
   var pago = $("#pago");
-  var P = { paso: 1, metodo: "", tipo: "nuevo", folio: "", venceAntes: null, via: "", reloj: null, abierto: false, empujado: false };
+  var P = { paso: 1, metodo: "", tipo: "nuevo", folio: "", venceAntes: null, via: "", reloj: null, abierto: false, empujado: false,
+            plan: "pro", periodo: 1 };
+  var PRECIOS = { basico: { 1: 99, 3: 259 }, pro: { 1: 199, 3: 499 }, premium: { 1: 449, 3: 1199 } };
+  var NOMBRE_PLAN = { basico: "Básico", pro: "Pro", premium: "Premium" };
+  function textoPlan() {
+    return "Plan " + NOMBRE_PLAN[P.plan] + " · $" + PRECIOS[P.plan][P.periodo].toLocaleString("es-MX") + (P.periodo === 3 ? " por 3 meses" : " al mes");
+  }
+  function ponerPlan(plan, periodo) {
+    if (plan && PRECIOS[plan]) P.plan = plan;
+    if (periodo === 1 || periodo === 3) P.periodo = periodo;
+    $$("#pagoPlan button").forEach(function (b) {
+      var k = b.getAttribute("data-plan");
+      b.setAttribute("aria-checked", k === P.plan ? "true" : "false");
+      b.lastChild.textContent = "$" + PRECIOS[k][P.periodo].toLocaleString("es-MX");
+    });
+    $$("#pagoPeriodo button").forEach(function (b) { b.setAttribute("aria-checked", +b.getAttribute("data-periodo") === P.periodo ? "true" : "false"); });
+    if ($("#pagoOjoPlan")) $("#pagoOjoPlan").textContent = "NO LIMIT · " + textoPlan();
+  }
   var pPasos = $$(".pago-paso", pago), pPuntos = $$("#pagoPuntos i");
 
   function nuevoFolio() {
@@ -2822,7 +2966,7 @@
     return "P-" + t;
   }
   function guardarPago() {
-    guardado("nolimit_pago", JSON.stringify({ folio: P.folio, metodo: P.metodo, tipo: P.tipo, venceAntes: P.venceAntes,
+    guardado("nolimit_pago", JSON.stringify({ folio: P.folio, metodo: P.metodo, tipo: P.tipo, venceAntes: P.venceAntes, plan: P.plan, periodo: P.periodo,
       via: P.via, codigo: $("#pagoCodigoRevisar").value || "", t: Date.now() }));
   }
   function leerPago() {
@@ -2864,6 +3008,7 @@
     var g = leerPago();
     if (g) {
       P.folio = g.folio; P.metodo = g.metodo || ""; P.tipo = g.tipo || "nuevo"; P.venceAntes = g.venceAntes || null; P.via = g.via || "";
+      ponerPlan(g.plan || "pro", g.periodo || 1);
       $("#pagoCodigoRevisar").value = g.codigo || (P.tipo === "renovar" ? guardado("nolimit_codigo") || "" : "");
       irPaso(4);
       estadoPago("esperando");
@@ -2893,7 +3038,7 @@
     if (t === "renovar" && !$("#pagoCodigo").value) $("#pagoCodigo").value = guardado("nolimit_codigo") || "";
   }
   function mensajePago() {
-    var l = ["Hola, quiero pagar NO LIMIT (150 MXN, 1 mes) por " + P.metodo.toLowerCase() + ".",
+    var l = ["Hola, quiero pagar NO LIMIT " + textoPlan() + " por " + P.metodo.toLowerCase() + ".",
              "Folio: " + P.folio,
              "Es: " + (P.tipo === "renovar" ? "renovación" : "primer mes"),
              "Nombre: " + $("#pagoNombre").value.trim(),
@@ -2999,6 +3144,17 @@
 
   if (pago) {
     $$(".js-comprar").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); abrirPago(false); }); });
+    $$(".js-plan").forEach(function (b) {
+      b.addEventListener("click", function () {
+        guardado("nolimit_pago", null);
+        P.paso = 1;
+        ponerPlan(b.getAttribute("data-plan"), periodoPlanes);
+        abrirPago(false);
+      });
+    });
+    $$("#pagoPlan button").forEach(function (b) { b.addEventListener("click", function () { ponerPlan(b.getAttribute("data-plan")); }); });
+    $$("#pagoPeriodo button").forEach(function (b) { b.addEventListener("click", function () { ponerPlan(null, +b.getAttribute("data-periodo")); }); });
+    ponerPlan("pro", 1);
     $$(".js-tarjeta").forEach(function (b) {
       if (PAGO_TARJETA) {
         b.setAttribute("aria-disabled", "false");
