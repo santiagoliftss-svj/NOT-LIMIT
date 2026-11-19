@@ -271,11 +271,32 @@ def estado_codigo(texto, ahora=None):
     return Estado(True, "ok", num, vence, plan)
 
 
+# tipos que de seguro son del Pro (si la vista ya lo dice, el Basico ni gasta la pregunta en resolverla)
+TIPOS_SOLO_PRO = {"graficar", "desplegable", "ordenar", "arrastrar", "relacionar", "matriz", "matematica", "estadistica",
+                  "simulacion", "zona_clic"}
+MENSAJE_PRO = "Esa es del plan Pro (gráficas, problemas con números, menús, ordenar y arrastrar). Sube a Pro para que la conteste."
+
+
 def permite(plan, tipo):
     """True si ese plan contesta ese tipo de pregunta (el Basico solo lo esencial)."""
     if plan != "basico":
         return True
     return str(tipo or "").strip().lower() in TIPOS_BASICO
+
+
+def permite_plan(plan, pregunta, tipo=None):
+    """True si el plan contesta lo que la IA planeo: en el Basico, solo opcion multiple, casillas, verdadero o falso y
+    abiertas; nada de menus, ordenar, arrastrar, puntos en una grafica ni problemas con numeros (con 'calculo')."""
+    if plan != "basico":
+        return True
+    if not permite(plan, pregunta.tipo if tipo is None else tipo):
+        return False
+    if (pregunta.datos or {}).get("calculo"):
+        return False
+    for p in pregunta.pasos:
+        if p.get("hacer") in ("elegir", "arrastrar", "ordenar") or p.get("plano"):
+            return False
+    return True
 
 
 def estado(config):

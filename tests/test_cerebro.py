@@ -1060,4 +1060,6 @@ def prueba_plan_basico_no_contesta_graficas_solo_avisa():
                 licencia__estado=lambda config: Est()):
         b.contestar(p.img.copy(), 0, 0, 150, 125, 1.0)
     assert p.log == [], p.log
-    assert any("plan Pro" in e[1] and "y = 2x + 2" in e[1] for e in _eventos(b) if e[0] == "actividad"), _eventos(b)
+    act = [e[1] for e in _eventos(b) if e[0] == "actividad"]
+    # avisa que es del Pro, sin decir la respuesta (y ni la resuelve: la vista ya dijo que es grafica)
+    assert any("plan Pro" in a for a in act) and not any("y = 2x + 2" in a for a in act), act

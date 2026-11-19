@@ -255,6 +255,11 @@ class Bot:
             log.info("ubicar: sin pregunta | %s", ub.salida[:200])
             self._emitir("actividad", "No vi ninguna pregunta ahí", "info")
             return None
+        lic = licencia.estado(self.config)
+        if lic.plan == "basico" and ub.tipo in licencia.TIPOS_SOLO_PRO:
+            log.info("plan basico: %s no incluido (antes de resolver)", ub.tipo)
+            self._emitir("actividad", licencia.MENSAJE_PRO, "info")
+            return None
         region = ub.region
         recorte = img.crop(region)
         cpx, cpy = px - region[0], py - region[1]
@@ -287,13 +292,10 @@ class Bot:
             log.info("segunda opinion: %s (%.1fs)", nota, time.time() - t2)
             self._cancelado()
         plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles, self.ocr, plano)
-        lic = licencia.estado(self.config)
-        if not licencia.permite(lic.plan, plan.tipo or ub.tipo):
-            # el plan Basico contesta lo esencial; lo demas solo se dice (sin tocar nada)
-            log.info("plan basico: tipo %s no incluido", plan.tipo or ub.tipo)
-            r = _corto(plan.respuesta, 70)
-            self._emitir("actividad", "Esa es del plan Pro (gráficas, problemas, menús, arrastrar). "
-                         + (f"Respuesta: {r}" if r else "Sube a Pro para que la conteste sola."), "info")
+        if not licencia.permite_plan(lic.plan, plan, plan.tipo or ub.tipo):
+            # el plan Basico contesta lo esencial; lo demas es del Pro (ni se toca ni se dice la respuesta)
+            log.info("plan basico: %s no incluido (pasos %s)", plan.tipo, [p["hacer"] for p in plan.pasos])
+            self._emitir("actividad", licencia.MENSAJE_PRO, "info")
             return None
         log.info("modelo=%s ubicar=%.1fs ia=%.1fs region=%s tipo=%s/%s cajas=%d campos=%d controles=%d pasos=%d "
                  "rechazadas=%s cuentas=%s plano=%s salida=%s", id_real, t_ubicar, t_ia, region, ub.tipo, plan.tipo,
@@ -333,7 +335,7 @@ class Bot:
 
     def _segunda_opinion(self, tipo_ubicar, datos):
         """Las de calcular (numericas, problemas, graficas) se comprueban con una segunda solucion."""
-        if not self.config.get("comprobar", True):
+        if not self.config.get("comprobar", True) or licencia.estado(self.config).plan == "basico":
             return False
         tipos = {str(tipo_ubicar or "").strip().lower(), str(datos.get("tipo") or "").strip().lower()}
         if not tipos & set(cerebro.TIPOS_CALCULO):

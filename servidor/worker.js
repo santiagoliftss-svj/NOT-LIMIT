@@ -112,6 +112,13 @@ function deLista(lista, campo, plan, normal) {
   return Number.isFinite(v) ? v : normal[plan];
 }
 
+// limite_codigo: { "2": 600 } o { "2": { "limite": 600, "hasta": "2026-12-13" } } (despues de esa fecha ya no cuenta)
+export function limitePropio(v, hoy) {
+  if (Number.isFinite(v)) return v;
+  if (v && Number.isFinite(v.limite) && (!v.hasta || String(hoy) <= String(v.hasta))) return v.limite;
+  return null;
+}
+
 export function estadoDe(num, huella, lista, hoy) {
   const plan = String((lista.planes || {})[String(num)] || PLAN_NORMAL).toLowerCase();
   const p = NOMBRES[plan] ? plan : PLAN_NORMAL;
@@ -120,8 +127,7 @@ export function estadoDe(num, huella, lista, hoy) {
   const base = {
     num, plan: p, nombre: NOMBRES[p], dueno: duenos.includes(num), sinLimite,
     // (un codigo puede traer su propio limite: los que pagaron antes del cambio de precios lo conservan hasta renovar)
-    limite: Number.isFinite((lista.limite_codigo || {})[String(num)]) ? lista.limite_codigo[String(num)]
-      : deLista(lista, "limites", p, LIMITES),
+    limite: limitePropio((lista.limite_codigo || {})[String(num)], hoy) ?? deLista(lista, "limites", p, LIMITES),
     porDia: deLista(lista, "por_dia", p, POR_DIA),
     equipos: deLista(lista, "equipos", p, EQUIPOS),
     reinicio: String((lista.reiniciar_equipos || {})[String(num)] || ""),

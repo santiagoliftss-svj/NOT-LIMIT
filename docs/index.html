@@ -3,13 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NO LIMIT</title>
-<meta name="description" content="La pregunta se contesta sola. Pon el puntero sobre la pregunta y haz Ctrl + clic (Option + clic en Mac): opción múltiple, abiertas, problemas, menús, arrastrar y hasta gráficas. Para Windows y Mac.">
-<meta property="og:title" content="NO LIMIT">
-<meta property="og:description" content="La pregunta se contesta sola. Ctrl + clic y listo. Para Windows y Mac.">
+<title>NO LIMIT (NOLIMIT) · La pregunta se contesta sola con IA · Windows y Mac</title>
+<meta name="description" content="NO LIMIT (NOLIMIT) es la app que contesta tus preguntas con IA: pon el puntero sobre la pregunta y haz Ctrl + clic (Option + clic en Mac). Opción múltiple, abiertas, problemas con números, menús, ordenar y gráficas. IA incluida: Claude, ChatGPT y Gemini.">
+<meta name="keywords" content="NO LIMIT, NOLIMIT, No Limit app, contestar preguntas con IA, ALEKS, Kahoot, tareas, Ctrl clic, Windows, Mac">
+<link rel="canonical" href="https://santiagoliftss-svj.github.io/NOT-LIMIT/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:site_name" content="NO LIMIT">
+<meta property="og:locale" content="es_MX">
+<meta property="og:url" content="https://santiagoliftss-svj.github.io/NOT-LIMIT/">
+<meta property="og:title" content="NO LIMIT (NOLIMIT) · La pregunta se contesta sola">
+<meta property="og:description" content="Ctrl + clic sobre la pregunta y NO LIMIT la contesta con IA. Para Windows y Mac.">
 <meta property="og:image" content="https://santiagoliftss-svj.github.io/NOT-LIMIT/assets/compartir.png">
 <meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NO LIMIT (NOLIMIT) · La pregunta se contesta sola">
+<meta name="twitter:description" content="Ctrl + clic sobre la pregunta y NO LIMIT la contesta con IA. Para Windows y Mac.">
+<meta name="twitter:image" content="https://santiagoliftss-svj.github.io/NOT-LIMIT/assets/compartir.png">
 <meta name="theme-color" content="#000000">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "SoftwareApplication", "name": "NO LIMIT", "alternateName": ["NOLIMIT", "No Limit", "NO LIMIT app"], "url": "https://santiagoliftss-svj.github.io/NOT-LIMIT/", "image": "https://santiagoliftss-svj.github.io/NOT-LIMIT/assets/compartir.png", "description": "App para Windows y Mac que contesta la pregunta que señalas en tu pantalla con IA (Claude, ChatGPT y Gemini incluidas): Ctrl + clic y listo.", "operatingSystem": "Windows 10, Windows 11, macOS 15", "applicationCategory": "EducationalApplication", "inLanguage": "es-MX", "offers": {"@type": "AggregateOffer", "priceCurrency": "MXN", "lowPrice": "99", "highPrice": "599", "offerCount": "3", "url": "https://santiagoliftss-svj.github.io/NOT-LIMIT/#precio"}}, {"@type": "Organization", "name": "NO LIMIT", "alternateName": "NOLIMIT", "url": "https://santiagoliftss-svj.github.io/NOT-LIMIT/", "logo": "https://santiagoliftss-svj.github.io/NOT-LIMIT/assets/icono-180.png", "sameAs": ["https://www.instagram.com/no.limit.mx77"]}, {"@type": "WebSite", "name": "NO LIMIT", "alternateName": "NOLIMIT", "url": "https://santiagoliftss-svj.github.io/NOT-LIMIT/", "inLanguage": "es-MX"}]}</script>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/icono-180.png">
 <link rel="preload" as="image" href="assets/marca.webp" type="image/webp">
@@ -249,6 +260,10 @@
     background: #fff; transition: transform .55s var(--rebote); }
   .pago-tipo[data-tipo="renovar"] .pago-tipo-fondo { transform: translateX(100%); }
   .pago-campo { display: block; margin-bottom: 12px; }
+  .pago-acepto { display: flex; gap: 10px; align-items: flex-start; margin: 4px 4px 10px; font-size: 13.5px; line-height: 1.45; color: var(--gris); cursor: pointer; }
+  .pago-acepto input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: #fff; cursor: pointer; }
+  .pago-acepto input.mal { outline: 2px solid #ff453a; outline-offset: 2px; }
+  .pago-acepto a { color: var(--tinta); }
   .pago-campo[hidden] { display: none; }
   .pago-campo > span { display: block; margin: 0 0 6px 4px; font-size: 13px; font-weight: 650; color: var(--gris); }
   .pago-campo input { width: 100%; height: 52px; padding: 0 16px; border-radius: 15px; border: 0; color: #fff; font: inherit; font-size: 16.5px;
@@ -396,6 +411,7 @@
     height: 1px; margin: -1px 4% 0;
     background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.2), rgba(255,255,255,0));
   }
+  .solo-lector { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .lema { margin-top: 6px; font-size: clamp(34px, 5.2vw, 70px); font-weight: 820; font-variation-settings: "wdth" 104; letter-spacing: -0.04em; line-height: 1.02; }
   .portada .sub { margin: 18px auto 0; text-align: center; max-width: 46ch; }
   .acciones { margin-top: 36px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; }
@@ -933,6 +949,11 @@
   .plan .monto span { color: var(--gris); font-size: 14.5px; }
   .plan .ahorro { min-height: 20px; margin-top: 6px; font-size: 13px; font-weight: 700; color: #30d158; opacity: 0; transition: opacity .3s ease; }
   .planes[data-periodo="3"] .ahorro { opacity: 1; }
+  .plan .monto { flex-wrap: wrap; }
+  .plan .monto s { display: none; flex-basis: 100%; margin-bottom: -2px; color: var(--gris); font-size: 16px; font-weight: 650;
+    text-decoration-thickness: 2px; text-decoration-color: rgba(255,69,58,.85); }
+  .planes[data-periodo="3"] .plan .monto s { display: block; }
+  .plan .ancla { margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--gris); letter-spacing: .01em; }
   .plan ul { list-style: none; margin: 20px 0 24px; display: grid; gap: 10px; flex: 1; }
   .plan li { display: flex; gap: 10px; font-size: 14.5px; line-height: 1.45; }
   .plan li svg { flex: none; width: 18px; height: 18px; margin-top: 1px; }
@@ -1153,8 +1174,58 @@
     .vl-estrellas button { width: 46px; height: 46px; }
   }
 
+
+  /* ------------------------------------------------ practica: preguntas de verdad para probar la app instalada */
+  .practica-rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 46px; }
+  @media (max-width: 860px) { .practica-rejilla { grid-template-columns: 1fr; } }
+  .pr-tarjeta { border-radius: 26px; padding: 14px; background: rgba(255,255,255,.045); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  .pr-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px 12px; }
+  .pr-cabeza b { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+  .pr-cabeza small { display: block; color: var(--gris); font-size: 12.5px; font-weight: 500; margin-top: 2px; }
+  .pr-estado { flex: none; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 750; line-height: 28px;
+    color: var(--gris); background: rgba(255,255,255,.07); transition: background .3s ease, color .3s ease; }
+  .pr-estado.bien { color: #00320f; background: #30d158; }
+  .pr-hoja { position: relative; border-radius: 16px; background: #fff; color: #1d1d1f; padding: 20px 20px 22px; font: 400 15.5px/1.5 Arial, Helvetica, sans-serif; overflow: hidden; }
+  .pr-hoja p { margin: 0 0 10px; }
+  .pr-hoja .pr-q { font-weight: 700; }
+  .pr-reiniciar { margin: 10px 8px 2px; font-size: 13px; color: var(--gris); text-decoration: underline; text-underline-offset: 3px; }
+  .pr-reiniciar:hover { color: var(--tinta); }
+  /* ALEKS */
+  .pr-aleks .resp { display: inline-block; border: 1px solid #333; padding: 16px 16px; margin-top: 4px; font: italic 19px "Times New Roman", serif; }
+  .pr-aleks .caja { display: inline-block; min-width: 9px; height: 21px; border: 1px solid #9aa8f0; padding: 0 2px; vertical-align: middle; outline: none;
+    font: normal 17px "Times New Roman", serif; line-height: 21px; white-space: nowrap; }
+  .pr-aleks .caja:focus { border-color: #2348d6; box-shadow: 0 0 0 1px #2348d6; }
+  /* Kahoot */
+  .pr-hoja.pr-kahoot { background: #46178f; color: #222; }
+  .pr-kahoot .pq { background: #fff; border-radius: 6px; padding: 14px; font: 700 21px Arial, sans-serif; text-align: center; }
+  .pr-kahoot input { display: block; width: 78%; margin: 44px auto 4px; height: 52px; border: 0; border-radius: 6px; font: 400 21px Arial, sans-serif; padding: 0 16px; outline: none; box-shadow: 0 4px 0 rgba(0,0,0,.2); color: #222; background: #fff; }
+  /* Seleccionar */
+  .pr-sel .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+  .pr-sel .card { border: 1.5px solid #ccc; border-radius: 12px; padding: 10px; background: #fafafa; font-size: 13.5px; }
+  .pr-sel .card h4 { margin: 2px 0 8px; font: 700 15px Georgia, serif; }
+  .pr-sel .sel { border: 1px solid #bbb; border-radius: 8px; padding: 8px 10px; background: #fff; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pr-sel .lista { display: none; border: 1px solid #ddd; border-radius: 10px; background: #fff; margin-top: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.13); }
+  .pr-sel .lista div { padding: 8px 10px; border-bottom: 1px solid #eee; cursor: pointer; line-height: 1.35; }
+  .pr-sel .abierta .lista { display: block; }
+  /* flechas */
+  .pr-flechas .fila { display: flex; align-items: center; border: 1.5px solid #ddd; border-radius: 12px; padding: 8px 10px; margin: 8px 0; background: #fbfbf9; }
+  .pr-flechas .n { flex: none; width: 24px; height: 24px; border: 1px solid #bbb; border-radius: 6px; text-align: center; margin-right: 10px; font-size: 13px; line-height: 24px; }
+  .pr-flechas .t { flex: 1; }
+  .pr-flechas button { flex: none; width: 34px; height: 34px; margin-left: 6px; border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #222; font-size: 17px; }
+  .pr-flechas button:disabled { opacity: .3; }
+  /* casillas */
+  .pr-casillas .op { display: flex; align-items: center; border: 1.5px solid #ddd; border-radius: 12px; padding: 10px 12px; margin: 8px 0; cursor: pointer; }
+  .pr-casillas .op .c { flex: none; width: 16px; height: 16px; border: 2px solid #666; border-radius: 4px; margin-right: 12px; }
+  .pr-casillas .op.si { border-color: #2a9d8f; background: #eefaf7; }
+  .pr-casillas .op.si .c { background: #2a9d8f; border-color: #2a9d8f; }
+  /* grafica */
+  .pr-grafica canvas { display: block; margin: 6px auto 0; max-width: 100%; height: auto; cursor: crosshair; }
+  /* menu dentro de un texto y abierta */
+  .pr-menu select { font: inherit; padding: 4px 6px; border: 1px solid #999; border-radius: 4px; background: #fff; color: #222; }
+  .pr-abierta .linea { border: 0; border-bottom: 2px solid #555; font: inherit; width: 70%; padding: 6px 2px; outline: none; background: transparent; color: #222; }
+  .pr-abierta .linea:focus { border-bottom-color: #2a6df4; }
   /* ------------------------------------------------ politicas (privacidad, terminos, reembolsos) */
-  .legal { position: fixed; inset: 0; z-index: 230; display: grid; place-items: center; padding: 18px; background: rgba(0,0,0,.66);
+  .legal { position: fixed; inset: 0; z-index: 250; display: grid; place-items: center; padding: 18px; background: rgba(0,0,0,.66);
     -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; transition: opacity .35s ease; }
   .legal[hidden] { display: none; }
   .legal.ver { opacity: 1; }
@@ -1241,7 +1312,7 @@
 
     <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
       <span class="vivo" aria-hidden="true"></span>
-      <span>Nuevo: <span class="js-version">v2.3</span> · planes Básico, Pro y Premium</span>
+      <span>Nuevo: <span class="js-version">v2.5</span> · cada respuesta en su casilla</span>
       <span class="flecha" aria-hidden="true">→</span>
     </a>
 
@@ -1260,7 +1331,7 @@
      </div>
     </div>
 
-    <h1 class="lema destello entra" style="--retraso:.35s">La pregunta se contesta sola.</h1>
+    <h1 class="lema destello entra" style="--retraso:.35s"><span class="solo-lector">NO LIMIT: </span>La pregunta se contesta sola.</h1>
     <p class="sub entra" style="--retraso:.45s">Pon el puntero sobre la pregunta y haz <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. NO LIMIT ubica la pregunta, la lee, la resuelve, la contesta y revisa que haya quedado bien.</p>
 
     <div class="acciones entra" style="--retraso:.55s">
@@ -1321,6 +1392,86 @@
     </div>
   </section>
 
+
+  <!-- ============================================================ practica (con la app instalada) -->
+  <section class="seccion" id="practica">
+    <div class="envoltura">
+      <header class="cabeza" data-revela>
+        <span class="ojo">Practica con la app</span>
+        <h2 class="titulo plata">¿Ya la tienes?<br>Pruébala aquí.</h2>
+        <p class="sub">Preguntas de verdad, como las de ALEKS, Kahoot y los quizzes: prende NO LIMIT, pon el puntero sobre una y haz <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. Se pone en verde cuando quedó bien.</p>
+      </header>
+      <div class="practica-rejilla" id="practica-rejilla">
+
+        <article class="pr-tarjeta" data-revela data-pr="aleks">
+          <div class="pr-cabeza"><div><b>Varias casillas (como ALEKS)</b><small>Cada respuesta en su casilla</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-aleks">
+            <p>Consideremos el triángulo ABC. Supongamos que B = 84°, C = 57° y a = 26. Resolver el triángulo.</p>
+            <p>Redondear sus respuestas a la décima más cercana.</p>
+            <div class="resp">A = <span class="caja" contenteditable="true" data-k="A"></span>°,&nbsp; b = <span class="caja" contenteditable="true" data-k="b"></span>,&nbsp; c = <span class="caja" contenteditable="true" data-k="c"></span></div>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela style="--retraso:.05s" data-pr="kahoot">
+          <div class="pr-cabeza"><div><b>Escribe la respuesta (como Kahoot)</b><small>Caja blanca sobre fondo de color</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-kahoot">
+            <div class="pq">¿Cuánto es 7 × 8?</div>
+            <input placeholder="Escribe tu respuesta" aria-label="Tu respuesta" autocomplete="off">
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela data-pr="seleccionar">
+          <div class="pr-cabeza"><div><b>Menús “Seleccionar”</b><small>Opciones largas de dos renglones</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-sel">
+            <p class="pr-q">Haz clic en Seleccionar debajo de cada civilización para elegir su aporte principal:</p>
+            <div class="cards"></div>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela style="--retraso:.05s" data-pr="flechas">
+          <div class="pr-cabeza"><div><b>Ordenar con flechas</b><small>Sin arrastrar: solo las flechas</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-flechas">
+            <p class="pr-q">Ordena de la más antigua (1) a la más reciente (4):</p>
+            <div class="lista"></div>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela data-pr="casillas">
+          <div class="pr-cabeza"><div><b>Selecciona todas</b><small>Ni una de más ni una de menos</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-casillas">
+            <p class="pr-q">Selecciona todas las afirmaciones verdaderas sobre f(x) = x² − 4x + 3:</p>
+            <div class="ops"></div>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela style="--retraso:.05s" data-pr="grafica">
+          <div class="pr-cabeza"><div><b>Gráfica</b><small>La herramienta ya está elegida: solo los puntos</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-grafica">
+            <p class="pr-q">Grafica la recta cuya intersección con el eje y es 2 y con el eje x es −1. Herramienta: Recta.</p>
+            <canvas width="300" height="300" aria-label="Plano cartesiano de -5 a 5"></canvas>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela data-pr="menu">
+          <div class="pr-cabeza"><div><b>Menú dentro del texto</b><small>Desplegable normal</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-menu">
+            <p>El agua hierve a <select aria-label="Temperatura"><option value="">Elige…</option><option>50 °C</option><option>100 °C</option><option>150 °C</option></select> al nivel del mar.</p>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela style="--retraso:.05s" data-pr="abierta">
+          <div class="pr-cabeza"><div><b>Completar</b><small>Solo una raya para escribir</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-abierta">
+            <p>¿Cuál es el planeta más grande del sistema solar?</p>
+            <input class="linea" placeholder="Tu respuesta" aria-label="Tu respuesta" autocomplete="off">
+          </div>
+        </article>
+
+      </div>
+      <p class="demo-ayuda" data-revela>Si alguna no queda, mándanos una captura desde <a href="#contacto">Contacto</a>. <button type="button" class="pr-reiniciar" id="prReiniciar">Volver a empezar</button></p>
+    </div>
+  </section>
+
   <!-- ============================================================ historia -->
   <section class="historia" id="como" aria-label="Cómo funciona">
     <div class="historia-fija">
@@ -1345,7 +1496,7 @@
                 <span class="halo-sel" id="hHalo"></span>
                 <small id="hProv">Claude · Incluida</small>
                 <span class="nombre-caja"><span class="nombre" id="hNombre">Haiku 5.5</span></span>
-                <span class="nota" id="hNota">Te quedan 600</span>
+                <span class="nota" id="hNota">Te quedan 500</span>
                 <svg class="chev" viewBox="0 0 14 14"><path d="M3 5.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
               <div class="v-boton" id="hBoton">
@@ -1461,7 +1612,7 @@
         <article class="tarjeta t-i" data-revela>
           <div>
             <h3>Gráficas</h3>
-            <p>Sigue la instrucción al pie de la letra: escoge la herramienta, saca los puntos exactos con los números de los ejes y traza rectas, parábolas, círculos, desigualdades y sistemas.</p>
+            <p>Sigue la instrucción al pie de la letra: tú eliges la herramienta (recta, punto, parábola…) y NO LIMIT saca los puntos exactos con los números de los ejes y da clic justo ahí. Rectas, parábolas, círculos, desigualdades y sistemas.</p>
           </div>
           <div class="mini-plano" aria-hidden="true">
             <svg viewBox="0 0 220 200">
@@ -1584,11 +1735,12 @@
         </div>
       </div>
       <div class="planes" id="planes" data-periodo="1">
-        <article class="plan basico" data-revela>
+        <article class="plan basico" data-revela data-preguntas="300">
           <h3>Básico</h3>
           <p class="para">Lo esencial para tareas sencillas.</p>
-          <div class="monto"><b class="js-monto" data-1="99" data-3="259"><small>$</small>99</b><span class="js-per">/ mes</span></div>
+          <div class="monto"><s class="js-antes" data-3="297" aria-label="Pagando mes por mes serían $297">$297</s><b class="js-monto" data-1="99" data-3="259"><small>$</small>99</b><span class="js-per">/ mes</span></div>
           <p class="ahorro" data-ahorro="38">Ahorras $38</p>
+          <p class="ancla js-ancla">Menos de $4 al día · $0.33 por pregunta</p>
           <ul>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>300 preguntas al mes</b></span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>IA: Gemini Flash Lite</span></li>
@@ -1601,32 +1753,34 @@
           </ul>
           <button class="elegir js-plan" type="button" data-plan="basico">Elegir Básico</button>
         </article>
-        <article class="plan pro" data-revela style="--retraso:.06s">
+        <article class="plan pro" data-revela style="--retraso:.06s" data-preguntas="500">
           <span class="insignia">Recomendado</span>
           <h3>Pro</h3>
           <p class="para">Todo lo que contesta NO LIMIT.</p>
-          <div class="monto"><b class="js-monto" data-1="199" data-3="499"><small>$</small>199</b><span class="js-per">/ mes</span></div>
+          <div class="monto"><s class="js-antes" data-3="747" aria-label="Pagando mes por mes serían $747">$747</s><b class="js-monto" data-1="249" data-3="649"><small>$</small>249</b><span class="js-per">/ mes</span></div>
           <p class="ahorro" data-ahorro="98">Ahorras $98</p>
+          <p class="ancla js-ancla">Menos de $9 al día · $0.50 por pregunta</p>
           <ul>
-            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>600 preguntas al mes</b> (el doble)</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>500 preguntas al mes</b></span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Elige tu IA: <b>Claude Haiku, GPT-6 Luna o Gemini Flash</b></span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Todo lo del Básico</span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Gráficas: rectas, parábolas, círculos y desigualdades</span></li>
-            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Problemas con números con la cuenta comprobada</span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Problemas con números: <b>se resuelven 2 veces</b> y se comprueba la cuenta</span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Menús, relacionar, ordenar, arrastrar, ecuaciones y matrices</span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Modo preciso: piensa más en lo difícil</span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Contesta solo lo que señalas, o todo</span></li>
           </ul>
           <button class="elegir js-plan" type="button" data-plan="pro">Elegir Pro</button>
         </article>
-        <article class="plan premium" data-revela style="--retraso:.12s">
+        <article class="plan premium" data-revela style="--retraso:.12s" data-preguntas="1000">
           <span class="insignia">Atención VIP</span>
           <h3>Premium</h3>
           <p class="para">Pro, más alguien que te ayuda 1 a 1.</p>
-          <div class="monto"><b class="js-monto" data-1="449" data-3="1199"><small>$</small>449</b><span class="js-per">/ mes</span></div>
-          <p class="ahorro" data-ahorro="148">Ahorras $148</p>
+          <div class="monto"><s class="js-antes" data-3="1797" aria-label="Pagando mes por mes serían $1,797">$1,797</s><b class="js-monto" data-1="599" data-3="1599"><small>$</small>599</b><span class="js-per">/ mes</span></div>
+          <p class="ahorro" data-ahorro="198">Ahorras $198</p>
+          <p class="ancla js-ancla">Menos de $20 al día · $0.60 por pregunta</p>
           <ul>
-            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>1,200 preguntas al mes</b></span></li>
+            <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>1,000 preguntas al mes</b></span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span><b>Todas las IAs</b>, también las más listas: Claude Opus y Sonnet, GPT-6.1 Terra y Gemini Pro</span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Todo lo del Pro</span></li>
             <li><svg aria-hidden="true"><use href="#i-chulo"/></svg><span>Te la instalamos y configuramos por videollamada</span></li>
@@ -1637,7 +1791,7 @@
           <button class="elegir js-plan" type="button" data-plan="premium">Elegir Premium</button>
         </article>
       </div>
-      <p class="planes-nota">Todos los planes: la IA ya viene incluida (no pones claves ni pagas nada aparte), tu código es tu cuenta y se actualiza sola en Windows y Mac. Las preguntas se reinician cada mes y en la app ves cuántas te quedan. Las IAs más listas cuentan doble (Opus, x5). Puedes cambiar de plan cuando quieras.</p>
+      <p class="planes-nota">Todos los planes: la IA ya viene incluida (no pones claves ni pagas nada aparte), tu código es tu cuenta y se actualiza sola en Windows y Mac. Las preguntas se reinician cada mes y en la app ves cuántas te quedan. Las IAs más listas cuentan doble (Opus, x5). Puedes cambiar de plan cuando quieras. Precios en pesos mexicanos (MXN), sin cargos automáticos.</p>
 
       <div class="precio" data-revela>
         <div class="acciones">
@@ -1763,7 +1917,7 @@
         <article class="ay-item" data-tema="contesta" data-claves="saturada error ia limite preguntas cuota se acabaron no responde lenta otra compu">
           <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Si no contesta</span><span class="titulo-q">"Se acabaron tus preguntas", "otra compu" o "saturada"</span><i class="mas"></i></button>
           <div class="ay-r"><div><ul>
-            <li><b>Se acabaron tus preguntas:</b> cada plan trae sus preguntas al mes (Básico 300, Pro 600, Premium 1,200) y se reinician cada mes. Si necesitas más, sube de plan en <a href="#precio">Precio</a>.</li>
+            <li><b>Se acabaron tus preguntas:</b> cada plan trae sus preguntas al mes (Básico 300, Pro 500, Premium 1,000) y se reinician cada mes. Si necesitas más, sube de plan en <a href="#precio">Precio</a>.</li>
             <li><b>Ya se usa en otra compu:</b> cada código es para 1 compu (Premium, 2). Si cambiaste de compu, escríbenos y la liberamos.</li>
             <li><b>"Es del plan Pro" o "del plan Premium":</b> esa IA no viene en tu plan. Elige otra en la app o sube de plan.</li>
             <li><b>La IA está saturada o no está disponible:</b> espera unos segundos o elige otra IA.</li>
@@ -1774,13 +1928,13 @@
           <div class="ay-r"><div><ul>
             <li>Que se vea <b>toda</b> la gráfica con los números de los ejes.</li>
             <li>Haz el Ctrl + clic sobre la <b>instrucción</b> ("Grafica la recta…"), no adentro de la gráfica.</li>
-            <li>Si la herramienta se escoge en un menú aparte, NO LIMIT la busca; si no la ve, escógela tú antes.</li>
+            <li>Primero elige tú la herramienta (lápiz, recta, punto, parábola…). NO LIMIT no la toca: solo da clic en los puntos.</li>
             <li>Al final revisa que quedó: la app nunca le pica a Enviar.</li>
           </ul></div></div>
         </article>
         <article class="ay-item" data-tema="pagos" data-claves="pagar precio cuanto cuesta efectivo transferencia comprar tarjeta">
           <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Pagos</span><span class="titulo-q">¿Cómo pago y cuánto cuesta?</span><i class="mas"></i></button>
-          <div class="ay-r"><div><p><b>Básico 99, Pro 199 o Premium 449 pesos al mes</b> (o 3 meses con descuento). En <a href="#precio">Precio</a> elige tu plan y toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar. Cuando se acepta tu pago, se pone en verde.</p></div></div>
+          <div class="ay-r"><div><p><b>Básico 99, Pro 249 o Premium 599 pesos al mes</b> (o 3 meses con descuento). En <a href="#precio">Precio</a> elige tu plan y toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar. Cuando se acepta tu pago, se pone en verde.</p></div></div>
         </article>
         <article class="ay-item" data-tema="pagos" data-claves="codigo vencido bloqueado renovar hasta cuando pagado cuenta">
           <button class="ay-q" type="button" aria-expanded="false"><span class="ay-tag">Pagos</span><span class="titulo-q">Mi código dice vencido o bloqueado</span><i class="mas"></i></button>
@@ -1870,8 +2024,8 @@
         <h2 class="titulo plata">Lo que todos preguntan.</h2>
       </header>
       <div class="faq" id="faq" data-revela>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Hay tres planes: <b>Básico 99</b>, <b>Pro 199</b> y <b>Premium 449</b> pesos al mes, o 3 meses con descuento. En <b>Precio</b> elige tu plan y toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar y tu código NL-XXXX-XXXX-XXXX. Ahí mismo ves en verde cuando ya se aceptó tu pago. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Contesta gráficas?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí. Lee la instrucción (“Grafica la recta que…”), saca la ecuación o los puntos, escoge la herramienta de la gráfica si hay que escogerla y da clic justo en los puntos, usando los números de los ejes. Traza rectas, segmentos, rayos, parábolas, círculos, valor absoluto, desigualdades (con línea continua o punteada y el lado sombreado) y sistemas. Funciona con cuadrícula punteada o de líneas, números de 1 en 1, de 2 en 2, de 5 en 5 o con decimales.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo la compro?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Hay tres planes: <b>Básico 99</b>, <b>Pro 249</b> y <b>Premium 599</b> pesos al mes, o 3 meses con descuento. En <b>Precio</b> elige tu plan y toca <b>Pagar en efectivo o transferencia</b>, llena tus datos y manda el mensaje: te contestamos con los datos para pagar y tu código NL-XXXX-XXXX-XXXX. Ahí mismo ves en verde cuando ya se aceptó tu pago. Ese código es tu cuenta: con él entras a la app y a esta página. Cada mes se renueva; si no pagas, la app se pausa sola hasta que pagues. Es un código por persona: si se comparte, se bloquea.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Contesta gráficas?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí. Lee la instrucción (“Grafica la recta que…”), saca la ecuación o los puntos y da clic justo en ellos, usando los números de los ejes. La herramienta (recta, punto, parábola…) la eliges tú antes: NO LIMIT no la toca. Traza rectas, segmentos, rayos, parábolas, círculos, valor absoluto, desigualdades (con línea continua o punteada y el lado sombreado) y sistemas. Funciona con cuadrícula punteada o de líneas, números de 1 en 1, de 2 en 2, de 5 en 5 o con decimales.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Puedo hacer que conteste solo una parte?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí: contesta lo que señalas. Si haces Ctrl + clic sobre un cuadro o un inciso, contesta solo ese. Si lo haces sobre la instrucción general, contesta todo.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué tipos de preguntas contesta?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Opción múltiple, varias casillas, verdadero o falso, completar espacios, menús desplegables (también dentro de un párrafo), relacionar columnas, respuesta corta y ensayo, problemas con números (aunque cambien, y comprueba la cuenta), editores de ecuaciones con fracciones y exponentes, dar clic en una parte de una imagen o diagrama, <b>trazar gráficas</b> (rectas, parábolas, círculos, puntos y desigualdades), leer gráficas y tablas, matrices, ordenar arrastrando, arrastrar etiquetas a un esquema y las cajas de los juegos de preguntas. También sigue instrucciones como “Grafica…” o “Completa…”. Lo que no puede: escuchar audio o ver un video completo, ni dibujar a mano libre. <a href="#tipos">Ver la lista completa</a>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué tarda unos segundos?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque lo hace con calma, como tú: primero ubica la pregunta, la lee de cerca, la resuelve, la contesta y al final revisa que haya quedado bien marcada. Tarda de 10 a 30 segundos según la pregunta. Así no se equivoca de casilla.</p></div></div></div>
@@ -1884,7 +2038,9 @@
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Qué pasa con mis capturas?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Pasan por el servidor de NO LIMIT solo para mandárselas a la IA y regresarte la respuesta. No se guardan: el servidor solo cuenta cuántas preguntas llevas en el mes. Más en el <a href="#privacidad">aviso de privacidad</a>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Se puede equivocar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Como cualquier IA, sí. Por eso el <b>modo preciso</b> viene prendido y la app revisa que el clic caiga en la opción que eligió. Si el quiz tiene la respuesta mal escrita, elige la más cercana a la real.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Dónde dejo una queja o una idea?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>En <a href="#contacto">Contacto</a>: escribe tu queja o sugerencia y se abre WhatsApp o tu correo con el mensaje listo. Ahí mismo puedes calificar NO LIMIT. También estamos en Instagram como <a href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener">@no.limit.mx77</a>.</p></div></div></div>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cuántas preguntas trae cada plan?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p><b>Básico 300, Pro 600 y Premium 1,200 preguntas al mes.</b> Una pregunta es cada Ctrl + clic; con las IAs más listas cuenta más (Sonnet, Terra y Gemini Pro x2, Opus x5). Se reinician cada mes y en la app ves cuántas te quedan. Si se te acaban, puedes subir de plan cuando quieras.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué en las de números tarda un poquito más?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque en Pro y Premium las resuelve <b>dos veces desde cero</b> y, si no dan lo mismo, revisa las dos paso a paso para quedarse con la buena. Además comprueba la cuenta con una calculadora. Todo eso cuenta como <b>una sola pregunta</b>.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo sé que me funciona antes de usarla en mi tarea?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>En <a href="#practica">Practica con la app</a> hay preguntas de verdad, como las de ALEKS, Kahoot y los quizzes (varias casillas, menús “Seleccionar”, ordenar con flechas, gráficas). Con NO LIMIT prendido haz Ctrl + clic en cada una: se ponen en verde cuando quedan bien.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cuántas preguntas trae cada plan?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p><b>Básico 300, Pro 500 y Premium 1,000 preguntas al mes.</b> Una pregunta es cada Ctrl + clic; con las IAs más listas cuenta más (Sonnet, Terra y Gemini Pro x2, Opus x5). Se reinician cada mes y en la app ves cuántas te quedan. Si se te acaban, puedes subir de plan cuando quieras.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Funciona en Mac?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí, en Mac con macOS 15 o más nuevo (chip M1 a M4 o Intel). Ahí el atajo es <b>Option + clic</b> y se queda en la barra de arriba. Como no está firmada por Apple, la primera vez abre Terminal y pega <code>xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"</code>. Luego te pide dos permisos (Accesibilidad y Grabación de pantalla). Desde la 1.5 se actualiza sola, igual que en Windows; después de actualizar, la app te vuelve a pedir esos dos permisos (es normal en Mac). En el cel todavía no.</p></div></div></div>
       </div>
     </div>
@@ -1944,7 +2100,7 @@
     </header>
     <div class="pago-cuerpo">
       <section class="pago-paso activo" data-paso="1">
-        <span class="ojo" id="pagoOjoPlan">NO LIMIT · Plan Pro · $199 al mes</span>
+        <span class="ojo" id="pagoOjoPlan">NO LIMIT · Plan Pro · $249 al mes</span>
         <h3>¿Cómo vas a pagar?</h3>
         <p class="pago-sub">Eliges cómo, mandas un mensaje y te contestamos con los datos para pagar. Cuando se confirma, tu código se activa y aquí se pone en verde.</p>
         <div class="pago-opciones" role="radiogroup" aria-label="Forma de pago">
@@ -1957,8 +2113,8 @@
         <h3>Tus datos</h3>
         <div class="pago-plan" id="pagoPlan" role="radiogroup" aria-label="Plan">
           <button type="button" role="radio" aria-checked="false" data-plan="basico"><b>Básico</b><span>$99</span></button>
-          <button type="button" role="radio" aria-checked="true" data-plan="pro"><b>Pro</b><span>$199</span></button>
-          <button type="button" role="radio" aria-checked="false" data-plan="premium"><b>Premium</b><span>$449</span></button>
+          <button type="button" role="radio" aria-checked="true" data-plan="pro"><b>Pro</b><span>$249</span></button>
+          <button type="button" role="radio" aria-checked="false" data-plan="premium"><b>Premium</b><span>$599</span></button>
         </div>
         <div class="pago-periodo" id="pagoPeriodo" role="radiogroup" aria-label="Cada cuánto">
           <button type="button" role="radio" aria-checked="true" data-periodo="1">1 mes</button>
@@ -1974,6 +2130,7 @@
           <label class="pago-campo"><span>Tu WhatsApp o Instagram</span><input id="pagoContacto" name="contacto" maxlength="60" autocomplete="tel"><small>Ahí te mandamos tu código.</small></label>
           <label class="pago-campo" id="pagoCampoCodigo" hidden><span>Tu código</span><input id="pagoCodigo" class="mono" placeholder="NL-XXXX-XXXX-XXXX" maxlength="24" spellcheck="false" autocapitalize="characters" autocomplete="off"></label>
           <label class="pago-campo"><span>Algo más (opcional)</span><input id="pagoNota" name="nota" maxlength="120" autocomplete="off"></label>
+          <label class="pago-acepto"><input type="checkbox" id="pagoAcepto"><span>Acepto los <a href="#terminos">Términos</a> y el <a href="#privacidad">Aviso de privacidad</a> de NO LIMIT.</span></label>
           <p class="pago-error" id="pagoError" role="alert"></p>
           <button class="pago-seguir" id="pagoSeguir" type="submit">Seguir</button>
         </form>
@@ -2034,7 +2191,11 @@
         </ul>
         <h4>Tus capturas</h4>
         <ul>
-          <li><b>Cuando haces el atajo,</b> la captura de la pregunta pasa por el servidor de NO LIMIT (en Cloudflare) para mandarla a la IA que elegiste (Gemini de Google, Claude de Anthropic o ChatGPT de OpenAI) y regresarte la respuesta. <b>No la guardamos</b> ni la vemos; cada una la procesa con sus propias políticas para su servicio de pago.</li>
+          <li><b>Solo cuando haces el atajo,</b> la captura de la pregunta pasa por el servidor de NO LIMIT (en Cloudflare) para mandarla a la IA que elegiste (Gemini de Google, Claude de Anthropic o ChatGPT de OpenAI) y regresarte la respuesta. Para revisar que quedó bien se puede mandar más de una vez en la misma pregunta. <b>No la guardamos</b> ni la vemos; cada IA la procesa con sus propias políticas para su servicio de pago.</li>
+        </ul>
+        <h4>Lo que se queda en tu compu</h4>
+        <ul>
+          <li>La app guarda en tu compu tu código, tus ajustes, la fecha en que aceptaste estos términos y, si dejas prendido “Guardar capturas”, la última captura para que revises si algo falla. Nada de eso se nos manda.</li>
         </ul>
         <h4>Qué NO recibimos</h4>
         <ul>
@@ -2052,24 +2213,31 @@
       <article data-doc="terminos" hidden>
         <h3>Términos de uso</h3>
         <p class="fecha">Última actualización: 19 de noviembre de 2026</p>
+        <h4>Aceptación</h4>
+        <p>Al marcar “Acepto” al pagar, o al tocar <b>Empezar</b> en la app, aceptas estos términos y el aviso de privacidad. Si no estás de acuerdo, no uses NO LIMIT. Si eres menor de 18 años, úsala con permiso de tu mamá, papá o tutor.</p>
         <h4>Qué es NO LIMIT</h4>
         <p>Una app para Windows y Mac que lee la pregunta que señalas en tu pantalla, la resuelve con la IA incluida en tu plan y la contesta con el mouse y el teclado.</p>
         <h4>Tu suscripción</h4>
         <ul>
-          <li>Hay tres planes: Básico (99 MXN al mes, 300 preguntas), Pro (199, 600 preguntas) y Premium (449, 1,200 preguntas), o 3 meses por adelantado con descuento. Las preguntas se reinician cada mes y las que no uses no se acumulan.</li>
+          <li>Planes (pesos mexicanos): Básico $99 al mes con 300 preguntas, Pro $249 con 500 y Premium $599 con 1,000; o 3 meses por adelantado con descuento (Básico $259, Pro $649, Premium $1,599). Las preguntas se reinician cada mes y las que no uses no se acumulan.</li>
+          <li>Si los precios cambian, el periodo que ya pagaste se respeta con lo que compraste. El precio nuevo aplica cuando renuevas.</li>
           <li>Tu código es personal y funciona en 1 compu (Premium: hasta 2 compus tuyas). Si cambias de compu, te la liberamos. Si se comparte, se puede bloquear.</li>
-          <li>Si no renuevas, la app se pausa sola al vencer tu mes. No hay cargos automáticos.</li>
+          <li>Si no renuevas, la app se pausa sola al vencer tu periodo. No hay cargos automáticos.</li>
         </ul>
         <h4>La IA incluida</h4>
-        <p>El precio de tu plan ya incluye la IA. No necesitas una clave ni pagar nada aparte. Básico trae Gemini Flash Lite; Pro, además, Gemini Flash, Claude Haiku y GPT-6 Luna; Premium, todas. Las más listas cuentan por más de una pregunta (Sonnet, Terra y Gemini Pro x2; Opus x5). Para que el servicio funcione para todos, puede haber un máximo de preguntas por día, y si una IA no está disponible un rato, eliges otra.</p>
+        <p>El precio de tu plan ya incluye la IA: no necesitas una clave ni pagar nada aparte. Básico trae Gemini Flash Lite; Pro, además, Gemini Flash, Claude Haiku y GPT-6 Luna; Premium, todas. Las más listas cuentan por más de una pregunta (Sonnet, Terra y Gemini Pro x2; Opus x5). Para revisar mejor, NO LIMIT puede consultar a la IA más de una vez en la misma pregunta (por ejemplo, las de números se resuelven dos veces): eso cuenta como una sola pregunta. Para que el servicio funcione para todos puede haber un máximo de preguntas por día, y si una IA no está disponible un rato, eliges otra.</p>
         <h4>La IA se puede equivocar</h4>
-        <p>NO LIMIT revisa cada respuesta, pero ninguna IA es perfecta. Revisa antes de enviar: no garantizamos calificaciones.</p>
+        <p>NO LIMIT revisa cada respuesta, pero ninguna IA es perfecta y las páginas cambian. Revisa antes de enviar: no garantizamos calificaciones ni que funcione igual en todas las páginas.</p>
         <h4>Uso responsable</h4>
-        <p>Úsala de forma responsable y respetando las reglas de tu escuela o plataforma; tú decides cuándo usarla. NO LIMIT no está hecha para saltarse supervisores de exámenes, navegadores bloqueados ni herramientas antitrampa, y no lo intenta.</p>
+        <p>Úsala para estudiar y practicar, respetando las reglas de tu escuela o plataforma; tú decides cuándo usarla y eres responsable de cómo la usas. NO LIMIT no está hecha para saltarse supervisores de exámenes, navegadores bloqueados ni herramientas antitrampa, y no lo intenta.</p>
+        <h4>Hasta dónde respondemos</h4>
+        <p>Si algo sale mal por nuestra parte, lo más que respondemos es lo que pagaste por el periodo en curso (ver Reembolsos). No respondemos por calificaciones, sanciones de tu escuela ni por fallas de servicios de terceros (las IAs, tu internet o la página donde contestas).</p>
         <h4>Software de terceros</h4>
         <p>La app incluye software libre (como Tesseract). Sus licencias están en <a href="https://github.com/santiagoliftss-svj/NOT-LIMIT/blob/main/LICENCIAS.txt" target="_blank" rel="noopener">LICENCIAS.txt</a>.</p>
+        <h4>Ley y contacto</h4>
+        <p>Estos términos se rigen por las leyes de México, incluida la Ley Federal de Protección al Consumidor. Para cualquier duda o queja escríbenos desde <a href="#contacto">Contacto</a> y te contestamos lo antes posible.</p>
         <h4>Cambios</h4>
-        <p>Podemos actualizar estos términos; los publicamos aquí con la fecha nueva.</p>
+        <p>Podemos actualizar estos términos; los publicamos aquí con la fecha nueva y, si cambian, la app te los vuelve a mostrar para aceptarlos.</p>
       </article>
       <article data-doc="reembolsos" hidden>
         <h3>Reembolsos y cancelación</h3>
@@ -2095,6 +2263,7 @@
     <img src="assets/marca.webp" alt="NO LIMIT" width="1400" height="592" loading="lazy">
     <nav aria-label="Pie">
       <a href="#demo">Pruébalo</a>
+      <a href="#practica">Practica</a>
       <a href="#preguntas">Preguntas</a>
       <a href="#precio">Precio</a>
       <a href="#ayuda">Ayuda</a>
@@ -2160,11 +2329,22 @@
     if (ES_MAC) $$(".js-atajo").forEach(function (e) { e.textContent = "Option"; });
   }
   ponerMac();
-  fetch("https://api.github.com/repos/santiagoliftss-svj/NOT-LIMIT/releases/tags/mac-beta")
+  // La de Intel corre en TODAS las Mac (en M1-M4 con Rosetta). La nativa (M1-M4) solo se pone sola si el navegador
+  // dice claro que el chip es Apple M (Chrome lo dice); si no se sabe, se queda la de Intel, que nunca falla.
+  function chipAppleM() {
+    try {
+      var c = document.createElement("canvas"), gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+      if (!gl) return false;
+      var ext = gl.getExtension("WEBGL_debug_renderer_info");
+      var r = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+      return /Apple M\d/i.test(r);
+    } catch (e) { return false; }
+  }
+  if (ES_MAC) fetch("https://api.github.com/repos/santiagoliftss-svj/NOT-LIMIT/releases/tags/mac-beta")
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (d) {
       var nativa = d && (d.assets || []).filter(function (x) { return x.name === "NO-LIMIT-Mac.dmg"; })[0];
-      if (nativa) { MAC_LINK = nativa.browser_download_url; ponerMac(); }   // chip M1-M4: la nativa
+      if (nativa && chipAppleM()) { MAC_LINK = nativa.browser_download_url; ponerMac(); }
     })
     .catch(function () {});
 
@@ -2553,7 +2733,7 @@
     tareas: $("#hTareas"), icono: $("#hIcono"), pulso: $("#hPulso"), tip: $("#hTip"),
     quiz: $("#hQuiz"), bien: $("#hBien"), captura: $("#hCaptura"), escaneo: $("#hEscaneo"), ctrl: $("#hCtrl"), puntero: $("#hPuntero"), burbuja: $("#hBurbuja")
   };
-  var MODELOS_H = [["Claude · Incluida", "Haiku 5.5", "Te quedan 600"], ["Gemini · Incluida", "Flash", "Te quedan 599"], ["ChatGPT · Incluida", "GPT-6 Luna", "Te quedan 598"], ["Claude · Incluida", "Haiku 5.5", "Te quedan 597"]];
+  var MODELOS_H = [["Claude · Incluida", "Haiku 5.5", "Te quedan 500"], ["Gemini · Incluida", "Flash", "Te quedan 499"], ["ChatGPT · Incluida", "GPT-6 Luna", "Te quedan 498"], ["Claude · Incluida", "Haiku 5.5", "Te quedan 497"]];
   var modeloH = 0, pasoH = -1, ultimoP = -1;
   function cambiarModelo(i) {
     if (i === modeloH) return;
@@ -2930,6 +3110,17 @@
   }
   /* ---------------------------------------------------------------- PLANES: cada mes o 3 meses */
   var periodoPlanes = 1;
+  // el ancla: cuanto sale al dia y por pregunta (con los precios de verdad, sin precios inventados)
+  function ponerAnclas() {
+    $$("#planes .plan").forEach(function (art) {
+      var m = $(".js-monto", art), a = $(".js-ancla", art), n = +art.getAttribute("data-preguntas");
+      if (!m || !a || !n) return;
+      var p = +m.getAttribute("data-" + periodoPlanes);
+      var porPregunta = "$" + (p / (n * periodoPlanes)).toFixed(2) + " por pregunta";
+      a.textContent = periodoPlanes === 3 ? "Te sale en $" + Math.round(p / 3).toLocaleString("es-MX") + " al mes · " + porPregunta
+                                           : "Menos de $" + Math.ceil(p / 30) + " al día · " + porPregunta;
+    });
+  }
   $$("#periodo button").forEach(function (b) {
     b.addEventListener("click", function () {
       periodoPlanes = +b.getAttribute("data-periodo");
@@ -2941,6 +3132,7 @@
         if (!reducido) { m.classList.remove("anima-precio"); void m.offsetWidth; m.classList.add("anima-precio"); }
       });
       $$("#planes .js-per").forEach(function (e) { e.textContent = periodoPlanes === 3 ? "/ 3 meses" : "/ mes"; });
+      ponerAnclas();
     });
   });
 
@@ -2954,8 +3146,9 @@
   var pago = $("#pago");
   var P = { paso: 1, metodo: "", tipo: "nuevo", folio: "", venceAntes: null, via: "", reloj: null, abierto: false, empujado: false,
             plan: "pro", periodo: 1 };
-  var PRECIOS = { basico: { 1: 99, 3: 259 }, pro: { 1: 199, 3: 499 }, premium: { 1: 449, 3: 1199 } };
+  var PRECIOS = { basico: { 1: 99, 3: 259 }, pro: { 1: 249, 3: 649 }, premium: { 1: 599, 3: 1599 } };
   var NOMBRE_PLAN = { basico: "Básico", pro: "Pro", premium: "Premium" };
+  var TERMINOS = "versión del 19 de noviembre de 2026";
   function textoPlan() {
     return "Plan " + NOMBRE_PLAN[P.plan] + " · $" + PRECIOS[P.plan][P.periodo].toLocaleString("es-MX") + (P.periodo === 3 ? " por 3 meses" : " al mes");
   }
@@ -3059,6 +3252,7 @@
     if (P.tipo === "renovar") l.push("Código: " + formatear(normalizar($("#pagoCodigo").value)));
     var nota = $("#pagoNota").value.trim();
     if (nota) l.push("Nota: " + nota);
+    l.push("Acepto los Términos y el Aviso de privacidad (" + TERMINOS + ").");
     return l.join("\n");
   }
   function campoMal(input, texto) {
@@ -3209,6 +3403,7 @@
       if (!P.metodo) { irPaso(1); return; }
       if (nombre.value.trim().length < 2) return campoMal(nombre, "Pon tu nombre.");
       if (contacto.value.trim().length < 3) return campoMal(contacto, "Pon tu WhatsApp o tu Instagram para mandarte tu código.");
+      if (!$("#pagoAcepto").checked) return campoMal($("#pagoAcepto"), "Para seguir, acepta los Términos y el Aviso de privacidad.");
       P.venceAntes = null;
       if (P.tipo === "renovar") {
         if (normalizar(codigo.value).length !== 12) return campoMal(codigo, "Pon tu código completo (NL-XXXX-XXXX-XXXX).");
@@ -3427,6 +3622,147 @@
   }
 
   pedirCuadro();
+})();
+</script>
+<script>
+/* ---------------------------------------------------------------- PRACTICA: preguntas de verdad para la app instalada */
+(function () {
+  var raiz = document.getElementById("practica-rejilla");
+  if (!raiz) return;
+  function q(sel, el) { return (el || document).querySelector(sel); }
+  function qq(sel, el) { return Array.prototype.slice.call((el || document).querySelectorAll(sel)); }
+  function norm(t) { return String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim(); }
+  function num(t) { var v = parseFloat(String(t || "").replace(",", ".").replace(/[^0-9.\-]/g, "")); return isFinite(v) ? v : null; }
+  function cerca(t, v, tol) { var n = num(t); return n !== null && Math.abs(n - v) <= tol; }
+  function estado(nombre, bien) {
+    var e = q('[data-pr="' + nombre + '"] .pr-estado', raiz);
+    if (!e) return;
+    e.classList.toggle("bien", !!bien);
+    e.textContent = bien ? "✓ Quedó bien" : "Sin contestar";
+  }
+  var revisores = {};
+
+  /* ALEKS */
+  var aleks = q('[data-pr="aleks"]', raiz);
+  revisores.aleks = function () {
+    var v = {}; qq(".caja", aleks).forEach(function (c) { v[c.getAttribute("data-k")] = c.textContent; });
+    return cerca(v.A, 39, 0.05) && cerca(v.b, 41.1, 0.05) && cerca(v.c, 34.6, 0.05);
+  };
+  qq(".caja", aleks).forEach(function (c) { c.addEventListener("input", revisar); });
+
+  /* Kahoot */
+  var kahoot = q('[data-pr="kahoot"] input', raiz);
+  revisores.kahoot = function () { return cerca(kahoot.value, 56, 0); };
+  kahoot.addEventListener("input", revisar);
+
+  /* Seleccionar */
+  var OPS = ["Democracia ateniense y filosofía clásica", "Construcción de acueductos y derecho romano",
+             "Invención de la imprenta de tipos móviles", "Sistema de caminos Qhapaq Ñan en los Andes"];
+  var CIVS = [["Antigua Grecia", 0], ["Imperio Inca", 3], ["Antigua Roma", 1]], elegido = {};
+  var cards = q('[data-pr="seleccionar"] .cards', raiz);
+  function pintarSel() {
+    cards.innerHTML = ""; elegido = {};
+    CIVS.forEach(function (cv, i) {
+      var t = document.createElement("div"); t.className = "card";
+      t.innerHTML = '<div style="font-size:11px;color:#777">TARJETA ' + (i + 1) + '</div><h4></h4><div class="sel">Seleccionar</div><div class="lista"></div>';
+      q("h4", t).textContent = cv[0];
+      var sel = q(".sel", t), lista = q(".lista", t);
+      OPS.forEach(function (o, k) {
+        var d = document.createElement("div"); d.textContent = o;
+        d.addEventListener("click", function () { elegido[cv[0]] = k; sel.textContent = o; t.classList.remove("abierta"); revisar(); });
+        lista.appendChild(d);
+      });
+      sel.addEventListener("click", function () { qq(".card", cards).forEach(function (x) { if (x !== t) x.classList.remove("abierta"); }); t.classList.toggle("abierta"); });
+      cards.appendChild(t);
+    });
+  }
+  revisores.seleccionar = function () { return CIVS.every(function (cv) { return elegido[cv[0]] === cv[1]; }); };
+
+  /* flechas */
+  var HITOS = ["Caída del Imperio romano de Occidente (476 d. C.)", "Invención de la escritura cuneiforme (3200 a. C.)",
+               "Llegada de Cristóbal Colón a América (1492)", "Inicio de la Revolución Francesa (1789)"];
+  var BIEN = [1, 0, 2, 3], orden = [0, 1, 2, 3], listaF = q('[data-pr="flechas"] .lista', raiz);
+  function pintarFlechas() {
+    listaF.innerHTML = "";
+    orden.forEach(function (h, i) {
+      var f = document.createElement("div"); f.className = "fila";
+      f.innerHTML = '<div class="n">' + (i + 1) + '</div><div class="t"></div><button type="button" aria-label="Subir">&#8593;</button><button type="button" aria-label="Bajar">&#8595;</button>';
+      q(".t", f).textContent = HITOS[h];
+      var b = qq("button", f);
+      b[0].disabled = i === 0; b[1].disabled = i === orden.length - 1;
+      b[0].addEventListener("click", function () { var x = orden[i - 1]; orden[i - 1] = orden[i]; orden[i] = x; pintarFlechas(); revisar(); });
+      b[1].addEventListener("click", function () { var x = orden[i + 1]; orden[i + 1] = orden[i]; orden[i] = x; pintarFlechas(); revisar(); });
+      listaF.appendChild(f);
+    });
+  }
+  revisores.flechas = function () { return orden.join() === BIEN.join(); };
+
+  /* casillas */
+  var AFIRM = [["Sus raíces o ceros son x = 1 y x = 3.", true], ["Abre hacia abajo porque el coeficiente principal es positivo.", false],
+               ["Su vértice se encuentra en x = 2.", true], ["Interseca al eje y en el punto (0, 3).", true]];
+  var marcadas = {}, ops = q('[data-pr="casillas"] .ops', raiz);
+  function pintarCasillas() {
+    ops.innerHTML = ""; marcadas = {};
+    AFIRM.forEach(function (a, i) {
+      var d = document.createElement("div"); d.className = "op"; d.innerHTML = '<span class="c"></span><span></span>';
+      d.lastChild.textContent = a[0];
+      d.addEventListener("click", function () { marcadas[i] = !marcadas[i]; d.classList.toggle("si", marcadas[i]); revisar(); });
+      ops.appendChild(d);
+    });
+  }
+  revisores.casillas = function () { return AFIRM.every(function (a, i) { return !!marcadas[i] === a[1]; }); };
+
+  /* grafica (como ALEKS / MyLab: cuadricula clara, ejes negros, numeros de 1 en 1) */
+  var lienzo = q('[data-pr="grafica"] canvas', raiz), g = lienzo.getContext("2d"), U = 26, O = 150, puntos = [];
+  function gx(v) { return O + v * U; } function gy(v) { return O - v * U; }
+  function linea(x0, y0, x1, y1) { g.beginPath(); g.moveTo(Math.round(x0) + .5, Math.round(y0) + .5); g.lineTo(Math.round(x1) + .5, Math.round(y1) + .5); g.stroke(); }
+  function pintarGrafica() {
+    g.fillStyle = "#fff"; g.fillRect(0, 0, 300, 300); g.lineWidth = 1;
+    for (var k = -5; k <= 5; k++) { g.strokeStyle = "#d5d8e2"; linea(gx(k), gy(5.5), gx(k), gy(-5.5)); linea(gx(-5.5), gy(k), gx(5.5), gy(k)); }
+    g.strokeStyle = "#000"; linea(gx(-5.6), O, gx(5.6), O); linea(O, gy(-5.6), O, gy(5.6));
+    g.fillStyle = "#000"; g.font = "12px Arial";
+    for (k = -5; k <= 5; k++) {
+      if (!k) continue;
+      linea(gx(k), O - 4, gx(k), O + 4); linea(O - 4, gy(k), O + 4, gy(k));
+      var t = String(k), w = g.measureText(t).width;
+      g.fillText(t, gx(k) - w / 2, O + 17); g.fillText(t, O - 8 - w, gy(k) + 4);
+    }
+    puntos.forEach(function (p) { g.fillStyle = "#1a5fd0"; g.beginPath(); g.arc(gx(p[0]), gy(p[1]), 5, 0, 7); g.fill(); });
+    if (puntos.length >= 2) {
+      var a = puntos[0], b = puntos[1], m = (b[1] - a[1]) / ((b[0] - a[0]) || 1e-9);
+      g.strokeStyle = "#1a5fd0"; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(gx(-5.5), gy(a[1] + m * (-5.5 - a[0]))); g.lineTo(gx(5.5), gy(a[1] + m * (5.5 - a[0]))); g.stroke();
+    }
+  }
+  lienzo.addEventListener("click", function (e) {
+    var r = lienzo.getBoundingClientRect(), s = 300 / r.width;
+    var x = Math.round(((e.clientX - r.left) * s - O) / U), y = Math.round((O - (e.clientY - r.top) * s) / U);
+    if (puntos.length >= 2) puntos = [];
+    puntos.push([x, y]); pintarGrafica(); revisar();
+  });
+  revisores.grafica = function () {
+    if (puntos.length < 2) return false;
+    var a = puntos[0], b = puntos[1];
+    if (a[0] === b[0] && a[1] === b[1]) return false;
+    return puntos.every(function (p) { return p[1] === 2 * p[0] + 2; });
+  };
+
+  /* menu y abierta */
+  var menu = q('[data-pr="menu"] select', raiz), abierta = q('[data-pr="abierta"] input', raiz);
+  revisores.menu = function () { return menu.value === "100 °C"; };
+  revisores.abierta = function () { return /j[uú]piter/.test(norm(abierta.value)); };
+  menu.addEventListener("change", revisar);
+  abierta.addEventListener("input", revisar);
+
+  function revisar() { Object.keys(revisores).forEach(function (k) { estado(k, revisores[k]()); }); }
+  function empezar() {
+    qq(".caja", aleks).forEach(function (c) { c.textContent = ""; });
+    kahoot.value = ""; menu.value = ""; abierta.value = ""; orden = [0, 1, 2, 3]; puntos = [];
+    pintarSel(); pintarFlechas(); pintarCasillas(); pintarGrafica(); revisar();
+  }
+  var btn = document.getElementById("prReiniciar");
+  if (btn) btn.addEventListener("click", empezar);
+  empezar();
 })();
 </script>
 </body>

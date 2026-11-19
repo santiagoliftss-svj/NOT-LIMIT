@@ -60,7 +60,13 @@ jobs:
         id: autoprueba
         shell: pwsh
         run: |
-          Start-Process -FilePath "dist\NO LIMIT\NO LIMIT.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -Wait
+          # (-PassThru + WaitForExit y no -Wait: -Wait tambien espera a los procesos hijos, como los de Chrome)
+          $p = Start-Process -FilePath "dist\NO LIMIT\NO LIMIT.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -PassThru
+          if (-not $p.WaitForExit(1200000)) {
+            Write-Host "::error title=autoprueba::Se colgo mas de 20 minutos: se corta (lo que alcanzo esta en resultado.json)"
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          }
+          Get-Process chrome, msedge -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
           python build/resumen.py autoprueba/resultado.json *>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP\resumen.txt"
           if ($LASTEXITCODE -ne 0) { exit 1 }
 

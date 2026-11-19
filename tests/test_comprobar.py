@@ -146,3 +146,100 @@ def prueba_bot_comprueba_las_de_calcular():
     assert llamadas[:4] == ["FASE: UBICAR", "FASE: CONTESTAR", "FASE: COMPROBAR", "FASE: DESEMPATE"], llamadas
     assert [p["texto"] for p in plan.pasos] == ["56"], plan.pasos
     assert ("escribe", "56") in acc.log and ("escribe", "54") not in acc.log, acc.log
+
+
+# ---------------------------------------------------------------- el plan Basico solo hace lo del Basico
+
+def _bot_con_plan(plan, respuesta_contestar, tipo_ubicar="opcion_unica"):
+    import queue
+    import tempfile
+
+    from clw import config, licencia, motor
+    from clw.bot import Bot
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (700, 300), "white")
+    d = ImageDraw.Draw(img)
+    d.text((40, 40), "Pregunta de prueba", fill="black")
+    d.rectangle((60, 120, 260, 160), outline=(60, 60, 60))
+    llamadas = []
+
+    class Cliente:
+        restantes = None
+
+        def preguntar(self, proveedor, modelo, clave, sistema, b64, mime, texto, preciso=False):
+            llamadas.append(texto.split("\n", 1)[0])
+            if texto.startswith("FASE: UBICAR"):
+                return json.dumps({"hay_pregunta": True, "caja": [10, 10, 690, 290], "tipo": tipo_ubicar}), False
+            if texto.startswith("FASE: REVISAR"):
+                return '{"ok": true}', False
+            return json.dumps(respuesta_contestar), False
+
+    class Acciones:
+        VK_ESCAPE = 0x1B
+
+        class Cancelado(Exception):
+            pass
+
+        def __init__(self):
+            self.log = []
+
+        def tecla_abajo(self, vk):
+            return False
+
+        def clic(self, x, y, lento=False):
+            self.log.append(("clic", x, y))
+
+        def seleccionar_todo(self):
+            pass
+
+        def escribir(self, texto, cancelar=None):
+            self.log.append(("escribe", texto))
+
+    c = config.Config(os.path.join(tempfile.mkdtemp(), "ajustes.json"))
+    c.poner_clave("claude", "sk-ant-prueba")
+    c["guardar_capturas"] = False
+    acc = Acciones()
+    eventos = queue.Queue()
+    bot = Bot(c, eventos, ocr=None, cliente=Cliente(), acciones=acc)
+    viejo_estado, viejo_zona = licencia.estado, motor.capturar_zona
+    licencia.estado = lambda config: licencia.Estado(True, "ok", 5, "2099-01-01", plan)
+    motor.capturar_zona = lambda left, top, w, h: img.crop((int(left), int(top), int(left + w), int(top + h)))
+    try:
+        res = bot.contestar(img, 0, 0, 100, 60, 1.0)
+    finally:
+        licencia.estado, motor.capturar_zona = viejo_estado, viejo_zona
+    avisos = []
+    while not eventos.empty():
+        e = eventos.get()
+        if e[0] == "actividad":
+            avisos.append(e[1])
+    return res, acc.log, llamadas, avisos
+
+
+def prueba_basico_no_grafica_ni_gasta_la_pregunta():
+    res, log, llamadas, avisos = _bot_con_plan("basico", {}, tipo_ubicar="graficar")
+    assert res is None and log == [] and llamadas == ["FASE: UBICAR"], (llamadas, log)
+    assert any("plan Pro" in a for a in avisos), avisos
+
+
+def prueba_basico_no_hace_problemas_con_numeros_ni_dice_la_respuesta():
+    numerica = {"tipo": "abierta", "respuesta": "3825", "calculo": "4500*0.85",
+                "acciones": [{"hacer": "escribir", "en": {"x": 160, "y": 140}, "texto": "3825"}]}
+    res, log, llamadas, avisos = _bot_con_plan("basico", numerica, tipo_ubicar="abierta")
+    assert res is None and log == [], log
+    assert "FASE: COMPROBAR" not in llamadas, llamadas            # (ni segunda opinion)
+    assert any("plan Pro" in a for a in avisos) and not any("3825" in a for a in avisos), avisos
+
+
+def prueba_basico_no_elige_en_menus():
+    menu = {"tipo": "opcion_unica", "respuesta": "Mitocondria", "acciones": [{"hacer": "elegir", "en": 0, "opcion": "Mitocondria"}]}
+    res, log, llamadas, avisos = _bot_con_plan("basico", menu)
+    assert res is None and log == [], log
+
+
+def prueba_pro_si_hace_problemas_con_numeros():
+    numerica = {"tipo": "numerica", "respuesta": "3825", "calculo": "4500*0.85",
+                "acciones": [{"hacer": "escribir", "en": "C0", "texto": "3825"}]}
+    res, log, llamadas, avisos = _bot_con_plan("pro", numerica, tipo_ubicar="numerica")
+    assert res is not None and "FASE: COMPROBAR" in llamadas, llamadas

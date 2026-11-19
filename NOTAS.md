@@ -2,7 +2,21 @@
 
 Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más información** y luego a **Ejecutar de todas formas**.
 
-Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y luego tu API key. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
+La primera vez te enseña cómo se usa (3 pasos) y aceptas los Términos. Toca **INYECTAR**, pega tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y listo: la IA ya viene incluida. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
+
+**Nuevo en 2.5 (cada respuesta en su lugar)**
+
+- Varias casillas (como ALEKS, juegos o tablas): cada respuesta va en SU casilla. Antes de escribir revisa dónde quedó el cursor; si el texto cae en otra casilla, lo borra y lo vuelve a intentar con un clic más lento. Ya no escribe todo en la última.
+- Ya no selecciona el texto de la página: Ctrl/Cmd + A solo se hace cuando el cursor de verdad está en la casilla.
+- Escribe con más calma (las páginas que se trababan con lo rápido ya lo agarran).
+- Menús "Seleccionar" (como los quizzes de Gemini), también con opciones largas de dos renglones: elige uno por cada tarjeta.
+- Ordenar con flechas ↑↓: pica las flechas hasta que queda en orden. Solo arrastra si la pregunta dice arrastrar.
+- Gráficas: la herramienta (lápiz, recta, punto...) la eliges tú; NO LIMIT solo da clic en los puntos exactos.
+- Problemas con números (Pro y Premium): los resuelve dos veces desde cero y, si no dan lo mismo, revisa las dos para quedarse con la buena. Cuenta como una sola pregunta.
+- Lee mejor cajas blancas sobre fondos de color (Kahoot, juegos) y los acentos que el OCR confundía.
+- El plan Básico contesta solo lo del Básico; lo demás te dice que es del Pro.
+- Planes nuevos: Básico 300 preguntas, Pro 500 y Premium 1,000 al mes. Si ya pagaste, tu mes se respeta con lo que compraste.
+- Probado en Chrome de verdad en Windows y en Mac (Intel y Apple) con preguntas como las de ALEKS, Kahoot y quizzes. Pruébala tú en la página, en **Practica con la app**.
 
 **Nuevo en 2.4 (la IA ya viene incluida)**
 

@@ -21,10 +21,13 @@ import tempfile
 import threading
 import time
 import traceback
+import logging
 import unicodedata
 from http.server import BaseHTTPRequestHandler
 
 from .servidor_local import abrir as _servidor
+
+log = logging.getLogger("clw.navegador")
 
 COMUN = """
 <style>
@@ -554,6 +557,154 @@ def _esperar_layout(nombre, limite=25.0):
     return None
 
 
+SEG_POR_PRUEBA = 150
+
+
+def _sin_error(fn):
+    try:
+        fn()
+    except Exception:
+        pass
+
+
+def _con_tiempo(fn, seg):
+    """Corre fn en otro hilo. True si termino a tiempo; False si se paso (el hilo se deja: es de fondo)."""
+    hilo = threading.Thread(target=lambda: _sin_error(fn), name="prueba-navegador", daemon=True)
+    hilo.start()
+    hilo.join(seg)
+    return not hilo.is_alive()
+
+
+def _pilas():
+    """Que estaba haciendo cada hilo (solo los de NO LIMIT y el de la prueba)."""
+    nombres = {t.ident: t.name for t in threading.enumerate()}
+    out = {}
+    for ident, marco in sys._current_frames().items():
+        n = nombres.get(ident, str(ident))
+        if n in ("trabajo", "prueba-navegador", "esc") or n.startswith("Thread"):
+            out[n + f"-{ident}"] = "".join(traceback.format_stack(marco)[-8:])[-1800:]
+    return out
+
+
+def _cerrar_navegador(proc, perfil):
+    """Cierra el navegador CON todos sus procesos (si queda uno vivo, Windows se queda esperando)."""
+    if proc is None:
+        return
+    try:
+        if sys.platform == "win32":
+            subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=20,
+                           creationflags=0x08000000)
+        else:
+            proc.terminate()
+            try:
+                proc.wait(5)
+            except Exception:
+                proc.kill()
+            subprocess.run(["pkill", "-f", perfil], capture_output=True, timeout=10)
+    except Exception:
+        pass
+
+
+def _una(prueba, paso, ctx):
+    """Una pregunta en el navegador: abrir la pagina, encontrarla en la pantalla, Ctrl / Option + clic y ver que
+    quedo. 'paso' dice por donde va (por si se cuelga)."""
+    nombre, contestar, tipo, enfoque, disparo, revisar = prueba
+    IA, bot, detalle, salida, d = ctx["IA"], ctx["bot"], ctx["detalle"], ctx["salida"], ctx["datos"]
+    entrada, motor = ctx["entrada"], ctx["motor"]
+
+    def ir(donde):
+        paso["donde"] = donde
+        log.info("navegador: %s: %s", nombre, donde)
+    t0 = time.time()
+    pedidos0 = getattr(IA, "pedidos", 0)
+    try:
+        ir("abrir la pagina")
+        _Estado.prueba = nombre
+        lay = _esperar_layout(nombre)
+        time.sleep(0.8)
+        lay = _Estado.layout.get(nombre) or lay
+        ir("buscar la pagina en la pantalla")
+        origen = _origen()
+        if not lay or not lay.get("r") or origen is None:
+            detalle[nombre] = {"ok": False, "error": "la pagina no aparecio en la pantalla", "layout": bool(lay),
+                               "origen": origen}
+            _sin_error(lambda: motor.capturar_zona(0, 0, *_pantalla_px()).save(os.path.join(salida, f"nav_{nombre}.png")))
+            return
+        ox, oy = origen
+        k = _escala()
+        r = lay["r"]
+
+        def punto(clave, fx, fy):
+            x, y, w, h = r[clave]
+            if 0 < fx < 1 or 0 < fy < 1:
+                return ox + (x + w * fx) * k, oy + (y + h * fy) * k
+            return ox + (x + fx) * k, oy + (y + fy) * k
+        ir("traer el navegador al frente")
+        entrada.clic(ox + 960 * k, oy + 12 * k)
+        time.sleep(0.4)
+        if enfoque:
+            ir("dejar el cursor en una casilla")
+            X, Y = punto(enfoque, 0.5, 0.5)
+            entrada.clic(X, Y, lento=True)                  # el usuario dejo el cursor del teclado en esa casilla
+            time.sleep(0.5)
+        foco_antes = (_Estado.layout.get(nombre) or {}).get("foco")
+        x, y, w, h = r["pregunta"]
+        m = 14
+        _Ahora.caja = (ox + (x - m) * k, oy + (y - m) * k, ox + (x + w + m) * k, oy + (y + h + m) * k)
+        X, Y = punto(*disparo)
+        _Ahora.zona = _zona_captura(X, Y)
+        fases, vistos = _fases(contestar, tipo), []
+
+        def elegir(t):
+            vistos.append(t[:2500])
+            return fases(t)
+        IA.elegir = elegir
+        ir("Ctrl / Option + clic")
+        entrada.mover(X, Y)
+        time.sleep(0.3)
+        bot._disparo(X, Y)                                 # (como el Ctrl / Option + clic del usuario)
+        time.sleep(1.0)
+        ir("NO LIMIT contestando")
+        fin = time.time() + 90
+        while time.time() < fin and bot._ocupado.locked():
+            time.sleep(0.3)
+        time.sleep(1.2)
+        ir("ver que quedo")
+        v = dict(_Estado.valores.get(nombre) or {})
+        ok = bool(revisar(v))
+        actividad = []
+        while True:
+            try:
+                e = bot.eventos.get_nowait()
+            except Exception:
+                break
+            if e and e[0] == "actividad":
+                actividad.append(e[1])
+        detalle[nombre] = {"ok": ok, "valores": v, "actividad": actividad[-3:], "seg": round(time.time() - t0, 1),
+                           "pedidos_ia": getattr(IA, "pedidos", 0) - pedidos0, "foco_antes": foco_antes,
+                           "escala": k, "dpr": lay.get("dpr")}
+        if bot._ocupado.locked():
+            detalle[nombre]["ok"] = False
+            detalle[nombre]["error"] = "NO LIMIT no termino en 90 s"
+            detalle[nombre]["pilas"] = _pilas()
+        if not detalle[nombre]["ok"]:          # (para saber que vio la IA: lo que manda NO LIMIT en CONTESTAR)
+            detalle[nombre]["ia"] = [t for t in vistos if t.startswith("FASE: CONTESTAR")][:1]
+        ir("guardar las fotos")
+        try:
+            motor.capturar_zona(0, 0, min(_pantalla_px()[0], int(1000 * k)),
+                                min(_pantalla_px()[1], int(760 * k))).save(os.path.join(salida, f"nav_{nombre}.png"))
+            for f in ("ultima_captura.png", "ultima_revision.png"):
+                rev = os.path.join(d, "revision", f)
+                if os.path.exists(rev):
+                    shutil.copy(rev, os.path.join(salida, f"nav_{nombre}_{f.split('_')[1]}"))
+                    os.remove(rev)
+        except Exception:
+            pass
+        ir("listo")
+    except Exception as e:
+        detalle[nombre] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+
+
 def correr(salida, IA, resultados, guardar=None, nombre_resultado="navegador", solo=None):
     """Corre las pruebas en el navegador y deja el resultado en resultados[nombre_resultado]."""
     import queue
@@ -580,98 +731,29 @@ def correr(salida, IA, resultados, guardar=None, nombre_resultado="navegador", s
     bot = Bot(c, queue.Queue())
     bot.activo = True
     pruebas = [p for p in PRUEBAS if not solo or p[0] in solo]
+    ctx = {"IA": IA, "bot": bot, "detalle": detalle, "salida": salida, "datos": d, "entrada": entrada, "motor": motor}
     try:
         if not _esperar_layout("inicio", 45):
             resultados[nombre_resultado] = {"ok": False, "error": "el navegador no abrio la pagina", "navegador": cual}
             return
         time.sleep(1.5)
-        for nombre, contestar, tipo, enfoque, disparo, revisar in pruebas:
-            t0 = time.time()
-            pedidos0 = getattr(IA, "pedidos", 0)
-            try:
-                _Estado.prueba = nombre
-                lay = _esperar_layout(nombre)
-                time.sleep(0.8)
-                lay = _Estado.layout.get(nombre) or lay
-                origen = _origen()
-                if not lay or not lay.get("r") or origen is None:
-                    detalle[nombre] = {"ok": False, "error": "la pagina no aparecio en la pantalla",
-                                       "layout": bool(lay), "origen": origen}
-                    try:
-                        motor.capturar_zona(0, 0, *_pantalla_px()).save(os.path.join(salida, f"nav_{nombre}.png"))
-                    except Exception:
-                        pass
-                    continue
-                ox, oy = origen
-                k = _escala()
-                r = lay["r"]
-
-                def punto(clave, fx, fy, r=r):
-                    x, y, w, h = r[clave]
-                    if 0 < fx < 1 or 0 < fy < 1:
-                        return ox + (x + w * fx) * k, oy + (y + h * fy) * k
-                    return ox + (x + fx) * k, oy + (y + fy) * k
-                entrada.clic(ox + 960 * k, oy + 12 * k)        # (que el navegador quede al frente)
-                time.sleep(0.4)
-                if enfoque:
-                    X, Y = punto(enfoque, 0.5, 0.5)
-                    entrada.clic(X, Y, lento=True)              # el usuario dejo el cursor del teclado en esa casilla
-                    time.sleep(0.5)
-                foco_antes = (_Estado.layout.get(nombre) or {}).get("foco")
-                x, y, w, h = r["pregunta"]
-                m = 14
-                _Ahora.caja = (ox + (x - m) * k, oy + (y - m) * k, ox + (x + w + m) * k, oy + (y + h + m) * k)
-                X, Y = punto(*disparo)
-                _Ahora.zona = _zona_captura(X, Y)
-                fases, vistos = _fases(contestar, tipo), []
-
-                def elegir(t, fases=fases, vistos=vistos):
-                    vistos.append(t[:2500])
-                    return fases(t)
-                IA.elegir = elegir
-                entrada.mover(X, Y)
-                time.sleep(0.3)
-                bot._disparo(X, Y)                             # (como el Ctrl / Option + clic del usuario)
-                time.sleep(1.0)
-                fin = time.time() + 70
-                while time.time() < fin and bot._ocupado.locked():
-                    time.sleep(0.3)
-                time.sleep(1.2)
-                v = dict(_Estado.valores.get(nombre) or {})
-                ok = bool(revisar(v))
-                actividad = []
-                while not bot.eventos.empty():
-                    e = bot.eventos.get()
-                    if e and e[0] == "actividad":
-                        actividad.append(e[1])
-                detalle[nombre] = {"ok": ok, "valores": v, "actividad": actividad[-3:], "seg": round(time.time() - t0, 1),
-                                   "pedidos_ia": getattr(IA, "pedidos", 0) - pedidos0, "foco_antes": foco_antes,
-                                   "escala": k, "dpr": lay.get("dpr")}
-                if not ok:              # (para saber que vio la IA: lo que manda NO LIMIT en CONTESTAR)
-                    detalle[nombre]["ia"] = [t for t in vistos if t.startswith("FASE: CONTESTAR")][:1]
-                try:
-                    motor.capturar_zona(0, 0, min(_pantalla_px()[0], int(1000 * k)),
-                                        min(_pantalla_px()[1], int(760 * k))).save(os.path.join(salida, f"nav_{nombre}.png"))
-                    for f in ("ultima_captura.png", "ultima_revision.png"):
-                        rev = os.path.join(d, "revision", f)
-                        if os.path.exists(rev):
-                            shutil.copy(rev, os.path.join(salida, f"nav_{nombre}_{f.split('_')[1]}"))
-                            os.remove(rev)
-                except Exception:
-                    pass
-            except Exception as e:
-                detalle[nombre] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
+        for prueba in pruebas:
+            nombre = prueba[0]
+            paso = {"donde": "empezar", "t": time.time()}
+            hecho = _con_tiempo(lambda: _una(prueba, paso, ctx), SEG_POR_PRUEBA)
+            if hecho is not True:
+                # se colgo: se apunta donde iba y que hacia cada hilo (para arreglarlo) y ya no se sigue
+                log.warning("navegador: %s se colgo en '%s'", nombre, paso["donde"])
+                detalle[nombre] = {"ok": False, "error": f"se colgo (mas de {SEG_POR_PRUEBA} s) en: {paso['donde']}",
+                                   "pilas": _pilas()}
+                if guardar:
+                    _sin_error(guardar)
+                break
             if guardar:
-                try:
-                    guardar()
-                except Exception:
-                    pass
+                _sin_error(guardar)
     finally:
         bot.activo = False
-        try:
-            proc.terminate()
-        except Exception:
-            pass
+        _cerrar_navegador(proc, perfil)
         srv.shutdown()
         shutil.rmtree(perfil, ignore_errors=True)
     buenas = [n for n, x in detalle.items() if x.get("ok")]

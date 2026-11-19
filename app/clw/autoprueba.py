@@ -15,7 +15,8 @@ import traceback
 from http.server import BaseHTTPRequestHandler
 
 RESULTADOS = {}
-OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
+OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana",
+                "navegador")    # preguntas como ALEKS, Kahoot y quizzes en Chrome de verdad: si no, no se publica
 if sys.platform == "darwin":
     OBLIGATORIAS += ("red",)       # en Mac los certificados de internet vienen dentro de la app
     OBLIGATORIAS += ("e2e",)       # la Mac es lo mas importante: si no contesta de punta a punta, no se publica

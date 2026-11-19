@@ -9,7 +9,7 @@ a = Analysis(
     [os.path.join(APP, "clw_gang.py")],
     pathex=[APP],
     datas=[(os.path.join(APP, "assets"), "assets")],
-    hiddenimports=["PIL.ImageTk", "PIL._tkinter_finder", "pystray._win32", "pystray._util.win32", "clw.uia",
+    hiddenimports=["PIL.ImageTk", "PIL._tkinter_finder", "pystray._win32", "pystray._util.win32", "clw.uia", "clw.servidor_local",
                    "clw.prueba_navegador"],
     excludes=["numpy", "matplotlib", "pytest", "IPython", "pystray._gtk", "pystray._appindicator",
               "pystray._xorg", "pystray._darwin", "gi", "Xlib", "AppKit", "Foundation"],
