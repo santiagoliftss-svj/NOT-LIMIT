@@ -50,7 +50,9 @@ class Falso(BaseHTTPRequestHandler):
     def do_POST(self):
         largo = int(self.headers.get("content-length") or 0)
         cuerpo = self.rfile.read(largo)
-        GEMINI.append((self.path, self.headers.get("x-goog-api-key"), cuerpo))
+        GEMINI.append((self.path, self.headers.get("x-goog-api-key") or self.headers.get("x-api-key"), cuerpo))
+        if self.path == "/v1/messages":
+            return self._mandar(200, {"content": [{"type": "text", "text": "hola"}], "usage": {"input_tokens": 3000, "output_tokens": 200}})
         self._mandar(200, {"candidates": [{"content": {"parts": [{"text": "hola"}]}}],
                            "usageMetadata": {"promptTokenCount": 3000, "candidatesTokenCount": 200}})
 
@@ -73,6 +75,7 @@ def main():
     huellas = {rapida(c): [n, f"huella{n}"] for c, n in CODIGOS.values()}
     with open(os.path.join(AQUI, ".dev.vars"), "w") as f:
         f.write(f"GEMINI_KEY={CLAVE}\nGEMINI_URL={base}\nLISTA_URL={base}/licencias.json\n")
+        f.write(f"CLAUDE_KEY={CLAVE}-claude\nCLAUDE_URL={base}\n")
         f.write(f"HUELLAS_PRUEBA='{json.dumps(huellas)}'\n")
     wr = subprocess.Popen(["wrangler", "dev", "--port", str(PUERTO), "--ip", "127.0.0.1"], cwd=AQUI,
                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -98,7 +101,7 @@ def main():
 
         pro, bas, ven = CODIGOS["pro"][0], CODIGOS["bas"][0], CODIGOS["ven"][0]
         e, t, _ = pedir("/salud", "")
-        ver("salud", e == 200 and json.loads(t)["ia"] is True and CLAVE not in t, t)
+        ver("salud", e == 200 and json.loads(t)["ias"]["claude"] is True and CLAVE not in t, t)
         e, t, _ = pedir("/estado", "NL-XXXX-XXXX-XXXX")
         ver("codigo falso -> 401", e == 401, t)
         e, t, _ = pedir("/estado", ven)
@@ -119,7 +122,19 @@ def main():
         e, t, _ = pedir("/estado", pro, equipo="compu-B")
         ver("otra compu -> 403", e == 403 and "otra compu" in t, t)
         e, t, _ = pedir(url, bas, pid="x", metodo="POST", cuerpo={"contents": []})
-        ver("Basico usa el ligero", e == 200 and "gemini-flash-lite-latest" in GEMINI[-1][0], GEMINI[-1][0])
+        ver("Basico con Gemini Flash -> 403 (es del Pro)", e == 403 and "plan Pro" in t, t)
+        e, t, _ = pedir("/v1beta/models/gemini-flash-lite-latest:generateContent", bas, pid="x", metodo="POST", cuerpo={"contents": []})
+        ver("Basico con Flash Lite si", e == 200 and "gemini-flash-lite-latest" in GEMINI[-1][0], (e, t))
+        e, t, _ = pedir("/v1/messages", bas, pid="y", metodo="POST", cuerpo={"model": "claude-haiku-5-5", "messages": []})
+        ver("Basico con Claude -> 403", e == 403, t)
+        LISTA["planes"]["901"] = "premium"
+        LISTA["limites"]["premium"] = 50
+        time.sleep(61)                                  # (el servidor guarda la lista 1 minuto)
+        e, t, _ = pedir("/v1/messages", pro, pid="z", metodo="POST", cuerpo={"model": "claude-opus-5-5", "messages": []})
+        ver("Premium con Claude Opus llega a Claude con su clave", e == 200 and GEMINI[-1][0] == "/v1/messages"
+            and GEMINI[-1][1] == CLAVE + "-claude" and json.loads(t)["content"][0]["text"] == "hola", (e, t))
+        e, t, _ = pedir("/estado", pro)
+        ver("Opus cuenta 5 (3 de antes + 5)", json.loads(t)["usadas"] == 8, t)
         e, t, _ = pedir("/admin", pro)
         ver("admin solo dueno", e == 403, t)
         print(f"{len(fallas)} fallas")

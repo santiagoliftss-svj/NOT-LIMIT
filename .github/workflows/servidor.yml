@@ -31,26 +31,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Revisar que Cloudflare ya este conectado
-        id: hay
-        env:
-          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          G: ${{ secrets.GEMINI_KEY }}
-        run: |
-          if [ -n "$T" ] && [ -n "$A" ] && [ -n "$G" ]; then echo "si=1" >> "$GITHUB_OUTPUT"; else
-            echo "si=0" >> "$GITHUB_OUTPUT"
-            echo "::warning::Falta conectar Cloudflare: secretos CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID y GEMINI_KEY"
-          fi
-      - name: Subir a Cloudflare
-        if: steps.hay.outputs.si == '1'
-        uses: cloudflare/wrangler-action@v3
+      - uses: actions/setup-node@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: servidor
-          wranglerVersion: "4"
-          secrets: |
-            GEMINI_KEY
+          node-version: 22
+      - name: Subir a Cloudflare (con las claves de IA que haya)
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
+          CLAUDE_KEY: ${{ secrets.CLAUDE_KEY }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+        working-directory: servidor
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::Falta conectar Cloudflare: secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID"
+            exit 0
+          fi
+          npm i -g wrangler@4 --silent
+          wrangler deploy
+          for k in GEMINI_KEY CLAUDE_KEY OPENAI_KEY; do
+            v="${!k}"
+            if [ -n "$v" ]; then printf '%s' "$v" | wrangler secret put "$k" >/dev/null && echo "$k: puesta"; else echo "$k: no hay (esa IA queda apagada)"; fi
+          done

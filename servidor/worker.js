@@ -4,14 +4,17 @@
 //   1. revisa que el codigo exista, este pagado y no este bloqueado (licencias.json de la pagina),
 //   2. revisa que no se use en mas compus de las del plan (asi no se comparte),
 //   3. cuenta las preguntas del mes (y del dia) contra el limite del plan,
-//   4. llama a Gemini con la clave del dueno (secreto GEMINI_KEY, nunca sale de aqui) y regresa la respuesta.
+//   4. revisa que la IA que eligio venga en su plan (las caras cuentan por mas de una pregunta),
+//   5. llama a esa IA (Gemini, Claude o ChatGPT) con la clave del dueno (secretos GEMINI_KEY, CLAUDE_KEY y
+//      OPENAI_KEY: nunca salen de aqui) y regresa la respuesta tal cual.
 //
 // Todo lo que se guarda (uso, compus) vive en un Durable Object con SQLite ("Cuentas").
 
 import { HUELLAS } from "./huellas.js";
 
 const LISTA = "https://santiagoliftss-svj.github.io/NOT-LIMIT/licencias.json";
-const GEMINI = "https://generativelanguage.googleapis.com";
+const URLS = { gemini: "https://generativelanguage.googleapis.com", claude: "https://api.anthropic.com", openai: "https://api.openai.com" };
+const NOMBRE_IA = { gemini: "Gemini", claude: "Claude", openai: "ChatGPT" };
 const SAL_RAPIDA = "NO-LIMIT-SRV-1";
 const VUELTAS_RAPIDA = 2000;
 
@@ -26,9 +29,24 @@ const LLAMADAS_POR_PREGUNTA = 12;      // una pregunta son ~3 llamadas (ubicar, 
 const LIBRE_TRAS_HORAS = 72;           // una compu que no se usa en 3 dias deja su lugar (cambio de compu)
 const MAX_CUERPO = 8 * 1024 * 1024;
 
-const MODELOS = { lite: "gemini-flash-lite-latest", flash: "gemini-flash-latest", pro: "gemini-pro-latest" };
-// dolares por millon de tokens (entrada, salida), para saber cuanto cuesta cada cliente
-const PRECIOS = { lite: [0.30, 2.50], flash: [1.50, 7.50], pro: [2.00, 12.00] };
+// Las IAs de cada plan (las ligeras de cada una van incluidas: con ellas se ubica y se revisa la pregunta)
+const BASICO = ["gemini-flash-lite-latest"];
+const PRO = [...BASICO, "gemini-flash-latest", "claude-haiku-5-5", "gpt-6-luna"];
+const PREMIUM = [...PRO, "gemini-pro-latest", "claude-sonnet-5-5", "claude-opus-5-5", "gpt-6.1-terra"];
+export const PLAN_MODELOS = { basico: BASICO, pro: PRO, premium: PREMIUM };
+// Las caras cuentan por mas preguntas (asi un cliente no te cuesta mas de lo que paga)
+export const PESOS = { "gemini-pro-latest": 2, "claude-sonnet-5-5": 2, "gpt-6.1-terra": 2, "claude-opus-5-5": 5 };
+const NOMBRE_MODELO = {
+  "gemini-flash-lite-latest": "Gemini Flash Lite", "gemini-flash-latest": "Gemini Flash", "gemini-pro-latest": "Gemini Pro",
+  "claude-haiku-5-5": "Claude Haiku", "claude-sonnet-5-5": "Claude Sonnet", "claude-opus-5-5": "Claude Opus",
+  "gpt-6-luna": "GPT-6 Luna", "gpt-6.1-terra": "GPT-6.1 Terra",
+};
+// dolares por millon de tokens (entrada, salida): ESTIMADOS, solo para ver cuanto cuesta cada cliente
+const PRECIOS = {
+  "gemini-flash-lite-latest": [0.30, 2.50], "gemini-flash-latest": [1.50, 7.50], "gemini-pro-latest": [2.00, 12.00],
+  "claude-haiku-5-5": [1.00, 5.00], "claude-sonnet-5-5": [3.00, 15.00], "claude-opus-5-5": [5.00, 25.00],
+  "gpt-6-luna": [0.50, 4.00], "gpt-6.1-terra": [2.00, 10.00],
+};
 
 // ---------------------------------------------------------------- utilidades
 
@@ -119,22 +137,47 @@ export function estadoDe(num, huella, lista, hoy) {
   return { ...base, activa: true, motivo: "ok" };
 }
 
-export function elegirModelo(pedido, estado) {
-  const p = String(pedido || "").toLowerCase();
-  if (estado.plan === "basico") return "lite";
-  if (p.includes("lite")) return "lite";
-  if (p.includes("pro")) return estado.dueno ? "pro" : "flash";
-  return "flash";
+export function permitido(modelo, estado) {
+  if (!NOMBRE_MODELO[modelo]) return false;
+  return estado.dueno || (PLAN_MODELOS[estado.plan] || PRO).includes(modelo);
 }
 
-export function usoDe(texto) {
+function planDe(modelo) {
+  return PRO.includes(modelo) ? "Pro" : "Premium";
+}
+
+// que IA y que modelo pide la app (habla igual que cada IA: el servidor solo pone la clave)
+export function queIA(ruta, cuerpo) {
+  const g = ruta.match(/^\/v1beta\/models\/([\w.\-]+):generateContent$/);
+  if (g) return { ia: "gemini", modelo: g[1], destino: `/v1beta/models/${g[1]}:generateContent` };
+  if (ruta === "/v1/messages" || ruta === "/v1/chat/completions") {
+    let modelo = "";
+    try { modelo = String(JSON.parse(cuerpo).model || ""); } catch {}
+    return { ia: ruta === "/v1/messages" ? "claude" : "openai", modelo, destino: ruta };
+  }
+  return null;
+}
+
+export function usoDe(ia, texto) {
   try {
-    const u = JSON.parse(texto).usageMetadata || {};
+    const j = JSON.parse(texto);
+    if (ia === "claude") {
+      const u = j.usage || {};
+      return { tin: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0), tout: u.output_tokens || 0 };
+    }
+    if (ia === "openai") {
+      const u = j.usage || {};
+      return { tin: u.prompt_tokens || 0, tout: u.completion_tokens || 0 };
+    }
+    const u = j.usageMetadata || {};
     return { tin: u.promptTokenCount || 0, tout: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0) };
   } catch {
     return { tin: 0, tout: 0 };
   }
 }
+
+const SIN_SALDO = /credit balance|insufficient_quota|exceeded your current quota|billing|payment/i;
+const CLAVE_MALA = /api key|api_key|x-api-key|authentication|permission|incorrect api key/i;
 
 async function alCuaderno(env, ruta, datos) {
   const stub = env.CUENTAS.get(env.CUENTAS.idFromName("todas"));
@@ -148,7 +191,8 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (url.pathname === "/" || url.pathname === "/salud") {
-      return json(200, { ok: true, servicio: "NO LIMIT", ia: Boolean(env.GEMINI_KEY) });
+      return json(200, { ok: true, servicio: "NO LIMIT",
+                         ias: { gemini: Boolean(env.GEMINI_KEY), claude: Boolean(env.CLAUDE_KEY), openai: Boolean(env.OPENAI_KEY) } });
     }
 
     // 1) el codigo
@@ -177,7 +221,8 @@ export default {
       if (!estado.activa) return error(401, estado.motivo, estado.mensaje);
       const r = await alCuaderno(env, "/estado", base);
       if (!r.ok) return error(r.status, r.tipo, r.mensaje);
-      return json(200, { ok: true, numero: num, plan: estado.plan, nombre: estado.nombre, vence: estado.vence,
+      const modelos = estado.dueno ? Object.keys(NOMBRE_MODELO) : PLAN_MODELOS[estado.plan];
+      return json(200, { ok: true, numero: num, plan: estado.plan, nombre: estado.nombre, vence: estado.vence, modelos, pesos: PESOS,
                          limite: estado.sinLimite ? null : estado.limite, usadas: r.usadas,
                          restantes: estado.sinLimite ? null : Math.max(0, estado.limite - r.usadas) });
     }
@@ -187,26 +232,37 @@ export default {
     }
 
     // 3) la pregunta a la IA
-    const m = url.pathname.match(/^\/v1beta\/models\/([\w.\-]+):generateContent$/);
-    if (!m || req.method !== "POST") return error(404, "otro", "No existe.");
-    if (!estado.activa) return error(401, estado.motivo, estado.mensaje);
-    if (!env.GEMINI_KEY) return error(503, "servidor", "El servidor de NO LIMIT no tiene IA configurada. Avísale a tu vendedor.");
+    if (req.method !== "POST") return error(404, "otro", "No existe.");
     const cuerpo = await req.text();
+    const pedido = queIA(url.pathname, cuerpo);
+    if (!pedido) return error(404, "otro", "No existe.");
+    if (!estado.activa) return error(401, estado.motivo, estado.mensaje);
     if (cuerpo.length > MAX_CUERPO) return error(413, "peticion", "La captura está demasiado grande.");
+    const { ia, modelo, destino } = pedido;
+    if (!NOMBRE_MODELO[modelo]) return error(404, "modelo", "Esa IA no está en NO LIMIT. Actualiza la app.");
+    if (!permitido(modelo, estado)) {
+      return error(403, "plan", `${NOMBRE_MODELO[modelo]} es del plan ${planDe(modelo)}. Elige otra IA o sube de plan.`);
+    }
+    const llave = env[`${ia.toUpperCase()}_KEY`];
+    if (!llave) return error(503, "ia", `${NOMBRE_IA[ia]} no está disponible ahorita. Elige otra IA.`);
 
     const pid = String(req.headers.get("x-nl-pregunta") || crypto.randomUUID()).slice(0, 64);
-    const permiso = await alCuaderno(env, "/permiso", { ...base, pid });
+    // la app manda el peso de la IA que va a contestar desde la 1a llamada (ubicar va con la ligera): solo puede subirlo
+    const pesoApp = Math.min(5, Math.max(1, parseInt(req.headers.get("x-nl-peso"), 10) || 1));
+    const peso = Math.max(PESOS[modelo] || 1, pesoApp);
+    const permiso = await alCuaderno(env, "/permiso", { ...base, pid, peso });
     if (!permiso.ok) return error(permiso.status, permiso.tipo, permiso.mensaje);
 
-    const clase = elegirModelo(m[1], estado);
-    const modelo = MODELOS[clase];
+    const cab = { "content-type": "application/json" };
+    if (ia === "gemini") cab["x-goog-api-key"] = llave;
+    if (ia === "claude") {
+      cab["x-api-key"] = llave;
+      cab["anthropic-version"] = req.headers.get("anthropic-version") || "2023-06-01";
+    }
+    if (ia === "openai") cab.authorization = `Bearer ${llave}`;
     let r;
     try {
-      r = await fetch(`${env.GEMINI_URL || GEMINI}/v1beta/models/${modelo}:generateContent`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_KEY },
-        body: cuerpo,
-      });
+      r = await fetch((env[`${ia.toUpperCase()}_URL`] || URLS[ia]) + destino, { method: "POST", headers: cab, body: cuerpo });
     } catch {
       return error(502, "servidor", "La IA no contestó. Intenta otra vez.");
     }
@@ -215,16 +271,18 @@ export default {
     if (permiso.restantes !== null && permiso.restantes !== undefined) extra["x-nl-restantes"] = String(permiso.restantes);
 
     if (r.ok) {
-      const u = usoDe(texto);
-      const [pin, pout] = PRECIOS[clase];
+      const u = usoDe(ia, texto);
+      const [pin, pout] = PRECIOS[modelo] || [2, 10];
       const centavos = (u.tin * pin + u.tout * pout) / 1e6 * 100;
       ctx.waitUntil(alCuaderno(env, "/gasto", { num, mes: base.mes, tin: u.tin, tout: u.tout, centavos }).catch(() => {}));
       return new Response(texto, { status: 200, headers: { "content-type": "application/json; charset=utf-8", ...extra } });
     }
-    // errores de Gemini: nunca se pasa nada de la clave del dueno
-    if (r.status === 401 || r.status === 403 || /api key|api_key|billing|permission/i.test(texto)) {
-      return error(502, "servidor", "El servidor de NO LIMIT tiene un problema con la IA. Avísale a tu vendedor.");
+    // errores de la IA: nunca se pasa nada de las claves ni del saldo del dueno
+    if (SIN_SALDO.test(texto)) return error(503, "ia", `${NOMBRE_IA[ia]} no está disponible ahorita. Elige otra IA.`);
+    if (r.status === 401 || r.status === 403 || CLAVE_MALA.test(texto)) {
+      return error(503, "ia", `${NOMBRE_IA[ia]} no está disponible ahorita. Elige otra IA.`);
     }
+    if (r.status === 404) return error(404, "modelo", `${NOMBRE_MODELO[modelo]} no está disponible ahorita. Elige otra IA.`);
     if (r.status === 429) return error(429, "limite", "La IA está saturada ahorita. Intenta en un momento.");
     if (r.status >= 500) return error(503, "servidor", "La IA está saturada ahorita. Intenta en un momento.");
     // 400 y demas: se pasa tal cual (la app prueba otra variante de "pensar" si el modelo no la acepta)
@@ -239,7 +297,7 @@ export class Cuentas {
     this.sql = state.storage.sql;
     this.sql.exec("CREATE TABLE IF NOT EXISTS uso (num INTEGER, mes TEXT, preguntas INTEGER DEFAULT 0, llamadas INTEGER DEFAULT 0, tin INTEGER DEFAULT 0, tout INTEGER DEFAULT 0, centavos REAL DEFAULT 0, PRIMARY KEY (num, mes))");
     this.sql.exec("CREATE TABLE IF NOT EXISTS dia (num INTEGER, dia TEXT, preguntas INTEGER DEFAULT 0, PRIMARY KEY (num, dia))");
-    this.sql.exec("CREATE TABLE IF NOT EXISTS preguntas (num INTEGER, mes TEXT, pid TEXT, llamadas INTEGER DEFAULT 0, PRIMARY KEY (num, mes, pid))");
+    this.sql.exec("CREATE TABLE IF NOT EXISTS preguntas (num INTEGER, mes TEXT, pid TEXT, llamadas INTEGER DEFAULT 0, peso INTEGER DEFAULT 1, PRIMARY KEY (num, mes, pid))");
     this.sql.exec("CREATE TABLE IF NOT EXISTS equipos (num INTEGER, equipo TEXT, primero INTEGER, ultimo INTEGER, PRIMARY KEY (num, equipo))");
     this.sql.exec("CREATE TABLE IF NOT EXISTS reinicios (num INTEGER PRIMARY KEY, marca TEXT)");
   }
@@ -300,30 +358,40 @@ export class Cuentas {
   }
 
   permiso(b) {
+    // Cuenta "preguntas": cada clic es una, y si la contesta una IA cara cuenta por su peso (Opus x5).
     const malo = this.equipo(b);
     if (malo) return malo;
+    const peso = Math.max(1, Math.floor(b.peso || 1));
     let usadas = this.usadas(b);
-    const p = this.uno("SELECT llamadas FROM preguntas WHERE num = ? AND mes = ? AND pid = ?", b.num, b.mes, b.pid);
+    const p = this.uno("SELECT llamadas, peso FROM preguntas WHERE num = ? AND mes = ? AND pid = ?", b.num, b.mes, b.pid);
     const nueva = !p || p.llamadas >= LLAMADAS_POR_PREGUNTA;
-    if (nueva) {
-      if (!b.sinLimite && usadas >= b.limite) {
+    const suma = nueva ? peso : Math.max(0, peso - p.peso);       // (ubico con la ligera y contesta con una cara)
+    if (nueva && !b.sinLimite) {           // (una pregunta que ya iba siempre termina)
+      if (usadas >= b.limite) {
         return { ok: false, status: 402, tipo: "cupo", restantes: 0,
                  mensaje: `Ya usaste tus ${b.limite} preguntas de este mes. Sube de plan o espera al próximo mes.` };
       }
-      const d = this.uno("SELECT preguntas FROM dia WHERE num = ? AND dia = ?", b.num, b.dia);
-      if (!b.sinLimite && d && d.preguntas >= b.porDia) {
-        return { ok: false, status: 402, tipo: "dia",
-                 mensaje: `Llegaste al máximo de ${b.porDia} preguntas por hoy. Mañana sigues.` };
+      if (usadas + peso > b.limite) {
+        const quedan = b.limite - usadas;
+        return { ok: false, status: 402, tipo: "cupo", restantes: quedan,
+                 mensaje: `Te quedan ${quedan} preguntas y esa IA cuenta por ${peso}. Elige una más ligera o sube de plan.` };
       }
-      this.sql.exec("INSERT OR REPLACE INTO preguntas (num, mes, pid, llamadas) VALUES (?, ?, ?, 1)", b.num, b.mes, b.pid);
-      this.sql.exec("INSERT INTO dia (num, dia, preguntas) VALUES (?, ?, 1) ON CONFLICT (num, dia) DO UPDATE SET preguntas = preguntas + 1", b.num, b.dia);
-      this.sql.exec("INSERT INTO uso (num, mes, preguntas, llamadas) VALUES (?, ?, 1, 1) ON CONFLICT (num, mes) DO UPDATE SET preguntas = preguntas + 1, llamadas = llamadas + 1", b.num, b.mes);
-      usadas += 1;
+      const d = this.uno("SELECT preguntas FROM dia WHERE num = ? AND dia = ?", b.num, b.dia);
+      if (d && d.preguntas >= b.porDia) {
+        return { ok: false, status: 402, tipo: "dia", mensaje: `Llegaste al máximo de ${b.porDia} preguntas por hoy. Mañana sigues.` };
+      }
+    }
+    if (nueva) {
+      this.sql.exec("INSERT OR REPLACE INTO preguntas (num, mes, pid, llamadas, peso) VALUES (?, ?, ?, 1, ?)", b.num, b.mes, b.pid, peso);
       if (Math.random() < 0.01) this.limpiar(b);
     } else {
-      this.sql.exec("UPDATE preguntas SET llamadas = llamadas + 1 WHERE num = ? AND mes = ? AND pid = ?", b.num, b.mes, b.pid);
-      this.sql.exec("UPDATE uso SET llamadas = llamadas + 1 WHERE num = ? AND mes = ?", b.num, b.mes);
+      this.sql.exec("UPDATE preguntas SET llamadas = llamadas + 1, peso = MAX(peso, ?) WHERE num = ? AND mes = ? AND pid = ?", peso, b.num, b.mes, b.pid);
     }
+    if (suma > 0) {
+      this.sql.exec("INSERT INTO dia (num, dia, preguntas) VALUES (?, ?, ?) ON CONFLICT (num, dia) DO UPDATE SET preguntas = preguntas + excluded.preguntas", b.num, b.dia, suma);
+      usadas += suma;
+    }
+    this.sql.exec("INSERT INTO uso (num, mes, preguntas, llamadas) VALUES (?, ?, ?, 1) ON CONFLICT (num, mes) DO UPDATE SET preguntas = preguntas + excluded.preguntas, llamadas = llamadas + 1", b.num, b.mes, suma);
     return { ok: true, usadas, restantes: b.sinLimite ? null : Math.max(0, b.limite - usadas) };
   }
 
