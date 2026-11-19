@@ -26,6 +26,7 @@ GEMINI = []
 def rapida(codigo):
     n = "".join(ch for ch in codigo.upper() if ch.isalnum())
     n = n[2:] if n.startswith("NL") and len(n) == 14 else n
+    n = n.replace("O", "0").replace("I", "1").replace("L", "1")
     return hashlib.pbkdf2_hmac("sha256", n.encode(), b"NO-LIMIT-SRV-1", 2000).hex()
 
 
