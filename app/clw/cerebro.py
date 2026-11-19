@@ -851,6 +851,24 @@ def refinar_campo(img, x, y, zoom=1.0):
     return None
 
 
+def _texto_cuadra(texto, i, cajas):
+    """True si el texto de la opcion que dice la IA es el de la caja i: se parecen, o es la caja que mas se le parece
+    y lo unico distinto son numeros que el OCR no alcanzo a leer (por ejemplo se le fue el "3" de "x = 3")."""
+    leido = cajas[i]["texto"]
+    if motor.parecido(texto, leido) >= 0.45:
+        return True
+
+    def sin_numeros(t):
+        return re.sub(r"\d+", " ", str(t))
+    if motor.parecido(sin_numeros(texto), sin_numeros(leido)) < 0.8:
+        return False
+    from collections import Counter
+    if Counter(re.findall(r"\d+", motor._norm(leido))) - Counter(re.findall(r"\d+", motor._norm(texto))):
+        return False                     # el OCR leyo un numero que la IA no dijo: es otra opcion
+    otros = [motor.parecido(texto, c["texto"]) for j, c in enumerate(cajas) if j != i]
+    return max(otros, default=0.0) < 0.6
+
+
 def _corregir_id(i, texto, cajas):
     """Si la IA puso un id cuyo texto no es el de su respuesta (error por uno), busca la caja correcta."""
     if i is None or not texto or not cajas:
@@ -889,6 +907,104 @@ def _comprobar_cuentas(acciones, datos, plan):
 
 
 SOLO_PUNTOS = "en graficas solo se pican los puntos"
+
+
+# ================================================================ segunda opinion (preguntas de calcular)
+
+_COMPROBAR = ("SEGUNDA OPINION: resuelve esta pregunta OTRA VEZ desde cero, como si fuera la primera vez: vuelve a leer "
+              "los datos de la imagen (numeros, signos, unidades, que angulo o lado piden), plantea, calcula y COMPRUEBA "
+              "(sustituye o recalcula de otra forma). Responde con el mismo formato JSON de siempre.")
+
+_DESEMPATE = ("DESEMPATE: dos soluciones de esta misma pregunta NO dan lo mismo.\n"
+              "Solucion A: {a}\nSolucion B: {b}\n"
+              "Vuelve a leer la pregunta en la imagen con mucho cuidado (que piden exactamente, desde donde se mide el "
+              "angulo, unidades, redondeo) y revisa cada solucion paso a paso: sustituye los valores y recalcula. "
+              "Responde con el JSON completo (mismo formato de siempre, con acciones e ids de ESTA imagen) de la "
+              "solucion correcta; si las dos estan mal, con la correcta tuya.")
+
+
+def _numero_texto(t):
+    t = str(t or "").strip().replace(",", ".").replace("−", "-").replace(" ", "")
+    m = re.fullmatch(r"(-?\d+(?:\.\d+)?)(°|%)?", t)
+    return (float(m.group(1)), len((m.group(1).split(".") + [""])[1])) if m else None
+
+
+def _mismo_valor(a, b):
+    """True si dos textos escritos son la misma respuesta (41.1 y 41.09 si; 41.1 y 53.6 no)."""
+    na, nb = _numero_texto(a), _numero_texto(b)
+    if na and nb:
+        dec = min(na[1], nb[1])
+        return abs(round(na[0], dec) - round(nb[0], dec)) <= 1.01 * 10 ** -dec / 2 or abs(na[0] - nb[0]) <= 1e-9
+    return motor._norm(a).replace(" ", "") == motor._norm(b).replace(" ", "")
+
+
+def valores_de(datos):
+    """Lo que una solucion deja contestado, para comparar dos: textos escritos, puntos del plano, opciones."""
+    escritos, puntos, marcas = [], set(), set()
+    for a in _a_lista_de_acciones(datos):
+        hacer = str(a.get("hacer") or a.get("accion") or "").strip().lower()
+        en = a.get("en", a.get("id"))
+        if hacer in ("escribir", "teclear", "write", "type"):
+            escritos.append(str(a.get("texto") or ""))
+        elif hacer in ("clic", "click", "marcar", "seleccionar"):
+            if isinstance(en, dict) and ("gx" in en or "gy" in en):
+                puntos.add((motor._numero(en.get("gx")), motor._numero(en.get("gy"))))
+            elif a.get("texto"):
+                marcas.add(motor._norm(a.get("texto")))
+        elif hacer in ("elegir", "menu", "desplegable", "select"):
+            marcas.add(motor._norm(a.get("opcion") or a.get("texto")))
+    return {"escritos": escritos, "puntos": puntos, "marcas": marcas}
+
+
+def mismas_respuestas(d1, d2):
+    v1, v2 = valores_de(d1), valores_de(d2)
+    if len(v1["escritos"]) != len(v2["escritos"]) or not all(_mismo_valor(a, b) for a, b in zip(v1["escritos"], v2["escritos"])):
+        return False
+    return v1["puntos"] == v2["puntos"] and v1["marcas"] == v2["marcas"]
+
+
+def hay_respuesta(datos):
+    v = valores_de(datos)
+    return bool(v["escritos"] or v["puntos"] or v["marcas"])
+
+
+def segunda_opinion(preguntar, b64, mime, texto, datos, esfuerzo=None):
+    """Preguntas de calcular: la IA la resuelve otra vez desde cero. Si las dos no dan lo mismo, una tercera vez revisa
+    las dos (sustituyendo) y dice cual es la buena. Devuelve (datos, que_paso)."""
+    _comprobar_en(datos)
+    t2 = texto.replace("FASE: CONTESTAR", "FASE: COMPROBAR", 1) + "\n" + _COMPROBAR
+    try:
+        salida2, _ = llamar(preguntar, b64, mime, t2, "contestar", esfuerzo)
+        d2 = motor.interpretar(salida2)
+    except Exception as e:
+        return datos, f"sin segunda opinion ({getattr(e, 'tipo', type(e).__name__)})"
+    _comprobar_en(d2)
+    if not hay_respuesta(d2) or mismas_respuestas(datos, d2):
+        return datos, "cuadra"
+
+    def corto(d):
+        return json.dumps({k: d.get(k) for k in ("respuesta", "pasos", "calculo", "acciones") if d.get(k) is not None},
+                          ensure_ascii=False)[:1800]
+    t3 = texto.replace("FASE: CONTESTAR", "FASE: DESEMPATE", 1) + "\n" + _DESEMPATE.format(a=corto(datos), b=corto(d2))
+    try:
+        salida3, _ = llamar(preguntar, b64, mime, t3, "contestar", "alto")
+        d3 = motor.interpretar(salida3)
+    except Exception as e:
+        return datos, f"no cuadran y no se pudo desempatar ({getattr(e, 'tipo', type(e).__name__)})"
+    if not hay_respuesta(d3):
+        return datos, "no cuadran y el desempate no dio respuesta"
+    _comprobar_en(d3)
+    return d3, ("desempate: se queda la primera" if mismas_respuestas(datos, d3) else
+                "desempate: se queda la segunda" if mismas_respuestas(d2, d3) else "desempate: otra respuesta")
+
+
+def _comprobar_en(datos):
+    """Corrige con la calculadora las cuentas de una solucion (su "calculo"), antes de compararla con otra."""
+    import types
+    try:
+        _comprobar_cuentas(_a_lista_de_acciones(datos), datos, types.SimpleNamespace(correcciones=[], respuesta=""))
+    except Exception:
+        pass
 
 
 def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=None, plano=None):
@@ -948,7 +1064,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
                 if j != i:
                     i = j
                     x, y = cajas[i]["cx"], cajas[i]["cy"]
-                if a.get("texto") and motor.parecido(str(a["texto"]), cajas[i]["texto"]) < 0.45:
+                if a.get("texto") and not _texto_cuadra(str(a["texto"]), i, cajas):
                     # el texto de la opcion que dice la IA no se parece a lo que hay ahi: mejor no picar a lo loco
                     rechazar(a, f"el texto no cuadra ('{a['texto']}' vs '{cajas[i]['texto']}')")
                     continue

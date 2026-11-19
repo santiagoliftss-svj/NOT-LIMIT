@@ -7,7 +7,7 @@ import sys
 import tempfile
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app"))
 from clw import config, licencia  # noqa: E402
@@ -65,9 +65,12 @@ class App:
         pass
 
 
-def _ui():
+def _ui(acepto=True):
+    from clw.ui import vistas
     d = tempfile.mkdtemp()
     c = config.Config(os.path.join(d, "a.json"))
+    if acepto:
+        c["acepto_terminos"] = vistas.TERMINOS          # (la bienvenida se prueba aparte)
     app = App()
     ui = Interfaz(c, app, 1.0, reloj=lambda: 100.0)
     app.ui = ui
@@ -138,7 +141,8 @@ class _Pagina(BaseHTTPRequestHandler):
 
 
 def prueba_refrescar_baja_la_lista_y_la_fecha_del_servidor():
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), _Pagina)
+    from clw.servidor_local import abrir
+    srv = abrir(_Pagina)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     d = tempfile.mkdtemp()
     antes_url, antes_datos = licencia.URL, os.environ.get("CLW_DATOS")
@@ -389,3 +393,36 @@ def prueba_restantes_avisa_cuando_quedan_pocas():
             ev.append(b.eventos.get())
         assert ("uso", 20) in ev and any(e[0] == "actividad" and "20 preguntas" in e[1] for e in ev), ev
         assert licencia.uso()["restantes"] == 20
+
+
+def prueba_primera_vez_pide_aceptar_terminos_antes_de_inyectar():
+    from clw.ui import vistas
+    with _Sin(vence=_dia(20)):
+        ui, app, c = _ui(acepto=False)
+        assert ui.pantalla == "bienvenida"
+        ui._accion("empezar")                            # sin aceptar no avanza
+        assert ui.pantalla == "bienvenida" and not c.get("acepto_terminos")
+        ui._accion("ver_terminos")
+        assert ("url", vistas.version.PAGINA + "#terminos") in app.log
+        ui._accion("acepto")
+        ui._accion("empezar")
+        assert ui.pantalla == "principal" and c["acepto_terminos"] == vistas.TERMINOS and c.get("acepto_fecha")
+        ui.render()
+        ui._accion("ajustes")
+        ui._accion("tutorial")                           # el tutorial se puede volver a ver
+        assert ui.pantalla == "bienvenida" and ui.acepto
+        ui.render()
+        ui._accion("empezar")
+        assert ui.pantalla == "principal"
+
+
+def prueba_terminos_nuevos_se_vuelven_a_aceptar():
+    with _Sin(vence=_dia(20)):
+        ui, app, c = _ui(acepto=False)
+        c["acepto_terminos"] = "2020-01"                 # acepto unos viejos
+        from clw.ui.vistas import Interfaz
+        ui2 = Interfaz(c, app, 1.0, reloj=lambda: 100.0)
+        assert ui2.pantalla == "bienvenida"
+        ui2.pantalla = "principal"
+        ui2._accion("inyectar")                          # tampoco deja prender sin aceptar
+        assert ui2.pantalla == "bienvenida"

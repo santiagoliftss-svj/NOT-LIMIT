@@ -278,6 +278,14 @@ class Bot:
             self._emitir("actividad", "La IA se quedó sin espacio. Prueba otra vez.", "error")
             return None
         datos = motor.interpretar(salida)
+        if self._segunda_opinion(ub.tipo, datos):
+            # preguntas de calcular: se resuelve otra vez desde cero y, si no da lo mismo, se desempata
+            self._cancelado()
+            t2 = time.time()
+            datos, nota = cerebro.segunda_opinion(preguntar, b64, mime, texto, datos, esfuerzo)
+            t_ia += time.time() - t2
+            log.info("segunda opinion: %s (%.1fs)", nota, time.time() - t2)
+            self._cancelado()
         plan = cerebro.planear(datos, cajas, campos, s, recorte, zoom, controles, self.ocr, plano)
         lic = licencia.estado(self.config)
         if not licencia.permite(lic.plan, plan.tipo or ub.tipo):
@@ -322,6 +330,17 @@ class Bot:
         log.info("hecho=%s fallas=%s total=%.1fs", ej.hecho, [m for _, m in ej.fallas][:4], time.time() - t0)
         self._reportar_plan(plan, ej)
         return plan, ej
+
+    def _segunda_opinion(self, tipo_ubicar, datos):
+        """Las de calcular (numericas, problemas, graficas) se comprueban con una segunda solucion."""
+        if not self.config.get("comprobar", True):
+            return False
+        tipos = {str(tipo_ubicar or "").strip().lower(), str(datos.get("tipo") or "").strip().lower()}
+        if not tipos & set(cerebro.TIPOS_CALCULO):
+            return False
+        if str(datos.get("seguro") or "alto").strip().lower() == "bajo" or datos.get("no_se_puede"):
+            return False
+        return cerebro.hay_respuesta(datos)
 
     def _accesibilidad(self, nombre, *args):
         f = getattr(self.acciones, nombre, None)

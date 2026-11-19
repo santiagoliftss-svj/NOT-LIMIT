@@ -19,7 +19,7 @@ const SAL_RAPIDA = "NO-LIMIT-SRV-1";
 const VUELTAS_RAPIDA = 2000;
 
 // Lo que trae cada plan (licencias.json puede cambiarlo con "limites", "por_dia" y "equipos")
-const LIMITES = { basico: 300, pro: 600, premium: 1200 };
+const LIMITES = { basico: 300, pro: 500, premium: 1000 };
 const POR_DIA = { basico: 60, pro: 120, premium: 250 };
 const EQUIPOS = { basico: 1, pro: 1, premium: 2 };
 const PLAN_NORMAL = "pro";
@@ -119,7 +119,9 @@ export function estadoDe(num, huella, lista, hoy) {
   const sinLimite = duenos.includes(num) || (lista.sin_limite || []).map(Number).includes(num);
   const base = {
     num, plan: p, nombre: NOMBRES[p], dueno: duenos.includes(num), sinLimite,
-    limite: deLista(lista, "limites", p, LIMITES),
+    // (un codigo puede traer su propio limite: los que pagaron antes del cambio de precios lo conservan hasta renovar)
+    limite: Number.isFinite((lista.limite_codigo || {})[String(num)]) ? lista.limite_codigo[String(num)]
+      : deLista(lista, "limites", p, LIMITES),
     porDia: deLista(lista, "por_dia", p, POR_DIA),
     equipos: deLista(lista, "equipos", p, EQUIPOS),
     reinicio: String((lista.reiniciar_equipos || {})[String(num)] || ""),

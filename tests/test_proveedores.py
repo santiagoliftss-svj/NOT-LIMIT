@@ -4,7 +4,7 @@ import json
 import os
 import sys
 import threading
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app"))
 os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost"
@@ -39,7 +39,8 @@ class _Manejador(BaseHTTPRequestHandler):
 
 
 def _servidor():
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), _Manejador)
+    from clw.servidor_local import abrir
+    srv = abrir(_Manejador)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{srv.server_address[1]}"
     for p in ("CLAUDE", "GEMINI", "OPENAI"):

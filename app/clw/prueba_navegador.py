@@ -22,7 +22,9 @@ import threading
 import time
 import traceback
 import unicodedata
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+
+from .servidor_local import abrir as _servidor
 
 COMUN = """
 <style>
@@ -397,7 +399,8 @@ def _contestar_kahoot(t):
 
 
 def _contestar_menus(t):
-    sel = sorted(_ids(t, "Seleccionar", exacto=True), key=lambda k: k[1])
+    sel = [k for k in _ids(t, "Seleccionar") if len(_norm([l for l in _lineas(t) if l[0] == str(k[0])][0][3]).split()) <= 3]
+    sel = sorted(sel, key=lambda k: k[1])
     ops = ["Democracia ateniense y filosofía clásica", "Sistema de caminos Qhapaq Ñan en los Andes",
            "Construcción de acueductos y derecho romano"]
     return {"tipo": "desplegable", "respuesta": " | ".join(ops),
@@ -560,7 +563,7 @@ def correr(salida, IA, resultados, guardar=None, nombre_resultado="navegador", s
     t_total = time.time()
     detalle = {}
     resultados[nombre_resultado] = {"ok": False, "detalle": detalle, "nota": "corriendo"}
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), _Paginas)
+    srv = _servidor(_Paginas)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{srv.server_address[1]}"
     perfil = tempfile.mkdtemp(prefix="nl-nav-")
@@ -620,7 +623,12 @@ def correr(salida, IA, resultados, guardar=None, nombre_resultado="navegador", s
                 _Ahora.caja = (ox + (x - m) * k, oy + (y - m) * k, ox + (x + w + m) * k, oy + (y + h + m) * k)
                 X, Y = punto(*disparo)
                 _Ahora.zona = _zona_captura(X, Y)
-                IA.elegir = _fases(contestar, tipo)
+                fases, vistos = _fases(contestar, tipo), []
+
+                def elegir(t, fases=fases, vistos=vistos):
+                    vistos.append(t[:2500])
+                    return fases(t)
+                IA.elegir = elegir
                 entrada.mover(X, Y)
                 time.sleep(0.3)
                 bot._disparo(X, Y)                             # (como el Ctrl / Option + clic del usuario)
@@ -639,6 +647,8 @@ def correr(salida, IA, resultados, guardar=None, nombre_resultado="navegador", s
                 detalle[nombre] = {"ok": ok, "valores": v, "actividad": actividad[-3:], "seg": round(time.time() - t0, 1),
                                    "pedidos_ia": getattr(IA, "pedidos", 0) - pedidos0, "foco_antes": foco_antes,
                                    "escala": k, "dpr": lay.get("dpr")}
+                if not ok:              # (para saber que vio la IA: lo que manda NO LIMIT en CONTESTAR)
+                    detalle[nombre]["ia"] = [t for t in vistos if t.startswith("FASE: CONTESTAR")][:1]
                 try:
                     motor.capturar_zona(0, 0, min(_pantalla_px()[0], int(1000 * k)),
                                         min(_pantalla_px()[1], int(760 * k))).save(os.path.join(salida, f"nav_{nombre}.png"))

@@ -51,6 +51,13 @@ R_MARCA = (MARCA_X - 6, MARCA_Y - 6, MARCA_W + 12, MARCA_H + 12)
 R_BOTON = (BOTON[0] - 30, BOTON[1] - 30, BOTON[2] + 60, BOTON[3] + 60 + 30)
 
 
+TERMINOS = "2026-11"                # cambia cuando cambian los Terminos o la Privacidad (se vuelven a aceptar)
+PASOS_TUTORIAL = (
+    ("Activa con tu código", "Pégalo una vez (NL-…). Se queda guardado en esta computadora."),
+    ("Elige tu IA", "Toca la IA en la pantalla principal. Según tu plan: Gemini, Claude o ChatGPT."),
+    (f"{plataforma.ATAJO} en la pregunta", "NO LIMIT la lee, la contesta y revisa que quede bien. Esc cancela."),
+)
+
 LICENCIA_UI = Proveedor("licencia", "NO LIMIT", "NL-", version.PAGINA + "#pago", "¿No tienes código? Cómpralo aquí")
 PROV_UI = dict(PROVEEDORES, licencia=LICENCIA_UI)
 MODELO_DE = {"gemini": "gemini-flash-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna"}
@@ -115,6 +122,12 @@ class Interfaz:
         self._prev_completo = False
         self._por_calentar = None          # pantallas que se arman antes de verlas (ver precalentar)
         self.msg_permisos = ""
+        self.acepto = self.terminos_aceptados()
+        if not self.acepto and not licencia.PRUEBA:
+            self.pantalla = "bienvenida"   # la primera vez: mini tutorial y aceptar Terminos y Privacidad
+
+    def terminos_aceptados(self):
+        return self.config.get("acepto_terminos") == TERMINOS
 
     # ================================================================ estado
     def modelo_actual(self):
@@ -245,6 +258,9 @@ class Interfaz:
             return {}
 
     def _encender(self):
+        if not self.terminos_aceptados() and not licencia.PRUEBA:
+            self._ir("bienvenida", 1)
+            return
         est = licencia.estado(self.config)
         if not est.activa:                        # sin codigo pagado y al corriente no arranca
             self.abrir_clave("licencia", iniciar=True, msg=est.mensaje,
@@ -322,6 +338,21 @@ class Interfaz:
             self.app.abrir_url(version.PAGINA)
         elif zid == "planes":
             self.app.abrir_url(version.PAGINA + "#precio")
+        elif zid == "acepto":
+            self.acepto = not self.acepto
+        elif zid == "ver_terminos":
+            self.app.abrir_url(version.PAGINA + "#terminos")
+        elif zid == "ver_privacidad":
+            self.app.abrir_url(version.PAGINA + "#privacidad")
+        elif zid == "empezar":
+            if self.acepto:
+                if not self.terminos_aceptados():
+                    c["acepto_terminos"] = TERMINOS
+                    c["acepto_fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                self._ir("principal", 1)
+        elif zid == "tutorial":
+            self.acepto = self.terminos_aceptados()
+            self._ir("bienvenida", 1)
         elif zid == "actualizar":
             if self.actualizacion_lista and hasattr(self.app, "actualizar"):
                 self.app.actualizar()
@@ -521,6 +552,8 @@ class Interfaz:
                      int(t * 3) % 4 if k["verificando"] else 0)
         elif self.pantalla == "permisos":
             extra = (tuple(sorted(self._estado_permisos().items())), self.msg_permisos)
+        elif self.pantalla == "bienvenida":
+            extra = (self.acepto, self.terminos_aceptados())
         c = self.config
         fila_animada = t - self._t_fila < T_FILA
         return (self.pantalla, self.capa, self.estado, tuple(self.actividad), fila_animada, c["modelo"], c["modo_preciso"],
@@ -583,6 +616,8 @@ class Interfaz:
                 self._pantalla_clave(l, t)
             elif self.pantalla == "permisos":
                 self._permisos(l)
+            elif self.pantalla == "bienvenida":
+                self._bienvenida(l)
             if self.capa == "modelos":
                 self._zonas_modelos(l)
             if solo_mouse:
@@ -1108,7 +1143,7 @@ class Interfaz:
         l.vidrio(24, 338, 332, 168, 20, borde=(95, 22), relleno=(10, 3))
         hov = self.hover == "preciso"
         l.texto(40, 352, "Modo preciso", "nombre", TEXTO)
-        for j, linea in enumerate(E.partir("Piensa antes de contestar. Se equivoca menos y tarda un poquito más.",
+        for j, linea in enumerate(E.partir("Piensa antes de contestar: se equivoca menos.",
                                            "chico", self.e, 222 * self.e)):
             l.texto(40, 375 + j * 16, linea, "chico", SUAVE)
         self._toggle(l, 294, 358, c["modo_preciso"], hov)
@@ -1142,10 +1177,50 @@ class Interfaz:
         l.zona("licencia", 22, 514, ancho + 8, 28)
 
         hov = self.hover == "pagina"
-        ancho = l.texto_centrado_v(24, PIE_Y, "Página de NO LIMIT", "chico", TEXTO if hov else SUAVE)
+        ancho = l.texto_centrado_v(24, PIE_Y, "Página", "chico", TEXTO if hov else SUAVE)
         l.icono("afuera", 28 + ancho, PIE_Y - 6, 12, TEXTO if hov else SUAVE)
         l.zona("pagina", 18, PIE_Y - 14, ancho + 30, 28)
+        x = 24 + ancho + 34
+        hov = self.hover == "tutorial"
+        ancho = l.texto_centrado_v(x, PIE_Y, "Tutorial", "chico", TEXTO if hov else SUAVE)
+        l.zona("tutorial", x - 6, PIE_Y - 14, ancho + 12, 28)
         self._chip_version(l)
+
+    # ---------------------------------------------------------------- bienvenida (mini tutorial + terminos)
+    def _bienvenida(self, l):
+        ya = self.terminos_aceptados()
+        if ya:
+            self._volver(l, "empezar")
+        l.texto_plata(24, 56, "Así se usa", "titulo")
+        l.texto(24, 100, "Tres pasos y listo. Tarda menos de un minuto.", "cuerpo", SUAVE)
+        l.vidrio(24, 128, 332, 222, 20, borde=(95, 22), relleno=(10, 3))
+        for i, (titulo, desc) in enumerate(PASOS_TUTORIAL):
+            y = 128 + i * 74
+            l.punto(48, y + 25, 12, BLANCO)
+            l.texto_centrado_v(48, y + 25, str(i + 1), "boton_chico", NEGRO, ancla="ma")
+            l.texto(72, y + 15, titulo, "nombre", TEXTO)
+            for j, linea in enumerate(E.partir(desc, "chico", self.e, 268 * self.e)[:2]):
+                l.texto(72, y + 38 + j * 16, linea, "chico", SUAVE)
+            if i < 2:
+                l.linea_h(40, y + 74, 300, (255, 255, 255, 26))
+
+        hov = self.hover == "acepto"
+        self._toggle(l, 24, 370, self.acepto, hov)
+        l.texto(84, 368, "Acepto los Términos y el", "chico", TEXTO)
+        l.texto(84, 385, "Aviso de privacidad de NO LIMIT", "chico", TEXTO)
+        l.zona("acepto", 20, 362, 336, 44)
+        x = 84
+        for zid, txt in (("ver_terminos", "Leer términos"), ("ver_privacidad", "Leer privacidad")):
+            hov = self.hover == zid
+            ancho = l.texto(x, 418, txt, "chico", TEXTO if hov else SUAVE)
+            l.icono("afuera", x + ancho + 4, 417, 12, TEXTO if hov else SUAVE)
+            l.linea_h(x, 433, ancho, (255, 255, 255, 150 if hov else 60))
+            l.zona(zid, x - 4, 410, ancho + 24, 28)
+            x += ancho + 34
+        for j, linea in enumerate(E.partir("Es para estudiar y practicar: no la uses en exámenes vigilados ni donde "
+                                           "tu escuela lo prohíba.", "chico", self.e, 330 * self.e)[:2]):
+            l.texto(24, 458 + j * 16, linea, "chico", TENUE)
+        self._boton_blanco(l, "empezar", 24, 514, 332, 54, "LISTO" if ya else "EMPEZAR", apagado=not self.acepto)
 
     # ---------------------------------------------------------------- permisos (Mac)
     def _permisos(self, l):

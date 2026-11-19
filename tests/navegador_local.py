@@ -16,7 +16,6 @@ import queue
 import sys
 import threading
 import time
-from http.server import ThreadingHTTPServer
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(AQUI, "..", "app"))
@@ -105,7 +104,8 @@ def correr(solo=None, sabe_foco=True):
     os.makedirs(SALIDA, exist_ok=True)
     licencia.PRUEBA = True
     srv_ia = autoprueba._servidor_ia()
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), pn._Paginas)
+    from clw.servidor_local import abrir
+    srv = abrir(pn._Paginas)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{srv.server_address[1]}"
     d = os.path.join(SALIDA, "datos")

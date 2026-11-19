@@ -240,5 +240,15 @@ ver("salud dice que IAs hay (sin claves)", r.status === 200 && r.j.ias.gemini &&
 r = await pedir("ia", { codigo: C.pro, metodo: "GET" });
 ver("GET a la IA -> 404", r.status === 404);
 
+// --- limite propio de un codigo (los que pagaron antes del cambio de precios lo conservan)
+lista = { ...lista, limite_codigo: { 902: 777 } };
+avanzar(61 * 1000);
+r = await pedir("/estado", { codigo: C.bas });
+ver("limite_codigo le gana al del plan", r.status === 200 && r.j.limite === 777, r.t);
+lista = { ...lista, limite_codigo: {}, limites: {} };
+avanzar(61 * 1000);
+r = await pedir("/estado", { codigo: C.bas });
+ver("sin limite_codigo: el del plan (Basico 300)", r.status === 200 && r.j.limite === 300, r.t);
+
 console.log(fallas ? `${fallas} fallas` : "0 fallas");
 process.exit(fallas ? 1 : 0);

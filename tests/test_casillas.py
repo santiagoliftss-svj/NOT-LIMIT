@@ -278,3 +278,72 @@ def prueba_las_instrucciones_nuevas():
     for frase in ("NO toques la barra de herramientas", "Seleccionar", "flechas", "VARIAS CASILLAS",
                   "Arrastra SOLO si la pregunta pide arrastrar"):
         assert frase in t, frase
+
+
+# ---------------------------------------------------------------- lo que salio de probar en Chrome de verdad
+
+def prueba_letras_no_son_casillas_pero_casillas_vacias_si():
+    """Una letra (8, B, D) en medio del texto no es una casilla; una casilla vacia (o con el cursor) si."""
+    from PIL import Image, ImageDraw, ImageFont
+    from clw import motor
+    try:
+        f = ImageFont.truetype("DejaVuSans.ttf", 26)
+    except OSError:
+        f = ImageFont.load_default()
+    im = Image.new("RGB", (420, 60), "white")
+    ImageDraw.Draw(im).text((10, 10), "x = 8 B 0 D [ ] H #", font=f, fill="black")
+    assert motor.rectangulos(im, 1.0) == [], motor.rectangulos(im, 1.0)
+    im = Image.new("RGB", (200, 60), "white")
+    d = ImageDraw.Draw(im)
+    d.rectangle((50, 15, 60, 37), outline=(80, 90, 200))                   # vacia (ALEKS)
+    d.rectangle((100, 15, 116, 38), outline=(30, 60, 210), width=2)         # con el cursor adentro
+    d.line((105, 19, 105, 34), fill=(0, 0, 0))
+    assert len(motor.rectangulos(im, 1.0)) == 2, motor.rectangulos(im, 1.0)
+
+
+def prueba_caja_blanca_en_fondo_morado():
+    """La caja para escribir de un juego (blanca, sin orilla) sobre un fondo de color si se ve como campo."""
+    from PIL import Image, ImageDraw
+    from clw import motor
+    im = Image.new("RGB", (700, 300), (70, 23, 143))
+    ImageDraw.Draw(im).rounded_rectangle((120, 150, 640, 208), radius=6, fill="white")
+    rs = motor.rectangulos(im, 1.0)
+    assert any(abs(r[0] - 120) <= 3 and abs(r[2] - 640) <= 3 for r in rs), rs
+
+
+def prueba_ocr_tolerante_al_comparar():
+    from clw import motor
+    assert motor.parecido("Llegada de Cristóbal Colón a América (1492)", "Llegada de Crist6bal Col6n a América (1492)") > 0.9
+    assert motor.parecido("Sus raíces o ceros son x = 1 y x = 3.", "(_) Sus raices 0 ceros son x =1yx=3.") > 0.6
+    assert motor.parecido("La respuesta es 6", "La respuesta es 0") <= 0.3          # los numeros siguen mandando
+    assert motor.parecido("H2O", "H2O2") <= 0.3
+
+
+def prueba_texto_cuadra_si_el_ocr_se_comio_un_numero():
+    from clw import cerebro
+
+    def caja(t):
+        return {"texto": t, "cx": 0, "cy": 0, "caja": (0, 0, 1, 1)}
+    cs = [caja("() Susraíces o ceros son x = 1 y x="), caja("Abre hacia abajo porque el coeficiente principal es positivo."),
+          caja("Su vértice se encuentra en x = 2.")]
+    assert cerebro._texto_cuadra("Sus raíces o ceros son x = 1 y x = 3.", 0, cs)
+    assert not cerebro._texto_cuadra("x = 1 y x = 3", 0, [caja("x = 1 y x = 5"), caja("x = 1 y x = 3")])
+    assert not cerebro._texto_cuadra("x = 13", 0, [caja("x = 1"), caja("x = 13")])
+
+
+def prueba_ordenar_ignora_el_numero_de_lugar():
+    from clw import cerebro
+    assert cerebro._parecido_renglon("Caída del Imperio romano de Occidente (476 d. C.)",
+                                     "1 Caida del Imperio romano de Occidente (476 d. C.)") > 0.9
+    assert cerebro._parecido_renglon("Llegada de Cristóbal Colón a América (1492)",
+                                     "2 Inicio de la Revolución Francesa (1789)") < 0.6
+
+
+def prueba_texto_de_ayuda_no_necesita_seleccionar():
+    from clw import cerebro
+
+    def caja(t, x, y):
+        return {"texto": t, "cx": x, "cy": y, "caja": (x - 40, y - 8, x + 40, y + 8)}
+    campo = (100, 100, 500, 150)
+    assert cerebro._solo_ayuda(campo, [caja("Escribe tu respuesta", 200, 125)])
+    assert not cerebro._solo_ayuda(campo, [caja("Paris", 200, 125)])

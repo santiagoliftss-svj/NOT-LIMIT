@@ -12,7 +12,7 @@ import tempfile
 import threading
 import time
 import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
 
 RESULTADOS = {}
 OBLIGATORIAS = ("ocr", "motor", "proveedores", "cifrado", "interfaz", "ventana")
@@ -79,7 +79,8 @@ class _IAFalsa(BaseHTTPRequestHandler):
 
 
 def _servidor_ia():
-    srv = ThreadingHTTPServer(("127.0.0.1", 0), _IAFalsa)
+    from .servidor_local import abrir
+    srv = abrir(_IAFalsa)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{srv.server_address[1]}"
     for p in ("CLAUDE", "GEMINI", "OPENAI"):

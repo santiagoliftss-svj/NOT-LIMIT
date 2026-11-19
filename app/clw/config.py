@@ -18,6 +18,7 @@ _PREDETERMINADO = {
     "licencia": "",
     "claves": {},
     "modo_preciso": True,
+    "comprobar": True,                 # las de calcular se resuelven dos veces (y se desempata si no cuadran)
     "guardar_capturas": True,
     "modelos_propios": {},   # para cambiar el id de un modelo sin actualizar la app
     "aviso_bandeja": False,
