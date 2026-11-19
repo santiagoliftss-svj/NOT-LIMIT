@@ -138,7 +138,13 @@ class Ventana:
         self.bot.hwnd_propio = self._hwnd
         self._pintar()
         self.root.after(30, self._tick)
-        licencia.refrescar_en_fondo()
+        def al_terminar():                 # con la IA incluida: cuantas preguntas le quedan (y registra la compu)
+            codigo = self.config.get("licencia")
+            if codigo and licencia.servidor() and licencia.estado(self.config).activa:
+                ok, datos = licencia.consultar_servidor(codigo)
+                if ok and datos.get("restantes") is not None:
+                    self.cola.put(lambda: self.ui.evento_bot(("uso", datos["restantes"])))
+        licencia.refrescar_en_fondo(al_terminar)
         self.root.after(licencia.REVISAR_CADA * 1000, self._revisar_licencia)
         self._revisar_version()
 
@@ -495,13 +501,26 @@ class Ventana:
             except Exception as ex:
                 log.info("no se pudo revisar la lista de licencias: %s", ex)
             est = licencia.estado_codigo(texto)
+            if est.activa and licencia.servidor():
+                ok, datos = licencia.consultar_servidor(texto)     # (registra esta compu)
+                if not ok:
+                    est = licencia.Estado(False, "servidor", est.numero, est.vence, est.plan)
+                    est.propio = datos
+                elif datos.get("restantes") is not None:
+                    self.cola.put(lambda: self.ui.evento_bot(("uso", datos["restantes"])))
             self.cola.put(lambda: self.ui.licencia_verificada(texto, est))
         threading.Thread(target=trabajo, name="licencia", daemon=True).start()
 
     def _revisar_licencia(self):
         if self._cerrado:
             return
-        licencia.refrescar_en_fondo()
+        def al_terminar():                 # con la IA incluida: cuantas preguntas le quedan (y registra la compu)
+            codigo = self.config.get("licencia")
+            if codigo and licencia.servidor() and licencia.estado(self.config).activa:
+                ok, datos = licencia.consultar_servidor(codigo)
+                if ok and datos.get("restantes") is not None:
+                    self.cola.put(lambda: self.ui.evento_bot(("uso", datos["restantes"])))
+        licencia.refrescar_en_fondo(al_terminar)
         self.root.after(licencia.REVISAR_CADA * 1000, self._revisar_licencia)
 
     def leer_portapapeles(self):

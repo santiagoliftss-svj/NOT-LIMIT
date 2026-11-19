@@ -35,6 +35,14 @@ def prueba_archivo_roto():
     assert c["modelo"] == "claude-haiku-5-5" and c["modo_preciso"] is True
 
 
+def prueba_el_codigo_se_queda_al_reabrir():
+    d = tempfile.mkdtemp()
+    ruta = os.path.join(d, "a.json")
+    c = config.Config(ruta)
+    c["licencia"] = "NL-AAAA-BBBB-CCCC"
+    assert config.Config(ruta).get("licencia") == "NL-AAAA-BBBB-CCCC"
+
+
 def prueba_desproteger_basura():
     assert config.desproteger("dpapi:@@@") == ""
     assert config.desproteger("otra") == ""

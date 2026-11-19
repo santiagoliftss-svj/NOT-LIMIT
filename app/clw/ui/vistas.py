@@ -87,6 +87,7 @@ class Interfaz:
         self.actividad = deque(maxlen=4)
         self.nueva_version = None
         self.descarga = None               # % de la actualizacion que se esta bajando
+        self.restantes = None              # preguntas que le quedan este mes (IA incluida)
         self.actualizacion_lista = False
         self.visible = True
         self.enfocado = True
@@ -117,7 +118,11 @@ class Interfaz:
 
     # ================================================================ estado
     def modelo_actual(self):
-        return buscar_modelo(self.config["modelo"])
+        return buscar_modelo(licencia.modelo_efectivo(self.config))
+
+    def ia_incluida(self):
+        """True si contesta con la IA incluida en el plan (sin claves)."""
+        return bool(licencia.servidor())
 
     def ocupado(self):
         return self.estado in OCUPADO
@@ -171,6 +176,8 @@ class Interfaz:
         elif tipo == "falta_clave":
             if self.pantalla != "clave":
                 self.abrir_clave(ev[1], volver="principal", msg="Agrega tu clave para empezar.", tipo="info")
+        elif tipo == "uso":
+            self.restantes = ev[1]
         elif tipo == "nueva_version":
             self.nueva_version = ev[1]
         elif tipo == "descarga":
@@ -217,6 +224,8 @@ class Interfaz:
         self.capa = None
 
     def abrir_clave(self, prov, volver="principal", iniciar=False, msg="", tipo=""):
+        if prov != "licencia" and licencia.servidor():   # con la IA incluida no hay claves: falta el codigo
+            prov = "licencia"
         self.clave = {"prov": prov, "texto": "", "msg": msg, "tipo": tipo, "verificando": False,
                       "volver": volver, "iniciar": iniciar}
         self._ir("clave", 1)
@@ -278,6 +287,16 @@ class Interfaz:
             self._capa_t0 = self.reloj()
         elif zid == "cerrar_capa":
             self.capa = None
+        elif zid.startswith("modelo:") and self.ia_incluida():
+            nuevo = buscar_modelo(zid.split(":", 1)[1])
+            self.capa = None
+            if nuevo.id not in licencia.permitidos(c):
+                self.agregar_actividad(f"{nuevo.nombre} es del plan {licencia.plan_de_modelo(nuevo.id)}", "info")
+            else:
+                c["modelo_servidor"] = nuevo.id
+                pz = licencia.peso(nuevo.id)
+                if pz > 1:
+                    self.agregar_actividad(f"{nuevo.nombre}: cada pregunta cuenta x{pz}", "info")
         elif zid.startswith("modelo:"):
             nuevo = buscar_modelo(zid.split(":", 1)[1])
             c["modelo"] = nuevo.id
@@ -301,6 +320,8 @@ class Interfaz:
             self.app.abrir_carpeta()
         elif zid == "pagina":
             self.app.abrir_url(version.PAGINA)
+        elif zid == "planes":
+            self.app.abrir_url(version.PAGINA + "#precio")
         elif zid == "actualizar":
             if self.actualizacion_lista and hasattr(self.app, "actualizar"):
                 self.app.actualizar()
@@ -504,7 +525,7 @@ class Interfaz:
         fila_animada = t - self._t_fila < T_FILA
         return (self.pantalla, self.capa, self.estado, tuple(self.actividad), fila_animada, c["modelo"], c["modo_preciso"],
                 c["guardar_capturas"], tuple(sorted(c["claves"].keys())), self.nueva_version, self.descarga,
-                self.actualizacion_lista) + extra
+                self.actualizacion_lista, self.restantes, self.ia_incluida(), c.get("modelo_servidor")) + extra
 
     def _rect_zona(self, zid):
         if zid is None:
@@ -805,7 +826,13 @@ class Interfaz:
         l.vidrio(x, y, w, h, 20, borde=(210, 60) if hov else (135, 34), relleno=(30, 8) if pres else (20, 6) if hov else (11, 3))
         l.pegar(E.sello(SELLOS[m.proveedor], 40, self.e), x + 12, y + 12)
         prov = PROVEEDORES[m.proveedor].nombre
-        l.texto(x + 64, y + 15, f"{prov} · {m.nota}" if tiene else prov, "mini", SUAVE)
+        nota = m.nota
+        if self.ia_incluida():
+            if self.restantes is None:
+                nota = "Incluida en tu plan"
+            else:
+                nota = "Sin preguntas este mes" if self.restantes <= 0 else f"Te quedan {self.restantes}"
+        l.texto(x + 64, y + 15, f"{prov} · {nota}" if tiene else prov, "mini", SUAVE)
         l.texto(x + 64, y + 31, m.corto or m.nombre, "nombre", TEXTO)
         l.icono("abajo", x + w - 30, y + 25, 14, TEXTO if hov else SUAVE)
         l.zona("modelo", x, y, w, h)
@@ -917,8 +944,10 @@ class Interfaz:
         """La hoja ya dibujada (cache por mouse encima / modelo elegido / claves)."""
         grupos, alto = self._grupos()
         y = ALTO - alto - 10
-        actual = self.config["modelo"]
-        llave = (actual, tuple(sorted(self.config["claves"].keys())), self.e)
+        actual = licencia.modelo_efectivo(self.config)
+        incluida = self.ia_incluida()
+        ok = licencia.permitidos(self.config) if incluida else None
+        llave = (actual, tuple(sorted(self.config["claves"].keys())), self.e, incluida, tuple(ok or ()))
         if self._panel and self._panel[0] == llave:
             return self._panel[1], y
         p = Lienzo(self.e, base=Image.new("RGBA", (round(ANCHO * self.e), round(ALTO * self.e)), (0, 0, 0, 0)))
@@ -926,23 +955,33 @@ class Interfaz:
         p.vidrio(10, y, 360, alto, 28, borde=(150, 36), relleno=(12, 2))
         p.solido(ANCHO / 2 - 18, y + 9, 36, 4, 2, (255, 255, 255, 60))
         p.texto_plata(28, y + 26, "Elige tu IA", "subtitulo")
+        if incluida:
+            p.texto(350, y + 32, "SIN CLAVES", "seccion", TENUE, ancla="ra")
         yy = y + 70
         for prov, ms in grupos:
             p.texto(30, yy + 8, PROVEEDORES[prov].nombre.upper(), "seccion", TENUE)
-            if not self.config.tiene_clave(prov):
+            if not incluida and not self.config.tiene_clave(prov):
                 p.texto(350, yy + 8, "SIN CLAVE", "seccion", TENUE, ancla="ra")
             yy += 28
             for m in ms:
                 sel = m.id == actual
+                bloqueada = incluida and m.id not in ok
                 if sel:
                     p.solido(18, yy, 344, 46, 14, (255, 255, 255, 22))
                 p.pegar(E.sello(SELLOS[prov], 30, self.e), 28, yy + 8)
-                p.texto_centrado_v(70, yy + 23, m.nombre, "nombre", BLANCO if sel else (220, 220, 224))
+                color = BLANCO if sel else (120, 120, 126) if bloqueada else (220, 220, 224)
+                p.texto_centrado_v(70, yy + 23, m.nombre, "nombre", color)
                 derecha = 348
                 if sel:
                     p.icono("palomita", 334, yy + 16, 14, BLANCO)
                     derecha = 326
-                p.texto_centrado_v(derecha, yy + 23, m.nota, "chico", SUAVE if sel else TENUE, ancla="ra")
+                nota = m.nota
+                if bloqueada:
+                    nota = f"Plan {licencia.plan_de_modelo(m.id)}"
+                elif incluida:
+                    pz = licencia.peso(m.id)
+                    nota = f"Cuenta x{pz}" if pz > 1 else ("Incluida" if m.nota in ("Clave gratis", "Con saldo") else m.nota)
+                p.texto_centrado_v(derecha, yy + 23, nota, "chico", SUAVE if sel else TENUE, ancla="ra")
                 yy += 48
         caja = p.im.getbbox() or (0, 0, 1, 1)
         img = p.im.crop(caja)
@@ -960,7 +999,7 @@ class Interfaz:
         dy = (1 - p) * 46 * self.e
         l.pegar_px(img, caja[0], caja[1] + dy)
         hov = self.hover or ""
-        if hov.startswith("modelo:") and p >= 1 and hov != "modelo:" + self.config["modelo"]:
+        if hov.startswith("modelo:") and p >= 1 and hov != "modelo:" + licencia.modelo_efectivo(self.config):
             for z, (zx, zy, zw, zh), _ in self.zonas:
                 if z == hov:
                     l.solido(zx, zy, zw, zh, 14, (255, 255, 255, 16))
@@ -1010,6 +1049,42 @@ class Interfaz:
         self._volver(l, "volver")
         l.texto_plata(24, 56, "Ajustes", "titulo")
 
+        if self.ia_incluida():
+            self._tu_ia(l)
+        else:
+            self._tus_claves(l)
+        self._ajustes_resto(l)
+
+    def _tu_ia(self, l):
+        """Ajustes con la IA incluida: sin claves, solo el plan y cuantas preguntas le quedan."""
+        c = self.config
+        l.texto(26, 110, "TU IA", "seccion", TENUE)
+        l.vidrio(24, 128, 332, 174, 20, borde=(95, 22), relleno=(10, 3))
+        m = self.modelo_actual()
+        l.pegar(E.sello(SELLOS[m.proveedor], 34, self.e), 40, 140)
+        l.texto(86, 141, m.nombre, "nombre", TEXTO)
+        l.icono("palomita", 85, 163, 12, SUAVE)
+        l.texto(101, 163, "Incluida en tu plan · sin claves", "chico", SUAVE)
+        l.linea_h(40, 186, 300, (255, 255, 255, 26))
+        est = licencia.estado(c)
+        l.texto(40, 199, f"Plan {est.nombre_plan}" if est.activa else "Tu plan", "nombre", TEXTO)
+        u = licencia.uso()
+        n = self.restantes if self.restantes is not None else u.get("restantes")
+        tope = u.get("limite")
+        if n is None:
+            txt = "Las preguntas del mes se cuentan solas"
+        elif tope:
+            txt = f"Te quedan {n} de {tope} preguntas este mes"
+        else:
+            txt = f"Te quedan {n} preguntas este mes"
+        l.texto(40, 222, txt, "chico", SUAVE)
+        l.linea_h(40, 244, 300, (255, 255, 255, 26))
+        l.texto(40, 257, "¿Necesitas más?", "nombre", TEXTO)
+        l.texto(40, 280, "Sube de plan cuando quieras", "chico", SUAVE)
+        self._boton_vidrio(l, "planes", 252, 258, 90, 30, "PLANES")
+
+    def _tus_claves(self, l):
+        c = self.config
         l.texto(26, 110, "TUS CLAVES", "seccion", TENUE)
         l.vidrio(24, 128, 332, 174, 20, borde=(95, 22), relleno=(10, 3))
         for i, prov in enumerate(("claude", "gemini", "openai")):
@@ -1027,6 +1102,8 @@ class Interfaz:
             if i < 2:
                 l.linea_h(40, y + 58, 300, (255, 255, 255, 26))
 
+    def _ajustes_resto(self, l):
+        c = self.config
         l.texto(26, 320, "CÓMO CONTESTA", "seccion", TENUE)
         l.vidrio(24, 338, 332, 168, 20, borde=(95, 22), relleno=(10, 3))
         hov = self.hover == "preciso"

@@ -47,6 +47,7 @@ MODELOS = [
     Modelo("claude", "claude-haiku-5-5", "Claude Haiku 5.5", "Rápido", "Haiku 5.5"),
     Modelo("claude", "claude-sonnet-5-5", "Claude Sonnet 5.5", "Equilibrado", "Sonnet 5.5"),
     Modelo("claude", "claude-opus-5-5", "Claude Opus 5.5", "El más listo", "Opus 5.5"),
+    Modelo("gemini", "gemini-flash-lite-latest", "Gemini Flash Lite", "Rápida", "Flash Lite"),
     Modelo("gemini", "gemini-flash-latest", "Gemini Flash", "Clave gratis", "Flash"),
     Modelo("gemini", "gemini-pro-latest", "Gemini Pro", "Con saldo", "Pro"),
     Modelo("openai", "gpt-6-luna", "GPT-6 Luna", "Rápido", "GPT-6 Luna"),
@@ -84,6 +85,30 @@ def _texto_error(cuerpo):
     if isinstance(e, list) and e:
         return _texto_error(json.dumps(e[0]))
     return str(e)[:400]
+
+
+def _traducir_servidor(proveedor, estado, cuerpo):
+    """Errores del servidor de NO LIMIT (ya vienen con mensaje para el cliente)."""
+    try:
+        e = json.loads(cuerpo).get("error") or {}
+    except (ValueError, AttributeError):
+        e = {}
+    tipo, msg = str(e.get("tipo") or ""), str(e.get("message") or "")
+    if estado == 400 and not tipo:
+        return _traducir(proveedor, estado, cuerpo)         # la IA no acepto la variante: se prueba otra
+    if tipo in ("codigo", "bloqueado", "vencido", "sin_activar", "equipo"):
+        return ErrorIA(msg or "Revisa tu código de NO LIMIT.", "licencia", tipo)
+    if tipo == "plan":
+        return ErrorIA(msg or "Esa IA no viene en tu plan.", "plan", tipo)
+    if tipo in ("ia", "modelo"):
+        return ErrorIA(msg or "Esa IA no está disponible ahorita. Elige otra.", "modelo", tipo)
+    if tipo in ("cupo", "dia"):
+        return ErrorIA(msg or "Ya usaste tus preguntas del plan.", "saldo", tipo)
+    if estado == 429 or tipo == "limite":
+        return ErrorIA(msg or "La IA está saturada ahorita. Espera un momento.", "limite", tipo)
+    if estado == 404:
+        return ErrorIA("Actualiza NO LIMIT a la versión nueva.", "modelo", cuerpo[:200])
+    return ErrorIA(msg or "El servidor de NO LIMIT no contestó. Intenta en un momento.", "servidor", cuerpo[:200])
 
 
 def _traducir(proveedor, estado, cuerpo):
@@ -127,7 +152,8 @@ def _contexto_ssl():
 _CTX = _contexto_ssl()
 
 
-def _http(metodo, url, cabeceras, cuerpo=None, timeout=60):
+def _http(metodo, url, cabeceras, cuerpo=None, timeout=60, respuesta=None):
+    """(estado, texto). Si 'respuesta' es un dict, ahi deja las cabeceras de la respuesta."""
     datos = json.dumps(cuerpo).encode("utf-8") if cuerpo is not None else None
     req = urllib.request.Request(url, data=datos, method=metodo, headers=dict(cabeceras))
     if datos is not None:
@@ -136,6 +162,8 @@ def _http(metodo, url, cabeceras, cuerpo=None, timeout=60):
     contexto = _CTX if url.startswith("https") else None
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=contexto) as r:
+            if respuesta is not None:
+                respuesta.update({k.lower(): v for k, v in r.headers.items()})
             return r.status, r.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as e:
         try:
@@ -185,8 +213,28 @@ def _variantes(proveedor, preciso):
     return [{}]
 
 
+def _al_servidor(proveedor, clave, url, cab):
+    """Con la IA incluida (clave = dict del servidor de NO LIMIT): misma peticion, pero al servidor y sin clave."""
+    if not isinstance(clave, dict):
+        return url, cab
+    ruta = url.split("://", 1)[-1]
+    ruta = ruta[ruta.index("/"):] if "/" in ruta else "/"
+    nuevas = {"x-nl-codigo": clave.get("codigo", ""), "x-nl-equipo": clave.get("equipo", ""),
+              "x-nl-pregunta": clave.get("pregunta", ""), "x-nl-version": clave.get("version", ""),
+              "x-nl-peso": str(clave.get("peso", 1))}
+    if "anthropic-version" in cab:
+        nuevas["anthropic-version"] = cab["anthropic-version"]
+    return clave.get("servidor", "").rstrip("/") + ruta, nuevas
+
+
 def _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
     """Devuelve (url, cabeceras, cuerpo) para una variante."""
+    url, cab, cuerpo = _peticion_ia(proveedor, modelo, clave, sistema, b64, mime, texto, variante)
+    url, cab = _al_servidor(proveedor, clave, url, cab)
+    return url, cab, cuerpo
+
+
+def _peticion_ia(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
     if proveedor == "claude":
         cuerpo = {
             "model": modelo,
@@ -198,7 +246,7 @@ def _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
             ]}],
         }
         cuerpo.update(variante)
-        cab = {"x-api-key": clave, "anthropic-version": "2023-06-01"}
+        cab = {"x-api-key": "" if isinstance(clave, dict) else clave, "anthropic-version": "2023-06-01"}
         return _base("claude", "https://api.anthropic.com") + "/v1/messages", cab, cuerpo
 
     if proveedor == "gemini":
@@ -213,7 +261,7 @@ def _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
         }
         if config:
             cuerpo["generationConfig"] = config
-        cab = {"x-goog-api-key": clave}
+        cab = {"x-goog-api-key": "" if isinstance(clave, dict) else clave}
         url = _base("gemini", "https://generativelanguage.googleapis.com") + f"/v1beta/models/{modelo}:generateContent"
         return url, cab, cuerpo
 
@@ -230,7 +278,7 @@ def _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
             "max_completion_tokens": 3000 if variante.get("reasoning_effort") in ("none", "minimal") else 16000,
         }
         cuerpo.update(variante)
-        cab = {"authorization": f"Bearer {clave}"}
+        cab = {"authorization": "" if isinstance(clave, dict) else f"Bearer {clave}"}
         return _base("openai", "https://api.openai.com") + "/v1/chat/completions", cab, cuerpo
 
     raise ErrorIA("Proveedor desconocido", "otro")
@@ -279,9 +327,12 @@ class ClienteIA:
         self._alterno = {}             # (proveedor, modelo) -> (modelo que si contesto, hasta cuando)
         self._candado = threading.Lock()
         self.pausa = 1.0               # (las pruebas la bajan)
+        self.restantes = None          # preguntas que le quedan (lo dice el servidor de NO LIMIT)
 
-    def modelos_a_probar(self, proveedor, modelo):
-        orden = [modelo] + [m for m in ALTERNOS.get(proveedor, []) if m != modelo]
+    def modelos_a_probar(self, proveedor, modelo, permitidos=None):
+        # (con la IA incluida solo se prueban las que trae el plan)
+        orden = [modelo] + [m for m in ALTERNOS.get(proveedor, []) if m != modelo
+                            and (permitidos is None or m in permitidos)]
         alterno = self._alterno.get((proveedor, modelo))
         if alterno and alterno[1] > time.time() and alterno[0] in orden:
             orden.remove(alterno[0])
@@ -289,17 +340,20 @@ class ClienteIA:
         return orden
 
     def preguntar(self, proveedor, modelo, clave, sistema, b64, mime, texto, preciso=False, reintentos=1):
+        servidor = isinstance(clave, dict)
+        if servidor and not clave.get("codigo"):
+            raise ErrorIA("Pega tu código de NO LIMIT para empezar.", "licencia")
         if not clave:
             raise ErrorIA(f"Falta tu clave de {PROVEEDORES[proveedor].nombre}.", "clave")
         inicio = time.time()
         primero = None
-        for m in self.modelos_a_probar(proveedor, modelo):
+        for m in self.modelos_a_probar(proveedor, modelo, clave.get("permitidos") if servidor else None):
             lento = False
             for intento in range(2):
                 try:
                     res = self._una(proveedor, m, clave, sistema, b64, mime, texto, preciso)
                 except ErrorIA as e:
-                    if e.tipo in ("clave", "saldo", "peticion"):
+                    if e.tipo in ("clave", "saldo", "peticion", "licencia", "plan"):
                         raise
                     primero = primero or e
                     if e.tipo == "modelo":
@@ -332,12 +386,17 @@ class ClienteIA:
         ultimo = None
         while i < len(variantes):
             url, cab, cuerpo = _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variantes[i])
-            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 40)
+            info = {}
+            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 40,
+                                 respuesta=info)
+            if info.get("x-nl-restantes", "").isdigit():
+                self.restantes = int(info["x-nl-restantes"])
             if estado == 200:
                 with self._candado:
                     self._recordado[llave] = i
                 return _extraer(proveedor, resp)
-            error = _traducir(proveedor, estado, resp)
+            error = (_traducir_servidor(proveedor, estado, resp) if isinstance(clave, dict)
+                     else _traducir(proveedor, estado, resp))
             if estado == 400 and error.tipo == "peticion" and i + 1 < len(variantes):
                 ultimo = error
                 i += 1          # este modelo no acepta esta variante: se prueba la siguiente

@@ -9,11 +9,13 @@ import threading
 
 from . import rutas
 
-VERSION_AJUSTES = 2
+VERSION_AJUSTES = 3
 
 _PREDETERMINADO = {
     "version_ajustes": VERSION_AJUSTES,
-    "modelo": "claude-haiku-5-5",
+    "modelo": "claude-haiku-5-5",            # con su propia clave (sin servidor de NO LIMIT)
+    "modelo_servidor": "gemini-flash-latest",  # con la IA incluida en el plan
+    "licencia": "",
     "claves": {},
     "modo_preciso": True,
     "guardar_capturas": True,
@@ -96,7 +98,7 @@ class Config:
                         self.datos[k] = v
                 if guardado.get("version_ajustes", 1) < 2:
                     self.datos["modo_preciso"] = True   # 1.1: pensar antes de contestar por defecto
-                    self.datos["version_ajustes"] = VERSION_AJUSTES
+                self.datos["version_ajustes"] = VERSION_AJUSTES
         except (OSError, ValueError):
             pass
 
@@ -112,6 +114,9 @@ class Config:
         return desproteger(self.datos["claves"].get(proveedor, ""))
 
     def tiene_clave(self, proveedor):
+        from . import licencia
+        if licencia.servidor():               # con la IA incluida nadie pone claves: basta el codigo
+            return bool(self.datos.get("licencia"))
         return bool(self.clave(proveedor))
 
     def poner_clave(self, proveedor, texto):
