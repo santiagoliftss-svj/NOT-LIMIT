@@ -331,7 +331,9 @@ def _abrir(url, perfil):
             "--disable-session-crashed-bubble", "--disable-infobars", "--disable-sync", "--disable-extensions",
             "--disable-background-networking", "--disable-component-update", "--use-mock-keychain",
             "--force-device-scale-factor=1", "--window-position=0,0", "--window-size=1000,740", f"--app={url}"]
-    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL), os.path.basename(exe)
+    # (en Mac el navegador va en su propia sesion: asi, al cerrarlo, sus avisos de cierre no le llegan a NO LIMIT)
+    return (subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=sys.platform != "win32"), os.path.basename(exe))
 
 
 # ---------------------------------------------------------------- la IA de mentiras (ve lo que veria la de verdad)
@@ -595,12 +597,18 @@ def _cerrar_navegador(proc, perfil):
             subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, timeout=20,
                            creationflags=0x08000000)
         else:
-            proc.terminate()
+            import signal
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)      # el navegador y sus ayudantes (su propio grupo)
+            except Exception:
+                proc.terminate()
             try:
                 proc.wait(5)
             except Exception:
-                proc.kill()
-            subprocess.run(["pkill", "-f", perfil], capture_output=True, timeout=10)
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except Exception:
+                    proc.kill()
     except Exception:
         pass
 
