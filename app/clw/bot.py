@@ -20,10 +20,7 @@ log = logging.getLogger("clw")
 
 
 # modelo ligero de cada proveedor (para ubicar la pregunta y revisar como quedo)
-LIGEROS = {"gemini": "gemini-flash-lite-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna",
-           "nolimit": "gemini-flash-lite-latest"}
-# con la IA incluida, el servidor de NO LIMIT decide el modelo segun el plan; la app pide estos
-MODELO_SERVIDOR = "gemini-flash-latest"
+LIGEROS = {"gemini": "gemini-flash-lite-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna"}
 
 
 def configurar_registro():
@@ -77,16 +74,19 @@ class Bot:
     def modelo(self):
         propio = self.config["modelos_propios"]
         m = buscar_modelo(licencia.modelo_efectivo(self.config))
-        if m.proveedor == "nolimit":
-            return m, MODELO_SERVIDOR
+        if licencia.servidor():
+            return m, m.id                     # (el servidor solo acepta los ids de verdad)
         return m, propio.get(m.id, m.id)
 
     def _clave(self, m):
-        """La clave para ese modelo. Con la IA incluida: el codigo, la compu y la pregunta van al servidor."""
-        if m.proveedor != "nolimit":
+        """La clave para ese modelo. Con la IA incluida no hay clave: el codigo, la compu y la pregunta van al
+        servidor de NO LIMIT, que pone la del dueno."""
+        url = licencia.servidor()
+        if not url:
             return self.config.clave(m.proveedor)
-        return {"servidor": licencia.servidor(), "codigo": licencia.formatear(self.config.get("licencia") or ""),
-                "equipo": licencia.equipo(), "pregunta": self._pregunta, "version": VERSION}
+        return {"servidor": url, "codigo": licencia.formatear(self.config.get("licencia") or ""),
+                "equipo": licencia.equipo(), "pregunta": self._pregunta, "version": VERSION,
+                "peso": licencia.peso(m.id), "permitidos": licencia.permitidos(self.config)}
 
     def puede_iniciar(self):
         m, _ = self.modelo()
@@ -221,6 +221,8 @@ class Bot:
         # ubicar y revisar van con el modelo ligero del mismo proveedor: es rapido y (en Gemini gratis) usa
         # otro cupo, asi el del modelo que contesta alcanza para mas preguntas
         ligero = self.config["modelos_propios"].get(LIGEROS.get(m.proveedor, ""), LIGEROS.get(m.proveedor)) or id_real
+        if licencia.servidor():
+            ligero = LIGEROS.get(m.proveedor) or id_real
 
         def preguntar(b64, mime, texto, fase="contestar", esfuerzo=None):
             p = False

@@ -6,8 +6,9 @@ Al abrir la app, toca **INYECTAR**: primero te pide tu código de NO LIMIT (NL-X
 
 **Nuevo en 2.4 (la IA ya viene incluida)**
 
-- Ya no necesitas ninguna clave de IA. Solo pones tu código de NO LIMIT y listo.
-- Cada plan trae sus preguntas al mes: Básico 300, Pro 600 y Premium 1200. Abajo de la app ves cuántas te quedan.
+- Ya no necesitas ninguna clave de IA. Pones tu código de NO LIMIT, eliges tu IA y le das INYECTAR.
+- Básico trae Gemini Flash Lite. Pro, además, Gemini Flash, Claude Haiku y GPT-6 Luna. Premium, todas (Claude Opus y Sonnet, GPT-6.1 Terra y Gemini Pro).
+- Cada plan trae sus preguntas al mes: Básico 300, Pro 600 y Premium 1,200. Las IAs más listas cuentan más (Sonnet, Terra y Gemini Pro x2, Opus x5). Abajo de la app ves cuántas te quedan.
 - Cada código funciona en 1 compu (Premium en 2). Si cambias de compu, pídele a tu vendedor que la libere.
 - Arreglado: a veces la app volvía a pedir tu código al abrirla.
 

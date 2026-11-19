@@ -286,21 +286,31 @@ class _ConServidor(_Sin):
         super().__exit__(*a)
 
 
-def prueba_con_servidor_el_cliente_no_pone_claves():
+def _planes(plan):
+    licencia._remoto["planes"] = {NUM: plan} if plan else {}
+
+
+def prueba_con_servidor_el_cliente_elige_ia_sin_claves():
     with _ConServidor():
         ui, app, c = _ui()
-        c["modelo"] = "claude-haiku-5-5"                   # (aunque tuviera otra elegida)
-        assert ui.modelo_actual().id == "nolimit" and ui.ia_incluida()
+        assert ui.ia_incluida()
         ui.inyectar()
-        assert ui.clave["prov"] == "licencia"              # sin codigo: pide el codigo, no una clave
+        assert ui.clave["prov"] == "licencia"              # sin codigo: pide el codigo, nunca una clave de IA
         c["licencia"] = CODIGO
         ui._ir("principal")
+        assert ui.modelo_actual().id == "gemini-flash-latest"   # Pro: arranca con Gemini Flash
         ui.inyectar()
-        assert "iniciar" in app.log, app.log               # con codigo pagado arranca directo, sin clave de IA
-        grupos, _ = ui._grupos()
-        assert [g[0] for g in grupos] == ["nolimit"]       # no puede elegir otra IA
-        ui.evento_bot(("uso", 37))
+        assert "iniciar" in app.log, app.log               # arranca directo, sin clave de IA
+        ui._accion("modelo:claude-haiku-5-5")               # Pro trae Claude Haiku
+        assert ui.modelo_actual().id == "claude-haiku-5-5" and c["modelo"] == "claude-haiku-5-5"
+        assert c["modelo_servidor"] == "claude-haiku-5-5"
+        ui._accion("modelo:claude-opus-5-5")                # Opus es del Premium: no cambia y le avisa
+        assert ui.modelo_actual().id == "claude-haiku-5-5"
+        assert any("plan Premium" in a[1] for a in ui.actividad), list(ui.actividad)
+        ui.capa = "modelos"
         ui.render()
+        ui.capa = None
+        ui.evento_bot(("uso", 37))
         ui._ir("ajustes")
         ui.render()
         assert any(z[0] == "planes" for z in ui.zonas), [z[0] for z in ui.zonas]
@@ -309,39 +319,55 @@ def prueba_con_servidor_el_cliente_no_pone_claves():
         assert ("url", "https://santiagoliftss-svj.github.io/NOT-LIMIT/#precio") in app.log
 
 
-def prueba_con_servidor_el_dueno_puede_usar_su_clave():
-    with _ConServidor(dueno=True):
-        ui, app, c = _ui()
+def prueba_ias_por_plan():
+    with _ConServidor():
+        d = tempfile.mkdtemp()
+        c = config.Config(os.path.join(d, "a.json"))
         c["licencia"] = CODIGO
-        grupos, _ = ui._grupos()
-        assert [g[0] for g in grupos][:2] == ["nolimit", "claude"]
-        ui._accion("modelo:gemini-flash-latest")
-        assert ui.modelo_actual().id == "gemini-flash-latest"
-        ui._ir("ajustes")
-        ui.render()
-        assert any(str(z[0]).startswith("clave:") for z in ui.zonas)
+        _planes("basico")
+        assert licencia.permitidos(c) == ["gemini-flash-lite-latest"]
+        c["modelo_servidor"] = "claude-opus-5-5"
+        assert licencia.modelo_efectivo(c) == "gemini-flash-lite-latest"   # lo que no trae su plan no se usa
+        _planes("pro")
+        assert "claude-haiku-5-5" in licencia.permitidos(c) and "claude-opus-5-5" not in licencia.permitidos(c)
+        assert licencia.modelo_efectivo(c) == "gemini-flash-latest"
+        _planes("premium")
+        assert licencia.modelo_efectivo(c) == "claude-opus-5-5" and licencia.peso("claude-opus-5-5") == 5
+        assert licencia.plan_de_modelo("claude-opus-5-5") == "Premium" and licencia.plan_de_modelo("gpt-6-luna") == "Pro"
+
+
+def prueba_dueno_tiene_todas():
+    with _ConServidor(dueno=True):
+        d = tempfile.mkdtemp()
+        c = config.Config(os.path.join(d, "a.json"))
+        c["licencia"] = CODIGO
+        _planes("basico")
+        assert "claude-opus-5-5" in licencia.permitidos(c)
 
 
 def prueba_sin_servidor_todo_sigue_como_antes():
     with _Sin(vence=_dia(30)):
         ui, app, c = _ui()
-        assert not licencia.servidor()
-        assert ui.modelo_actual().proveedor != "nolimit"
-        assert "nolimit" not in [g[0] for g in ui._grupos()[0]]
-        assert not c.tiene_clave("nolimit")
+        assert not licencia.servidor() and not ui.ia_incluida()
+        assert ui.modelo_actual().id == "claude-haiku-5-5"
+        assert not c.tiene_clave("claude")
 
 
-def prueba_bot_con_servidor_manda_codigo_y_una_pregunta_por_clic():
+def prueba_bot_con_servidor_manda_codigo_peso_y_una_pregunta_por_clic():
     from clw.bot import Bot
     with _ConServidor():
+        _planes("premium")
         d = tempfile.mkdtemp()
         c = config.Config(os.path.join(d, "a.json"))
         c["licencia"] = CODIGO.lower()
+        c["modelo_servidor"] = "claude-opus-5-5"
         b = Bot(c, queue.Queue(), ocr=None, cliente=object())
+        assert b.puede_iniciar()                           # sin ninguna clave de IA
         m, real = b.modelo()
-        assert m.proveedor == "nolimit" and real == "gemini-flash-latest"
+        assert m.proveedor == "claude" and real == "claude-opus-5-5"
         k = b._clave(m)
         assert k["servidor"] == "https://servidor.prueba" and k["codigo"] == CODIGO and len(k["equipo"]) == 32
+        assert k["peso"] == 5 and "claude-haiku-5-5" in k["permitidos"]
         assert k["equipo"] == licencia.equipo()            # siempre la misma compu
         p1 = k["pregunta"]
         b._pregunta = "otra"

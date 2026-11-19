@@ -307,7 +307,14 @@ def necesita_revisar():
 
 # ---------------------------------------------------------------- el servidor de NO LIMIT (la IA incluida en el plan)
 
-MODELO_SERVIDOR = "nolimit"
+# Las IAs de cada plan (igual que en el servidor, que es el que manda). Las ligeras van incluidas: con ellas se
+# ubica y se revisa la pregunta.
+_BASICO = ["gemini-flash-lite-latest"]
+_PRO = _BASICO + ["gemini-flash-latest", "claude-haiku-5-5", "gpt-6-luna"]
+_PREMIUM = _PRO + ["gemini-pro-latest", "claude-sonnet-5-5", "claude-opus-5-5", "gpt-6.1-terra"]
+PLAN_MODELOS = {"basico": _BASICO, "pro": _PRO, "premium": _PREMIUM}
+PESOS = {"gemini-pro-latest": 2, "claude-sonnet-5-5": 2, "gpt-6.1-terra": 2, "claude-opus-5-5": 5}
+PREDETERMINADO = {"basico": "gemini-flash-lite-latest", "pro": "gemini-flash-latest", "premium": "gemini-flash-latest"}
 
 
 def servidor():
@@ -331,17 +338,43 @@ def es_dueno(config):
         return num is not None and num in _remoto["duenos"]
 
 
-def modelo_efectivo(config, modelos_validos=()):
-    """El modelo que de verdad se usa: con servidor todos usan la IA de NO LIMIT (el dueno puede elegir otra)."""
-    elegido = str(config.get("modelo") or "")
+def peso(modelo):
+    """Cuantas preguntas cuenta una pregunta con esa IA (las caras cuentan mas)."""
+    return PESOS.get(modelo, 1)
+
+
+def permitidos(config):
+    """Las IAs que puede usar con su plan (el dueno, todas)."""
+    if es_dueno(config):
+        return list(_PREMIUM)
+    try:
+        plan = estado(config).plan
+    except Exception:
+        plan = PLAN_NORMAL
+    return list(PLAN_MODELOS.get(plan, _PRO))
+
+
+def plan_de_modelo(modelo):
+    """'Pro' o 'Premium': el plan mas barato que trae esa IA."""
+    for clave in ("basico", "pro", "premium"):
+        if modelo in PLAN_MODELOS[clave]:
+            return PLANES[clave]
+    return PLANES["premium"]
+
+
+def modelo_efectivo(config):
+    """El modelo que de verdad se usa. Con servidor: la IA que eligio (si viene en su plan) sin clave."""
     if servidor():
-        if elegido == MODELO_SERVIDOR or not es_dueno(config):
-            return MODELO_SERVIDOR
-        return elegido
-    if elegido == MODELO_SERVIDOR:                   # (todavia no hay servidor: la que tenia antes)
-        antes = str(config.get("modelo_antes") or "")
-        return antes if antes and antes != MODELO_SERVIDOR else "claude-haiku-5-5"
-    return elegido
+        elegido = str(config.get("modelo_servidor") or "")
+        ok = permitidos(config)
+        if elegido in ok:
+            return elegido
+        try:
+            plan = estado(config).plan
+        except Exception:
+            plan = PLAN_NORMAL
+        return PREDETERMINADO.get(plan, ok[0])
+    return str(config.get("modelo") or "")
 
 
 def equipo():

@@ -269,28 +269,50 @@ def prueba_si_un_modelo_se_tarda_se_pasa_al_siguiente():
 
 # ---------------------------------------------------------------- servidor de NO LIMIT (IA incluida en el plan)
 
-def _clave_nl(pregunta="p1"):
+def _clave_nl(pregunta="p1", peso=1, permitidos=None):
     return {"servidor": os.environ["CLW_API_GEMINI"], "codigo": "NL-AAAA-BBBB-CCCC", "equipo": "eq1",
-            "pregunta": pregunta, "version": "2.4.0"}
+            "pregunta": pregunta, "version": "2.4.0", "peso": peso, "permitidos": permitidos}
 
 
-def prueba_servidor_nolimit_manda_codigo_compu_y_pregunta():
+def _sin_claves(h):
+    assert "x-goog-api-key" not in h and "x-api-key" not in h and "authorization" not in h, dict(h)
+
+
+def prueba_servidor_gemini_manda_codigo_compu_y_pregunta():
     PEDIDOS.clear()
 
     def f(m, path, h, body):
         assert path == "/v1beta/models/gemini-flash-latest:generateContent"
         assert h["x-nl-codigo"] == "NL-AAAA-BBBB-CCCC" and h["x-nl-equipo"] == "eq1" and h["x-nl-pregunta"] == "p1"
-        assert "x-goog-api-key" not in h                        # la app ya no manda ninguna clave de IA
+        _sin_claves(h)                                        # la app ya no manda ninguna clave de IA
         assert body["contents"][0]["parts"][0]["inlineData"]["data"] == "QUJD"
         return 200, {"candidates": [{"content": {"parts": [{"text": "ok"}]}, "finishReason": "STOP"}]}, {"x-nl-restantes": "41"}
 
     GUION["f"] = f
     cli = P.ClienteIA()
-    assert cli.preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t") == ("ok", False)
+    assert cli.preguntar("gemini", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t") == ("ok", False)
     assert cli.restantes == 41
 
 
-def prueba_servidor_nolimit_errores_del_plan():
+def prueba_servidor_claude_y_chatgpt_sin_clave():
+    PEDIDOS.clear()
+
+    def f(m, path, h, body):
+        _sin_claves(h)
+        assert h["x-nl-peso"] == "5"
+        if path == "/v1/messages":
+            assert body["model"] == "claude-opus-5-5" and h["anthropic-version"]
+            return 200, _claude_ok("claude")
+        assert path == "/v1/chat/completions" and body["model"] == "gpt-6-luna"
+        return 200, {"choices": [{"message": {"content": "gpt"}, "finish_reason": "stop"}]}
+
+    GUION["f"] = f
+    cli = P.ClienteIA()
+    assert cli.preguntar("claude", "claude-opus-5-5", _clave_nl(peso=5), "s", "QUJD", "image/png", "t")[0] == "claude"
+    assert cli.preguntar("openai", "gpt-6-luna", _clave_nl(peso=5), "s", "QUJD", "image/png", "t")[0] == "gpt"
+
+
+def prueba_servidor_errores_del_plan():
     cli = P.ClienteIA()
     cli.pausa = 0
     casos = [
@@ -299,12 +321,13 @@ def prueba_servidor_nolimit_errores_del_plan():
         (403, "equipo", "Tu código ya se está usando en otra compu.", "licencia"),
         (401, "vencido", "Tu plan venció el 2026-11-01.", "licencia"),
         (401, "codigo", "Ese código no sirve.", "licencia"),
+        (403, "plan", "Claude Opus es del plan Premium. Elige otra IA o sube de plan.", "plan"),
     ]
     for estado, tipo, msg, esperado in casos:
         PEDIDOS.clear()
         GUION["f"] = lambda m, p, h, b, e=estado, t=tipo, ms=msg: (e, {"error": {"tipo": t, "message": ms}})
         try:
-            cli.preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")
+            cli.preguntar("claude", "claude-opus-5-5", _clave_nl(), "s", "QUJD", "image/png", "t")
             raise AssertionError("debio fallar")
         except P.ErrorIA as e:
             assert e.tipo == esperado and e.mensaje == msg, (e.tipo, e.mensaje)
@@ -312,7 +335,24 @@ def prueba_servidor_nolimit_errores_del_plan():
         assert len(PEDIDOS) == 1, (tipo, len(PEDIDOS))        # no reintenta ni cambia de modelo
 
 
-def prueba_servidor_nolimit_variante_rechazada_prueba_otra():
+def prueba_servidor_ia_apagada_prueba_otra_del_plan():
+    PEDIDOS.clear()
+
+    def f(m, path, h, body):
+        if body["model"] == "claude-sonnet-5-5":
+            return 503, {"error": {"tipo": "ia", "message": "Claude no está disponible ahorita. Elige otra IA."}}
+        return 200, _claude_ok("haiku")
+
+    GUION["f"] = f
+    cli = P.ClienteIA()
+    cli.pausa = 0
+    # Pro: no trae Sonnet ni Opus: si la elegida falla, solo prueba las de su plan
+    assert cli.preguntar("claude", "claude-sonnet-5-5", _clave_nl(permitidos=["claude-haiku-5-5"]), "s", "QUJD",
+                         "image/png", "t")[0] == "haiku"
+    assert [b["model"] for _, _, _, b in PEDIDOS] == ["claude-sonnet-5-5", "claude-haiku-5-5"]
+
+
+def prueba_servidor_variante_rechazada_prueba_otra():
     PEDIDOS.clear()
 
     def f(m, path, h, body):
@@ -322,19 +362,5 @@ def prueba_servidor_nolimit_variante_rechazada_prueba_otra():
         return 200, {"candidates": [{"content": {"parts": [{"text": "ya"}]}, "finishReason": "STOP"}]}
 
     GUION["f"] = f
-    assert P.ClienteIA().preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")[0] == "ya"
+    assert P.ClienteIA().preguntar("gemini", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")[0] == "ya"
     assert len(PEDIDOS) == 2
-
-
-def prueba_servidor_nolimit_saturado_usa_el_ligero():
-    PEDIDOS.clear()
-
-    def f(m, path, h, body):
-        if "lite" not in path:
-            return 429, {"error": {"tipo": "limite", "message": "La IA está saturada ahorita."}}
-        return 200, {"candidates": [{"content": {"parts": [{"text": "lite"}]}, "finishReason": "STOP"}]}
-
-    GUION["f"] = f
-    cli = P.ClienteIA()
-    cli.pausa = 0
-    assert cli.preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")[0] == "lite"
