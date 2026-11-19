@@ -1,0 +1,16 @@
+# Servidor de NO LIMIT. Se sube solo desde GitHub (.github/workflows/servidor.yml).
+name = "no-limit"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "CUENTAS"
+class_name = "Cuentas"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Cuentas"]
+
+[observability]
+enabled = true
