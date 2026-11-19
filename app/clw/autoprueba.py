@@ -223,19 +223,21 @@ def p_red():
     import urllib.request
     from . import proveedores, version
     det = {"cert": os.environ.get("SSL_CERT_FILE"), "openssl": ssl.OPENSSL_VERSION}
-    req = urllib.request.Request(f"https://api.github.com/repos/{version.REPO}", headers={"user-agent": "no-limit"})
-    with urllib.request.urlopen(req, timeout=20, context=proveedores._CTX) as r:
-        det["github"] = r.status
-    req = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models",
-                                 headers={"user-agent": "no-limit"})
-    try:
-        with urllib.request.urlopen(req, timeout=20, context=proveedores._CTX) as r:
-            det["google"] = r.status
-    except urllib.error.HTTPError as e:      # sin clave contesta 403: lo importante es que el candado sirvio
-        det["google"] = e.code
-    with urllib.request.urlopen(urllib.request.Request(f"https://api.github.com/repos/{version.REPO}",
-                                                       headers={"user-agent": "no-limit"}), timeout=20) as r:
-        det["sin_contexto"] = r.status       # (como lo usa la actualizacion)
+
+    def pedir(url, nombre, contexto=proveedores._CTX):
+        # Lo que se prueba es el candado (los certificados): si el servidor contesta, aunque sea con un error
+        # (GitHub da 403 cuando muchas pruebas le preguntan a la vez, Google da 403 sin clave), el candado sirvio.
+        # Un certificado malo truena antes, con URLError / SSLError.
+        try:
+            kw = {"context": contexto} if contexto is not None else {}
+            with urllib.request.urlopen(urllib.request.Request(url, headers={"user-agent": "no-limit"}), timeout=20,
+                                        **kw) as r:
+                det[nombre] = r.status
+        except urllib.error.HTTPError as e:
+            det[nombre] = e.code
+    pedir(f"https://api.github.com/repos/{version.REPO}", "github")
+    pedir("https://generativelanguage.googleapis.com/v1beta/models", "google")
+    pedir(f"https://api.github.com/repos/{version.REPO}", "sin_contexto", contexto=None)   # (como lo usa la actualizacion)
     return det
 
 
