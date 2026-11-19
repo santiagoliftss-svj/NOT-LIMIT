@@ -174,11 +174,14 @@ def bajar_prioridad_hilo():
         pass
 
 
-def clic(x, y):
+def clic(x, y, lento=False):
+    """Clic izquierdo. lento: primero se pone encima, espera y deja el boton abajo un poquito mas (paginas que
+    necesitan ver el mouse llegar antes del clic, como algunos editores de matematicas)."""
     U32.SetCursorPos(int(round(x)), int(round(y)))
-    time.sleep(0.05)
+    _mover_abs(x, y)
+    time.sleep(0.14 if lento else 0.05)
     U32.mouse_event(0x0002, 0, 0, 0, 0)  # izquierdo abajo
-    time.sleep(0.03)
+    time.sleep(0.09 if lento else 0.03)
     U32.mouse_event(0x0004, 0, 0, 0, 0)  # izquierdo arriba
 
 
@@ -278,6 +281,11 @@ def seleccionar_todo():
     _enviar([(VK_CONTROL, 0, 0), (0x41, 0, 0), (0x41, 0, _TECLA_ARRIBA), (VK_CONTROL, 0, _TECLA_ARRIBA)])
 
 
+def deshacer():
+    """Ctrl + Z: quita lo que se acaba de escribir (cuando cayo en la casilla equivocada)."""
+    _enviar([(VK_CONTROL, 0, 0), (0x5A, 0, 0), (0x5A, 0, _TECLA_ARRIBA), (VK_CONTROL, 0, _TECLA_ARRIBA)])
+
+
 def soltar_ctrl_si_hace_falta():
     """Si quedo Ctrl 'pegado' en el estado del sistema, lo suelta."""
     if tecla_abajo(VK_CONTROL):
@@ -285,14 +293,18 @@ def soltar_ctrl_si_hace_falta():
 
 
 def escribir(texto, cancelar=None):
-    """Teclea el texto. Si 'cancelar()' devuelve True (o se presiona Esc) se detiene."""
+    """Teclea el texto letra por letra, con calma (las paginas pesadas, los editores de matematicas y los juegos se
+    comen letras si llegan de golpe). Los textos largos (ensayos) van un poco mas rapido.
+    Si 'cancelar()' devuelve True (o se presiona Esc) se detiene."""
     eventos = eventos_texto(texto)
+    largo = len(eventos) > 240
+    paso = 4 if largo else 2                         # (cada letra son 2 eventos: abajo y arriba)
     enviados = 0
-    for i in range(0, len(eventos), 40):
+    for i in range(0, len(eventos), paso):
         if (cancelar and cancelar()) or tecla_abajo(VK_ESCAPE):
             raise Cancelado()
-        enviados += _enviar(eventos[i:i + 40])
-        time.sleep(0.012)
+        enviados += _enviar(eventos[i:i + paso])
+        time.sleep(0.008 if largo else 0.018)
     return enviados == len(eventos)
 
 
@@ -301,19 +313,34 @@ def tam_input():
 
 
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
-           "arrastrar", "mover", "TECLAS",
+           "arrastrar", "mover", "TECLAS", "deshacer", "foco_caja",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente"]
 
-# ---------------------------------------------------------------- accesibilidad (en Windows todavia no: la vista basta)
+# ---------------------------------------------------------------- accesibilidad (UI Automation: ver uia.py)
 
 def preparar_accesibilidad(x, y):
-    return False
+    """Chrome y Edge prenden su accesibilidad cuando alguien les pregunta: se hace al empezar cada pregunta."""
+    try:
+        from . import uia
+        return uia.preparar(x, y)
+    except Exception:
+        return False
+
+
+def foco_caja():
+    """Donde esta el cursor del teclado: {'editable': True/False/None, 'caja': (x0, y0, x1, y1)} o None."""
+    try:
+        from . import uia
+        return uia.foco()
+    except Exception:
+        return None
 
 
 def foco_editable():
-    """None = no se sabe (en Windows se escribe en los campos que se ven)."""
-    return None
+    """True si el cursor del teclado esta en un campo para escribir; False si seguro que no; None si no se sabe."""
+    f = foco_caja()
+    return None if f is None else f.get("editable")
 
 
 def controles_en(left, top, w, h, punto=None):
@@ -321,7 +348,12 @@ def controles_en(left, top, w, h, punto=None):
 
 
 def que_hay_en(x, y):
-    return None
+    """Que hay en ese punto: {'rol', 'campo': True/False/None, 'enlace': bool, 'caja'} o None si no se sabe."""
+    try:
+        from . import uia
+        return uia.que_hay_en(x, y)
+    except Exception:
+        return None
 
 
 class _CURSORINFO(ctypes.Structure):

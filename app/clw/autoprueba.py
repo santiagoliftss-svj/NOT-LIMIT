@@ -1051,11 +1051,23 @@ def main(salida):
             _ventana_y_e2e(salida)
     except Exception as e:
         RESULTADOS.setdefault("ventana", {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]})
+    _escribir(salida)                # (lo que va hasta ahorita, por si algo de lo que sigue se cuelga)
+    if os.environ.get("CLW_SIN_NAVEGADOR") != "1":
+        # preguntas como las de ALEKS, Kahoot, juegos y quizzes, en Chrome / Edge de verdad
+        try:
+            from . import prueba_navegador
+            prueba_navegador.correr(salida, _IAFalsa, RESULTADOS, guardar=lambda: _escribir(salida))
+        except Exception as e:
+            RESULTADOS["navegador"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
     srv.shutdown()
+    _escribir(salida)
+    malas = [n for n in OBLIGATORIAS if not RESULTADOS.get(n, {}).get("ok")]
+    return 1 if malas else 0
+
+
+def _escribir(salida):
     RESULTADOS["_version"] = __import__("clw.version", fromlist=["VERSION"]).VERSION
     RESULTADOS["_obligatorias"] = list(OBLIGATORIAS)
     RESULTADOS["_sistema"] = sys.platform
     with open(os.path.join(salida, "resultado.json"), "w", encoding="utf-8") as f:
         json.dump(RESULTADOS, f, ensure_ascii=False, indent=2, default=str)
-    malas = [n for n in OBLIGATORIAS if not RESULTADOS.get(n, {}).get("ok")]
-    return 1 if malas else 0

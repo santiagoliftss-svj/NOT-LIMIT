@@ -15,7 +15,7 @@ a = Analysis(
     datas=[(os.path.join(APP, "assets"), "assets")],
     hiddenimports=["objc", "AppKit", "Foundation", "Quartz", "HIServices", "certifi",
                    "clw.mac.ventana", "clw.mac.escucha", "clw.mac.entrada", "clw.mac.captura",
-                   "clw.mac.llavero", "clw.mac.permisos", "clw.mac.autoprueba"],
+                   "clw.mac.llavero", "clw.mac.permisos", "clw.mac.autoprueba", "clw.prueba_navegador"],
     excludes=["tkinter", "_tkinter", "PIL.ImageTk", "PIL._tkinter_finder", "numpy", "matplotlib", "pytest",
               "IPython", "pystray"],
     noarchive=False,

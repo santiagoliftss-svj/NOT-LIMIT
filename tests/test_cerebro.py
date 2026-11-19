@@ -33,6 +33,8 @@ class Pantalla:
         self.img = Image.new("RGB", (w, h), (250, 250, 250))
         self.log = []
         self.perder = perder
+        self.cursor_en = None              # donde quedo el cursor del teclado (el ultimo clic que si se registro)
+        self.deshechos = []
 
     def tecla_abajo(self, vk):
         return False
@@ -42,15 +44,25 @@ class Pantalla:
         if self.perder > 0:
             self.perder -= 1
             return
+        self.cursor_en = (x, y)
         ImageDraw.Draw(self.img).ellipse((x - 6, y - 6, x + 6, y + 6), fill=(255, 0, 0))
 
     def seleccionar_todo(self):
         self.log.append(("ctrl+a",))
 
     def escribir(self, texto, cancelar=None):
+        """Lo escrito aparece donde esta el cursor del teclado (como en una pagina de verdad)."""
         self.log.append(("escribe", texto))
-        ImageDraw.Draw(self.img).rectangle((2, 2, 40, 12), fill=(0, 200, 0))
+        self.deshechos.append(self.img.copy())
+        if self.cursor_en is not None:
+            x, y = self.cursor_en
+            ImageDraw.Draw(self.img).rectangle((x + 8, y - 5, x + 8 + 7 * len(texto), y + 5), fill=(0, 120, 0))
         return True
+
+    def deshacer(self):
+        self.log.append(("deshacer",))
+        if self.deshechos:
+            self.img = self.deshechos.pop()
 
     def tecla(self, nombre, veces=1):
         self.log.append(("tecla", nombre))
@@ -307,7 +319,7 @@ def prueba_escribir_con_teclas_de_ecuacion():
     p = Pantalla()
     ej = cerebro.Ejecutor(p, 0, 0, (0, 0, 1000, 700), foto=lambda: p.foto(0, 0, 1000, 700), pausa=0)
     ej.correr([{"hacer": "escribir", "p": (300, 200), "texto": "x^2{derecha}+3/4{derecha}"}])
-    assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "x^2"), ("tecla", "derecha"), ("escribe", "+3/4"),
+    assert p.log == [("clic", 300, 200), ("escribe", "x^2"), ("tecla", "derecha"), ("escribe", "+3/4"),
                      ("tecla", "derecha")], p.log
 
 
@@ -588,12 +600,12 @@ def prueba_mac_si_el_cursor_no_queda_en_un_campo_no_teclea():
     p = PantallaMac(que={"rol": "AXGroup", "campo": None, "enlace": False}, foco=False)
     ej = _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
     assert ("ctrl+a",) not in p.log and not any(a[0] == "escribe" for a in p.log), p.log
-    assert len(p.clics()) == 2 and ej.no_escritos == ["hola"]                 # lo intento 2 veces y no tecleo
+    assert len(p.clics()) == 3 and ej.no_escritos == ["hola"]                 # lo intento 3 veces y no tecleo
 
 
 def prueba_mac_con_cursor_en_campo_si_escribe():
     p = PantallaMac(que={"rol": "AXTextField", "campo": True, "enlace": False}, foco=True)
-    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "con_texto": True})
     assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log
 
 
@@ -612,7 +624,10 @@ def prueba_juego_en_canvas_si_escribe_en_su_campo():
 def prueba_windows_escribe_como_antes():
     p = Pantalla()
     _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola"})
-    assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log
+    assert p.log == [("clic", 300, 200), ("escribe", "hola")], p.log             # vacia: sin Ctrl + A
+    p = Pantalla()
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "con_texto": True})
+    assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log   # se vio que el clic si entro
 
 
 def prueba_nunca_pica_un_enlace():
@@ -746,7 +761,7 @@ def prueba_mac_por_confirmar_solo_si_el_foco_queda_en_un_campo():
     _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
     assert ("escribe", "hola") in p.log, p.log
     p = PantallaMac(que={"rol": "AXTextField", "campo": True, "enlace": False}, foco=True)
-    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True})
+    _escribe(p, {"hacer": "escribir", "p": (300, 200), "texto": "hola", "verificar_campo": True, "con_texto": True})
     assert p.log == [("clic", 300, 200), ("ctrl+a",), ("escribe", "hola")], p.log
 
 
@@ -954,7 +969,7 @@ def prueba_sin_grafica_no_inventa_ejes():
         assert not pl["x"] and not pl["y"], pl
 
 
-def prueba_grafica_elige_herramienta_y_no_repite_clics_del_plano():
+def prueba_grafica_solo_puntos_y_no_repite_clics_del_plano():
     img = Image.new("RGB", (700, 640), "white")
     plano = {"x": (28.0, 320.0), "y": (-28.0, 300.0), "rango": {"x": (-10, 10, 1), "y": (-10, 10, 1)}}
     cajas = [caja(600, 20, 660, 44, "Recta")]
@@ -962,8 +977,9 @@ def prueba_grafica_elige_herramienta_y_no_repite_clics_del_plano():
         {"hacer": "clic", "en": 0, "texto": "Recta"},
         {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
     plan = cerebro.planear(datos, cajas, [], 1.0, img, 1.0, plano=plano)
-    assert [p["p"] for p in plan.pasos] == [(630, 32), (320, 244), (292, 300)], plan.pasos
-    assert [p.get("plano") for p in plan.pasos] == [False, True, True]
+    # 2.5: la herramienta la elige el usuario: solo se pican los puntos
+    assert [p["p"] for p in plan.pasos] == [(320, 244), (292, 300)], plan.pasos
+    assert [p.get("plano") for p in plan.pasos] == [True, True]
     p = Pantalla(w=700, h=640, perder=5)          # (la pagina no cambia al dar clic)
     ej = cerebro.Ejecutor(p, 0, 0, (0, 0, 700, 640), foto=lambda: p.foto(0, 0, 700, 640), pausa=0)
     ej.correr(plan.pasos)

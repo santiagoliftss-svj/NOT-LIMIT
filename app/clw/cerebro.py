@@ -77,13 +77,15 @@ Acciones. "en", "desde" y "hasta" pueden ser: el id de una caja de texto (numero
 - {"hacer":"escribir","en":"C0","texto":"..."}   escribir en un campo.
 - {"hacer":"elegir","en":7,"opcion":"texto exacto de la opcion"}   abrir un menu desplegable y elegir una opcion.
 - {"hacer":"arrastrar","desde":3,"hasta":{"x":420,"y":310}}   arrastrar un elemento y soltarlo en su lugar.
-- {"hacer":"ordenar","orden":["primero","segundo","tercero"]}   preguntas de ordenar arrastrando: el orden final (de arriba a abajo o de izquierda a derecha) con el texto de cada elemento como se ve.
+- {"hacer":"ordenar","orden":["primero","segundo","tercero"]}   preguntas de ordenar: el orden final (de arriba a abajo o de izquierda a derecha) con el texto de cada elemento como se ve.
+- {"hacer":"ordenar","orden":[...],"flechas":{"arriba":{"x":..,"y":..},"abajo":{"x":..,"y":..}}}   si cada elemento tiene botones de flechas (subir y bajar): el centro del boton de SUBIR y el de BAJAR de cualquier renglon que los tenga. NO LIMIT pica las flechas hasta que quede en orden.
 
 Reglas de seguridad (muy importantes):
 - NUNCA des clic en botones para avanzar, mandar o cerrar: Siguiente, Anterior, Enviar, Entregar, Terminar, Comprobar, Continuar, Saltar, Responder, Aceptar, Submit, Next, Check, Done. Esos los toca el usuario.
 - NUNCA des clic en el texto del enunciado ni fuera de la pregunta.
 - NUNCA des clic en enlaces (texto azul o subrayado que abre otra pagina), ni en logos, menus de la pagina o pestanas.
 - Solo escribe en campos para escribir: los A# que son campo, los C#, una caja o raya para escribir que veas en la imagen, o el texto gris que esta adentro de un campo (como "Escriba su respuesta"). Si no ves donde escribir, NO inventes un punto: deja "acciones" vacio y pon la respuesta en "respuesta".
+- Lee las instrucciones de la pregunta (redondeo, unidades, "escribe solo el numero", "usa el boton o", el orden de los puntos) y siguelas al pie de la letra.
 - Pon "seguro":"bajo" si no estas seguro de COMO se contesta en esta pantalla (donde dar clic, que arrastrar). Asi NO LIMIT no toca nada y solo muestra la respuesta.
 - Si no se puede contestar (audio, video, algo que no se ve), pon "acciones": [] y explica en "no_se_puede".
 
@@ -91,7 +93,8 @@ Por tipo:
 - OPCION UNICA, VERDADERO O FALSO, SI O NO: un clic en la opcion correcta (el id de su texto). Si las opciones son imagenes sin texto, el centro de la imagen.
 - OPCION MULTIPLE (casillas, "selecciona todas"): un clic por CADA opcion correcta, ni una de mas ni una de menos. Revisa las opciones una por una.
 - COMPLETAR (espacios en blanco en un texto): un "escribir" por cada espacio, en orden, solo con la palabra o dato que va.
-- DESPLEGABLE (menus, tambien dentro de un parrafo): un "elegir" por cada menu, en orden, con el texto exacto de la opcion. "en" es el menu (su id de texto, su campo o el centro del menu).
+- VARIAS CASILLAS (como "A = [ ]°, b = [ ], c = [ ]" de ALEKS, una tabla para llenar o un juego con varias cajas): un "escribir" por CADA casilla vacia. Cada valor va en la casilla que esta JUSTO a la derecha (o abajo) de SU etiqueta: fijate bien cual C# es de "A", cual de "b" y cual de "c" (las casillas pueden ser cajitas angostas de una letra de ancho). No dejes ninguna vacia y no pongas dos valores en la misma. Si una casilla ya trae un dato que da el problema, no la toques.
+- DESPLEGABLE (menus, tambien dentro de un parrafo, y botones que dicen "Seleccionar", "Elige", "Select" o "Choose" con una flechita, como las tarjetas de un quiz): un "elegir" por CADA menu, en orden, con el texto exacto y completo de la opcion (aunque ocupe dos renglones). "en" es ESE menu (el id de su "Seleccionar", su campo o su centro); si hay varios "Seleccionar", cada uno es de su tarjeta.
 - RELACIONAR COLUMNAS: si cada concepto tiene su menu, un "elegir" por concepto. Si se une arrastrando, "arrastrar" de cada elemento a su pareja. Si se escriben letras o numeros, "escribir".
 - ABIERTA, RESPUESTA CORTA O ENSAYO: "escribir" en el campo. Corto y directo si pide un dato, nombre, fecha o numero; si pide explicar, describir, comparar o argumentar, un parrafo de 3 a 6 oraciones naturales en el idioma de la pregunta. Texto plano: sin markdown, sin saltos de linea, sin LaTeX.
 - NUMERICA (aunque los numeros cambien al azar): usa los numeros que se ven en ESTA imagen, comprueba, y escribe solo el valor (con unidad solo si no aparece ya junto al campo). Redondea como lo pida la pregunta; decimales con punto. Ademas pon en "calculo" la operacion completa que da ese valor, solo con numeros (por ejemplo "(12.5*4)/3" o "sqrt(3^2+4^2)"; se vale: + - * / ^ ( ), sqrt, ln, log, exp, abs, pi, e, sin/cos/tan en radianes y sind/cosd/tand en grados). NO LIMIT la calcula exacta y, si tu cuenta no cuadra, escribe la correcta. Si hay varios campos con numeros, "calculo" es una lista en el mismo orden que sus "escribir".
@@ -99,15 +102,15 @@ Por tipo:
 - ZONA DE CLIC (clic sobre una parte de una imagen, mapa o diagrama): un clic en el centro exacto de esa parte; usa las reglas para dar coordenadas precisas.
 - GRAFICAR (casi siempre es una INSTRUCCION: "Grafica...", "Traza...", "Use the graphing tool to graph...", "Plot the point..."): sigue la instruccion AL PIE DE LA LETRA.
   1) Saca la ecuacion o los puntos exactos (pendiente, intersecciones con los ejes, vertice, centro y radio...) y comprueba que cumplen la ecuacion.
-  2) Si la grafica tiene barra de herramientas (recta, segmento, rayo, punto, parabola, circulo, valor absoluto, exponencial, desigualdad, linea continua o punteada...), PRIMERO da clic en la herramienta correcta (su A#, su id de texto o el centro de su icono con {"x","y"}). Si ya esta elegida (resaltada), no la toques.
-  3) Luego da clic en cada punto con coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT los pone exactos con los numeros de los ejes. En orden:
-     punto: el punto | recta: dos puntos de la recta | segmento: sus dos extremos | rayo: el extremo y otro punto hacia donde va | parabola: el vertice y otro punto | valor absoluto: el vertice y otro punto | circulo: el centro y un punto del circulo | recta vertical (x = a) u horizontal (y = b): dos puntos con la misma x o la misma y | exponencial, logaritmo o raiz: los puntos que pida la herramienta (y la asintota si la pide) | desigualdad: traza la frontera (punteada si es < o >, continua si es <= o >=; elige el tipo de linea si hay boton) y luego da clic en un punto del lado que se sombrea (uno que SI cumpla la desigualdad) | sistema: cada recta, una tras otra.
+  2) NO toques la barra de herramientas (lapiz, recta, punto, parabola, circulo...): la herramienta la elige el usuario antes. Tu SOLO das los clics de los puntos.
+  3) Da clic en cada punto con coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT los pone exactos con los numeros de los ejes. En el orden que pide la instruccion (si dice "primero la interseccion con y", esa va primero) y si no:
+     punto: el punto | recta: dos puntos de la recta | segmento: sus dos extremos | rayo: el extremo y otro punto hacia donde va | parabola: el vertice y otro punto | valor absoluto: el vertice y otro punto | circulo: el centro y un punto del circulo | recta vertical (x = a) u horizontal (y = b): dos puntos con la misma x o la misma y | exponencial, logaritmo o raiz: los puntos que pida la herramienta (y la asintota si la pide) | desigualdad: los dos puntos de la frontera y luego un punto del lado que se sombrea (uno que SI cumpla la desigualdad) | sistema: cada recta, una tras otra.
   4) Usa puntos con coordenadas enteras que se vean DENTRO del plano (mira el "PLANO CARTESIANO detectado"). Si uno se sale, usa otro punto de la misma recta.
   NUNCA arrastres para trazar y NUNCA escribas en una grafica. "arrastrar" con "hasta":{"gx":..,"gy":..} es solo para mover un punto o una figura que YA esta dibujada. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
 - PASOS GUIADOS: contesta solo los pasos que se ven ahorita.
 - GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la orilla de arriba de cada barra hasta su valor con "hasta":{"x": x de la barra, "gy": valor}, o da clic en cada punto con {"gx","gy"}.
-- ORDENAR: usa "ordenar" con el orden final.
-- ARRASTRAR ETIQUETAS (a un esquema, plano anatomico, mapa o categorias): un "arrastrar" por etiqueta, desde la etiqueta hasta el lugar exacto donde va.
+- ORDENAR: usa "ordenar" con el orden final, revisado con cuidado (fechas, numeros, pasos). Si los elementos tienen botones de flechas para subir y bajar, pon "flechas" con el centro de esos botones: NUNCA arrastres en ese caso.
+- ARRASTRAR ETIQUETAS (a un esquema, plano anatomico, mapa o categorias): un "arrastrar" por etiqueta, desde la etiqueta hasta el lugar exacto donde va. Arrastra SOLO si la pregunta pide arrastrar o soltar y no hay otra forma (menus, flechas, casillas).
 - MATRIZ (tabla con circulos o casillas): un clic por renglon en la columna correcta con {"fila": id, "columna": id}.
 - SIMULACION: contesta con lo que se ve y con la teoria; no muevas controles a lo loco.
 - AUDIO O VIDEO: no puedes escuchar ni ver el video completo; si la respuesta no se puede saber con lo que se ve, "acciones": [] y "no_se_puede": "es de audio o video".
@@ -123,7 +126,7 @@ Revisa si quedo contestada EXACTAMENTE como se queria:
 - campos: con el texto correcto y completo.
 - menus: mostrando la opcion correcta.
 - arrastrar u ordenar: cada elemento en su lugar.
-- graficas: la figura que pide la instruccion (recta, parabola, circulo...) YA trazada, pasando por los puntos correctos, con la linea continua o punteada que pide y el sombreado del lado correcto. Si solo quedaron puntos sueltos, falta elegir la herramienta correcta y volver a dar los clics (con {"gx","gy"}).
+- graficas: que los puntos esten en el lugar correcto. La herramienta la elige el usuario: NO la toques y NO repitas clics en puntos que ya estan (otro clic en el mismo punto la puede borrar).
 
 Responde SOLO un JSON en una linea:
 {"ok": true}
@@ -764,10 +767,21 @@ def _con_texto(caja, cajas, controles=(), pagina=None):
     antes de escribir. Asi, si el clic no quedo en el campo, Cmd/Ctrl + A nunca selecciona toda la pagina."""
     if pagina is not None:
         return bool(str(controles[pagina].get("valor") or "").strip())
+    angosta = caja is not None and (caja[2] - caja[0]) < 1.2 * (caja[3] - caja[1])
     for c in cajas:
         if motor._dentro(c["cx"], c["cy"], caja) and motor._norm(c["texto"]):
+            if angosta and len(re.sub(r"[^0-9A-Za-z]", "", c["texto"])) < 2:
+                continue                 # una cajita vacia: el OCR lee su orilla como "U", "|" o "[" (no es texto)
             return True                  # (tambien texto gris: en algunas paginas es texto de verdad y hay que quitarlo)
     return False
+
+
+def _solo_ayuda(caja, cajas):
+    """True si lo unico que se ve en el campo es el texto gris de ayuda ('Escribe tu respuesta', 'Tu respuesta',
+    'Type your answer'): ese se quita solo al escribir, asi que no hace falta seleccionarlo antes."""
+    dentro = [c for c in cajas if caja is not None and motor._dentro(c["cx"], c["cy"], caja) and motor._norm(c["texto"])]
+    return bool(dentro) and all(len(motor._norm(c["texto"]).split()) <= 5 and _AYUDA.search(motor._norm(c["texto"]))
+                                for c in dentro)
 
 
 def _campo_libre_de_pagina(x, y, controles, zoom, usados):
@@ -874,6 +888,9 @@ def _comprobar_cuentas(acciones, datos, plan):
             a["texto"] = nuevo
 
 
+SOLO_PUNTOS = "en graficas solo se pican los puntos"
+
+
 def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=None, plano=None):
     """Revisa cada accion de la IA contra el candado. Puntos en pixeles de la region (la imagen recortada)."""
     plan = Plan()
@@ -916,6 +933,10 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
 
         if hacer == "clic":
             obj = a.get("en", a.get("id"))
+            if plan.tipo == "graficar" and not isinstance(obj, dict):
+                # en una grafica solo se pican puntos: la herramienta (lapiz, recta...) la elige el usuario
+                rechazar(a, SOLO_PUNTOS)
+                continue
             r = _res(obj)
             if r is None:
                 rechazar(a, "fuera de la pregunta o no existe")
@@ -1018,7 +1039,7 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
                 continue
             plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": caja,
                                "seguro_campo": k is not None, "verificar_campo": verificar,
-                               "con_texto": _con_texto(caja, cajas)})
+                               "con_texto": _con_texto(caja, cajas), "solo_ayuda": _solo_ayuda(caja, cajas)})
 
         elif hacer == "elegir":
             opcion = str(a.get("opcion") or a.get("texto") or "").strip()
@@ -1054,7 +1075,16 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
             if len(orden) < 2:
                 rechazar(a, "orden vacio")
                 continue
-            plan.pasos.append({"hacer": "ordenar", "orden": orden[:15]})
+            paso = {"hacer": "ordenar", "orden": orden[:15]}
+            flechas = a.get("flechas") if isinstance(a.get("flechas"), dict) else {}
+            for k in ("arriba", "abajo"):
+                obj = flechas.get(k, a.get(k))
+                if obj is None:
+                    continue
+                r = _res(obj)
+                if r is not None:
+                    paso[k] = (r[0], r[1])
+            plan.pasos.append(paso)
         elif hacer:
             rechazar(a, f"accion desconocida: {hacer}")
 
@@ -1077,6 +1107,83 @@ def _escribir_con_teclas(acciones, texto, cancelar):
                 time.sleep(0.05)
         elif parte:
             acciones.escribir(parte, cancelar)
+
+
+def opciones_del_menu(cajas, zoom=1.0, unir=True):
+    """De las cajas que leyo el OCR, los renglones (lo que esta a la misma altura junto) y, si unir, tambien cada
+    renglon pegado con el que sigue (opciones largas que ocupan 2 o 3 renglones, como en los menus 'Seleccionar').
+    Devuelve [(texto, (x, y) donde picar)]: siempre el centro del PRIMER renglon de la opcion."""
+    cajas = sorted(cajas, key=lambda c: (c["cy"], c["cx"]))
+    renglones = []
+    for c in cajas:
+        alto = max(6.0, c["caja"][3] - c["caja"][1])
+        for r in renglones:
+            if abs(r["cy"] - c["cy"]) < 0.5 * alto and c["caja"][0] - r["caja"][2] < 40 * zoom:
+                r["partes"].append(c)
+                r["caja"] = (min(r["caja"][0], c["caja"][0]), min(r["caja"][1], c["caja"][1]),
+                             max(r["caja"][2], c["caja"][2]), max(r["caja"][3], c["caja"][3]))
+                break
+        else:
+            renglones.append({"cy": c["cy"], "caja": c["caja"], "partes": [c]})
+    for r in renglones:
+        r["texto"] = " ".join(p["texto"] for p in sorted(r["partes"], key=lambda p: p["cx"]))
+    renglones.sort(key=lambda r: r["caja"][1])
+    out = []
+    for i, r in enumerate(renglones):
+        punto = ((r["caja"][0] + r["caja"][2]) / 2, (r["caja"][1] + r["caja"][3]) / 2)
+        out.append((r["texto"], punto))
+        if not unir:
+            continue
+        texto, ultimo = r["texto"], r
+        for sig in renglones[i + 1:i + 3]:
+            alto = max(6.0, ultimo["caja"][3] - ultimo["caja"][1])
+            if sig["caja"][1] - ultimo["caja"][3] > 0.9 * alto or abs(sig["caja"][0] - r["caja"][0]) > 24 * zoom:
+                break
+            texto = texto + " " + sig["texto"]
+            out.append((texto, punto))
+            ultimo = sig
+    return out
+
+
+_NUM_DE_LUGAR = re.compile(r"^\s*(?:[#(\[]?\d{1,2}[.):\]-]?|[•·*-])\s+(?=\S)")
+
+
+def _sin_lugar(t):
+    """Quita el numero de lugar o la vineta del principio ('1 ', '2.', '#3', '•'): en las listas para ordenar ese
+    numero es del LUGAR y no del elemento (cambia al moverlo), y con el, "1 Colon (1492)" no se parece a "Colon (1492)"."""
+    return _NUM_DE_LUGAR.sub("", str(t or ""), count=1)
+
+
+def _parecido_renglon(texto, t):
+    """Que tanto se parece el texto de un elemento (como lo dio la IA) a un renglon leido con OCR."""
+    a, b = _sin_lugar(texto), _sin_lugar(t)
+    return max(motor.parecido(texto, t), motor.parecido(texto, t[:len(texto) + 4]),
+               motor.parecido(a, b), motor.parecido(a, b[:len(a) + 4]))
+
+
+def orden_de_escritura(pasos):
+    """Las casillas seguidas se llenan de la ultima a la primera (de abajo hacia arriba y de derecha a izquierda): al
+    escribir en una casilla que crece, lo que esta a su derecha se recorre; asi ninguna de las que faltan se mueve."""
+    out, grupo = [], []
+
+    def clave(p):
+        caja = p.get("caja")
+        x, y = p["p"]
+        alto = (caja[3] - caja[1]) if caja else 24
+        return (-round(y / max(10.0, 0.8 * alto)), -(caja[0] if caja else x))
+
+    def vaciar():
+        if grupo:
+            out.extend(sorted(grupo, key=clave))
+            grupo.clear()
+    for p in pasos:
+        if p.get("hacer") == "escribir" and p.get("p"):
+            grupo.append(p)
+        else:
+            vaciar()
+            out.append(p)
+    vaciar()
+    return out
 
 
 class Ejecutor:
@@ -1112,7 +1219,7 @@ class Ejecutor:
 
     def correr(self, pasos):
         antes = self.foto()
-        for paso in pasos:
+        for paso in orden_de_escritura(pasos):
             self._revisar_cancelar()
             hacer = paso["hacer"]
             try:
@@ -1183,61 +1290,234 @@ class Ejecutor:
         self.marcados.append(paso.get("desc") or "")
         return despues
 
+    def _foco_caja(self):
+        f = getattr(self.a, "foco_caja", None)
+        try:
+            if f:
+                return f()
+            e = self._foco()                 # (solo se sabe si es campo, no donde esta)
+            return None if e is None else {"editable": e, "caja": None}
+        except Exception:
+            return None
+
+    def _foco_en(self, caja, punto):
+        """Donde quedo el cursor del teclado despues del clic (lo dice Windows o la Mac):
+        True = en un campo para escribir que es ESTA casilla; False = en otro lado (la pagina, otra casilla, un
+        boton); None = no se sabe (se decide con la vista)."""
+        f = self._foco_caja()
+        if f is None:
+            return None
+        if f.get("editable") is False:
+            return False
+        fc = f.get("caja")
+        if not f.get("editable"):
+            return None
+        if not fc:
+            return True                      # es un campo (no se sabe cual, pero se escribio con clic en este)
+        if caja:
+            x0, y0 = self.pantalla(caja[0], caja[1])
+            x1, y1 = self.pantalla(caja[2], caja[3])
+        else:
+            X, Y = self.pantalla(*punto)
+            x0, y0, x1, y1 = X - 6, Y - 6, X + 6, Y + 6
+        m = 14 * self.zoom
+        se_tocan = not (fc[2] < x0 - m or fc[0] > x1 + m or fc[3] < y0 - m or fc[1] > y1 + m)
+        if se_tocan:
+            return True
+        if (fc[2] - fc[0]) < 4 or (fc[3] - fc[1]) < 4:
+            return None                  # (editores que esconden su campo de verdad: no se sabe)
+        return False
+
+    def _cambio_en(self, a, b, caja, punto):
+        """True si en la casilla (o junto al punto) cambio algo: el marco de foco o el cursor que parpadea."""
+        if a is None or b is None or a.size != b.size:
+            return None
+        if caja:
+            zona = (caja[0] - 4, caja[1] - 4, caja[2] + 4, caja[3] + 4)
+        else:
+            x, y = punto
+            zona = (x - 16, y - 14, x + 16, y + 14)
+        return hubo_cambio(a, b, zona, umbral=40, minimo=6)
+
+    def _donde_quedo(self, antes, despues, caja, punto, texto):
+        """'bien' si lo escrito aparecio en la casilla, 'otra' si aparecio en otro lado, 'nada' si no aparecio."""
+        if antes is None or despues is None or antes.size != despues.size:
+            return None
+        dif = ImageChops.difference(antes.convert("L"), despues.convert("L")).point(lambda v: 255 if v > 40 else 0)
+        total = dif.histogram()[255]
+        if total < 6:
+            return "nada"
+        if caja:
+            x0, y0, x1, y1 = caja
+        else:
+            x0, y0, x1, y1 = punto[0] - 10, punto[1] - 12, punto[0] + 10, punto[1] + 12
+        alto = max(12.0, y1 - y0)
+        ancho = max(x1 - x0, min(900 * self.zoom, len(texto) * 0.62 * min(alto, 30 * self.zoom))) + 24 * self.zoom
+        zona = (int(max(0, x0 - 12 * self.zoom)), int(max(0, y0 - 10 * self.zoom)),
+                int(min(dif.width, max(x1, x0 + ancho) + 8)), int(min(dif.height, y1 + 10 * self.zoom)))
+        if zona[2] - zona[0] < 2 or zona[3] - zona[1] < 2:
+            return "otra"
+        dentro = dif.crop(zona).histogram()[255]
+        # (un menu de sugerencias o la pagina que se redibuja tambien cambian: basta con que en la casilla se vea
+        # el texto, aunque haya cambios en otros lados)
+        if dentro >= max(6, 0.3 * total) or dentro >= max(12, min(80, 6 * len(texto))):
+            return "bien"
+        return "otra"
+
+    def _reubicar(self, paso, foto):
+        """La casilla pudo moverse (al escribir en una, la de al lado se recorre): se busca de nuevo en la foto."""
+        caja = paso.get("caja")
+        if not caja or foto is None or not paso.get("seguro_campo"):
+            return paso["p"], caja
+        try:
+            actuales = motor.rectangulos(foto, self.zoom)
+        except Exception:
+            return paso["p"], caja
+        w, h = caja[2] - caja[0], caja[3] - caja[1]
+        mejor = None
+        for r in actuales:
+            ix = max(0, min(r[2], caja[2]) - max(r[0], caja[0]))
+            iy = max(0, min(r[3], caja[3]) - max(r[1], caja[1]))
+            union = w * h + (r[2] - r[0]) * (r[3] - r[1]) - ix * iy
+            iou = ix * iy / union if union else 0
+            if iou >= 0.35 and (mejor is None or iou > mejor[0]):
+                mejor = (iou, r)
+        if mejor is not None:
+            r = mejor[1]
+            return ((r[0] + r[2]) / 2, (r[1] + r[3]) / 2), r
+        cy = (caja[1] + caja[3]) / 2
+        fila = [r for r in actuales if abs((r[1] + r[3]) / 2 - cy) < 0.5 * h and abs((r[3] - r[1]) - h) < 0.5 * h
+                and 0 <= r[0] - caja[0] < 6 * max(w, 20) + 160 * self.zoom]
+        if fila:
+            r = min(fila, key=lambda r: r[0] - caja[0])
+            return ((r[0] + r[2]) / 2, (r[1] + r[3]) / 2), r
+        return paso["p"], caja
+
+    def _clic_campo(self, X, Y, lento):
+        try:
+            self.a.clic(X, Y, lento=lento)
+        except TypeError:
+            self.a.clic(X, Y)
+
     def _escribir(self, paso, antes):
-        """Escribe solo si de verdad hay un campo: en Mac se le pregunta a la pagina que hay en ese punto y si el
-        cursor quedo dentro de un campo. Si no, NO se selecciona todo ni se teclea nada (eso era lo que abria
-        pestanas y seleccionaba toda la pagina)."""
-        X, Y = self.pantalla(*paso["p"])
+        """Escribe en UNA casilla y comprueba que de verdad quedo ahi:
+        1. se busca la casilla otra vez (pudo moverse) y se confirma que ahi se puede escribir;
+        2. clic y se revisa a donde se fue el cursor del teclado (Windows y Mac lo dicen; si no, se ve si la casilla
+           cambio: el marco o el cursor que parpadea);
+        3. solo si el cursor esta en la casilla y ya tenia algo, se selecciona lo de adentro (Ctrl/Cmd + A NUNCA se
+           hace si no se sabe donde esta el cursor: eso seleccionaba toda la pagina);
+        4. se escribe con calma y se mira donde aparecio el texto. Si aparecio en otra casilla se deshace y se
+           vuelve a intentar con un clic mas lento. Si no se puede, no se escribe y se avisa la respuesta."""
+        texto = paso["texto"]
+        foto0 = self.foto()
+        p, caja = self._reubicar(paso, foto0)
+        X, Y = self.pantalla(*p)
         info = self._que_hay(X, Y)
-        if info and info.get("campo") is False and not (paso.get("seguro_campo") and info.get("rol") in ("AXImage", "AXCanvas")):
-            self.fallas.append((paso, f"ahi no hay un campo para escribir ({info.get('rol')})"))
-            self.no_escritos.append(paso["texto"])
-            return antes
         if info and info.get("enlace"):
             self.fallas.append((paso, "ahi hay un enlace, no un campo"))
-            self.no_escritos.append(paso["texto"])
+            self.no_escritos.append(texto)
+            return antes
+        if info and info.get("campo") is False and not paso.get("seguro_campo"):
+            self.fallas.append((paso, f"ahi no hay un campo para escribir ({info.get('rol')})"))
+            self.no_escritos.append(texto)
+            return antes
+        if info and info.get("campo") is False and info.get("rol") in ("boton", "casilla", "circulo", "AXButton",
+                                                                         "AXCheckBox", "AXRadioButton"):
+            self.fallas.append((paso, f"ahi hay un {info.get('rol')}, no un campo"))
+            self.no_escritos.append(texto)
             return antes
         # un lugar que la IA ve pero que no tiene forma de campo: hay que confirmarlo antes de tocar
         verificar = bool(paso.get("verificar_campo")) and not (info and info.get("campo") is True)
-        forma = None
-        if verificar:
-            if hasattr(self.a, "mover"):
-                self.a.mover(X, Y)
+        if hasattr(self.a, "mover"):
+            self.a.mover(X, Y)
+            time.sleep(0.15)
+        if verificar and info is None and self._cursor() != "texto":
+            self.fallas.append((paso, "no se confirmo que ahi haya un campo: no escribi nada"))
+            self.no_escritos.append(texto)
+            return antes
+        base = self.foto() or foto0
+        # (si la casilla es angosta, el segundo intento pica un poco mas a la izquierda, ya adentro de la orilla)
+        x2 = p[0]
+        if caja and (caja[2] - caja[0]) > 14:
+            x2 = caja[0] + min(8 * self.zoom, (caja[2] - caja[0]) / 3)
+        intentos = [(p[0], False), (p[0], True), (x2, True)]
+        motivo = "no pude poner el cursor en la casilla"
+        for n, (px_, lento) in enumerate(intentos):
+            self._revisar_cancelar()
+            Xc, Yc = self.pantalla(px_, p[1])
+            self._clic_campo(Xc, Yc, lento)
+            time.sleep(0.32 if lento else 0.28)
+            tras = self.foto()
+            foco = self._foco_en(caja, p)
+            if foco is False:
+                # Windows o la Mac dicen que el cursor quedo en otro lado (otra casilla, la pagina, un boton)
+                motivo = "el cursor quedo en otro lado"
                 time.sleep(0.15)
-            forma = self._cursor()
-            if info is None and forma != "texto":
-                self.fallas.append((paso, "no se confirmo que ahi haya un campo: no escribi nada"))
-                self.no_escritos.append(paso["texto"])
-                return antes
-        self.a.clic(X, Y)
-        time.sleep(0.3)
-        foco = self._foco()
-        if foco is False:
-            self.a.clic(X, Y)                # a veces el primer clic solo activa la ventana
-            time.sleep(0.35)
-            foco = self._foco()
-        if foco is False or (verificar and foco is not True and forma != "texto"):
-            self.fallas.append((paso, "el cursor no quedo en un campo: no escribi nada"))
-            self.no_escritos.append(paso["texto"])
-            return self.foto()
-        # Cmd/Ctrl + A solo si el campo ya tiene algo escrito Y se sabe que el cursor esta en un campo (o no hay
-        # forma de saberlo: Windows). Un campo vacio no lo necesita, y asi nunca se selecciona toda la pagina.
-        if paso.get("con_texto", True) and (foco is True or (info and info.get("campo") is True)
-                                            or (info is None and foco is None and not verificar)):
-            self.a.seleccionar_todo()
-            time.sleep(0.06)
-        _escribir_con_teclas(self.a, paso["texto"], self.cancelar)
-        time.sleep(0.25)
-        self.hecho["escribir"] += 1
-        self.escritos.append(paso["texto"])
-        foto = self.foto()
-        paso["ok_local"] = self._se_lee(foto, paso["p"], paso.get("caja"), paso["texto"])
-        return foto
+                continue
+            sin_saber = info is None or info.get("campo") is None
+            if verificar:
+                # sin forma de campo, la vista no basta: lo tiene que decir la computadora (o la I del cursor)
+                confirmado = foco is True or (info is not None and info.get("campo") is True) or (
+                    foco is None and sin_saber and self._cursor() == "texto")
+                if not confirmado:
+                    motivo = "no se confirmo que ahi haya un campo"
+                    continue
+            else:
+                visto = self._cambio_en(base, tras, caja, p)
+                confirmado = foco is True or (info is not None and info.get("campo") is True) or (
+                    foco is None and bool(visto))
+                if not confirmado and n < len(intentos) - 1:
+                    motivo = "no se vio que el cursor entrara a la casilla"
+                    continue                     # (antes de teclear a ciegas, otro clic mas lento)
+            revisar_lo_de_adentro = False
+            if paso.get("con_texto"):
+                if confirmado:
+                    self.a.seleccionar_todo()
+                    time.sleep(0.08)
+                elif paso.get("solo_ayuda"):
+                    revisar_lo_de_adentro = True     # el texto gris se va solo; despues se revisa que no quede nada
+                else:
+                    motivo = "la casilla ya tenia algo y no se confirmo que el cursor estuviera ahi"
+                    continue
+            _escribir_con_teclas(self.a, texto, self.cancelar)
+            time.sleep(0.3)
+            despues = self.foto()
+            lugar = self._donde_quedo(tras, despues, caja, p, texto)
+            if lugar == "nada" and foco is not True:
+                time.sleep(0.35)                 # paginas que tardan en dibujar
+                despues = self.foto()
+                lugar = self._donde_quedo(tras, despues, caja, p, texto)
+            if lugar == "otra":
+                # se escribio en otra casilla (el clic no movio el cursor): se deshace y se intenta otra vez
+                if hasattr(self.a, "deshacer"):
+                    self.a.deshacer()
+                    time.sleep(0.3)
+                motivo = "el texto cayo en otra casilla"
+                base = self.foto() or base
+                continue
+            if lugar == "nada" and foco is not True:
+                motivo = "lo escrito no aparecio en la casilla"
+                continue
+            if revisar_lo_de_adentro and lugar == "bien" and self._sobra_texto(despues, p, caja, texto):
+                # lo de adentro NO era texto de ayuda: ya se sabe que el cursor esta en la casilla (ahi aparecio lo
+                # escrito), asi que ahora si se selecciona todo y se escribe otra vez
+                self.a.seleccionar_todo()
+                time.sleep(0.08)
+                _escribir_con_teclas(self.a, texto, self.cancelar)
+                time.sleep(0.3)
+                despues = self.foto() or despues
+            self.hecho["escribir"] += 1
+            self.escritos.append(texto)
+            paso["ok_local"] = lugar == "bien" and (self._se_lee(despues, p, caja, texto) or foco is True)
+            return despues
+        self.fallas.append((paso, motivo + ": no escribi nada"))
+        self.no_escritos.append(texto)
+        return self.foto()
 
-    def _se_lee(self, foto, punto, caja, esperado):
-        """True si con OCR se lee el texto esperado en ese lugar (asi no hace falta preguntarle a la IA)."""
-        if foto is None or self.ocr is None or not esperado or re.search(r"[{}^/√]", esperado):
-            return False
+    def _leer_campo(self, foto, punto, caja):
+        """Cajas de texto (OCR) que se leen en ese campo, o None si no se pudo leer."""
+        if foto is None or self.ocr is None:
+            return None
         x, y = punto
         if caja:
             zona = (caja[0] - 6, caja[1] - 6, caja[2] + 6, caja[3] + 6)
@@ -1245,17 +1525,42 @@ class Ejecutor:
             zona = (x - 320 * self.zoom, y - 30 * self.zoom, x + 320 * self.zoom, y + 30 * self.zoom)
         zona = (int(max(0, zona[0])), int(max(0, zona[1])), int(min(foto.width, zona[2])), int(min(foto.height, zona[3])))
         if zona[2] - zona[0] < 8 or zona[3] - zona[1] < 8:
-            return False
+            return None
         try:
             trozo = foto.crop(zona)
-            cajas = motor.detectar_cajas(trozo, trozo.width / 2, trozo.height / 2, self.zoom, self.ocr)
+            return motor.detectar_cajas(trozo, trozo.width / 2, trozo.height / 2, self.zoom, self.ocr)
         except Exception:
+            return None
+
+    def _sobra_texto(self, foto, punto, caja, escrito):
+        """True si en el campo, ademas de lo que se escribio, se lee otro texto (lo que ya tenia)."""
+        if not caja:
+            return False
+        cajas = self._leer_campo(foto, punto, caja)
+        if not cajas:
+            return False
+        leido, buscado = motor._norm(" ".join(c["texto"] for c in cajas)), motor._norm(escrito)
+        return len(leido) > len(buscado) + 4 and len(set(leido.split()) - set(buscado.split())) >= 1
+
+    def _se_lee(self, foto, punto, caja, esperado):
+        """True si con OCR se lee el texto esperado en ese lugar (asi no hace falta preguntarle a la IA)."""
+        if foto is None or self.ocr is None or not esperado or re.search(r"[{}^/√]", esperado):
+            return False
+        cajas = self._leer_campo(foto, punto, caja)
+        if cajas is None:
             return False
         leido = motor._norm(" ".join(c["texto"] for c in cajas))
         buscado = motor._norm(esperado)[:40]
         if not buscado or not leido:
             return False
-        return buscado in leido or motor.parecido(buscado, leido[:len(buscado) + 10]) >= 0.8
+        if buscado in leido or motor.parecido(buscado, leido[:len(buscado) + 10]) >= 0.8:
+            return True
+        # un menu que muestra la opcion cortada ("Construccion de acue...")
+        for c in cajas:
+            corto = motor._norm(re.sub(r"(\.\.\.|…)\s*$", "", c["texto"]))
+            if len(corto) >= 10 and motor._norm(esperado).startswith(corto[:-1]):
+                return True
+        return False
 
     def _elegir(self, paso, antes):
         X, Y = self.pantalla(*paso["p"])
@@ -1286,15 +1591,17 @@ class Ejecutor:
             x0, y0, x1, y1 = c["caja"]
             trozo = mascara.crop((int(zx0 + x0), int(zy0 + y0), int(zx0 + x1) + 1, int(zy0 + y1) + 1))
             return trozo.histogram()[255] >= 4
-        puntajes = sorted(((motor.parecido(paso["opcion"], c["texto"]), i) for i, c in enumerate(cajas) if aparecio(c)),
+        nuevas = [c for c in cajas if aparecio(c)]
+        candidatos = opciones_del_menu(nuevas, self.zoom)
+        puntajes = sorted(((motor.parecido(paso["opcion"], t), k) for k, (t, punto) in enumerate(candidatos)),
                           reverse=True)
         if not puntajes or puntajes[0][0] < 0.72:
             self.a.clic(X, Y)            # se cierra el menu (otro clic en el mismo menu)
             time.sleep(0.3)
             self.fallas.append((paso, f"no encontre la opcion '{paso['opcion']}' en el menu"))
             return self.foto()
-        c = cajas[puntajes[0][1]]
-        self.a.clic(self.left + zx0 + c["cx"], self.top + zy0 + c["cy"])
+        cx, cy = candidatos[puntajes[0][1]][1]
+        self.a.clic(self.left + zx0 + cx, self.top + zy0 + cy)
         time.sleep(self.pausa + 0.1)
         self.hecho["elegir"] += 1
         self.marcados.append(paso["opcion"])
@@ -1318,11 +1625,68 @@ class Ejecutor:
         self.hecho["arrastrar"] += 1
         return despues
 
+    def _leer_orden(self, orden):
+        """(fotos, cajas de cada elemento en el orden pedido) o (foto, None) si no se encontraron todos."""
+        foto = self.foto()
+        if foto is None:
+            return None, None
+        cajas = motor.detectar_cajas(foto, foto.width / 2, foto.height / 2, self.zoom, self.ocr)
+        renglones = opciones_del_menu(cajas, self.zoom, unir=False)
+        elegidas, usadas = [], set()
+        for texto in orden:
+            mejor = (0, None)
+            for k, (t, punto) in enumerate(renglones):
+                if k in usadas:
+                    continue
+                v = _parecido_renglon(texto, t)
+                if v > mejor[0]:
+                    mejor = (v, k)
+            if mejor[1] is None or mejor[0] < 0.6:
+                return foto, None
+            usadas.add(mejor[1])
+            elegidas.append(renglones[mejor[1]][1])
+        return foto, elegidas
+
+    def _ordenar_flechas(self, paso, antes):
+        """Listas con botones de flechas (subir / bajar): se pica la flecha del renglon que toca, una y otra vez,
+        releyendo la lista cada vez, hasta que queda en el orden pedido. Nunca se arrastra."""
+        orden = paso["orden"]
+        arriba, abajo = paso.get("arriba"), paso.get("abajo")
+        for _ in range(len(orden) * len(orden) + 3):
+            self._revisar_cancelar()
+            foto, puntos = self._leer_orden(orden)
+            if puntos is None:
+                self.fallas.append((paso, "no encontre todos los elementos para ordenar"))
+                return foto
+            actuales = sorted(range(len(puntos)), key=lambda k: puntos[k][1])     # de arriba a abajo
+            fuera = next((i for i in range(len(puntos)) if actuales[i] != i), None)
+            if fuera is None:
+                self.hecho["ordenar"] += 1
+                return foto
+            # el que debe ir en el lugar 'fuera' esta mas abajo: se sube un lugar (o el de arriba de el se baja)
+            yo = puntos[fuera]
+            fila = actuales.index(fuera)
+            if arriba:
+                X, Y = self.pantalla(arriba[0], yo[1])
+            else:
+                encima = puntos[actuales[fila - 1]]
+                X, Y = self.pantalla(abajo[0], encima[1])
+            self.a.clic(X, Y)
+            time.sleep(0.5)
+            despues = self.foto()
+            if foto is not None and despues is not None and not hubo_cambio(foto, despues):
+                self.fallas.append((paso, "la flecha no movio nada"))
+                return despues
+        self.fallas.append((paso, "no quedo en orden"))
+        return self.foto()
+
     def _ordenar(self, paso, antes):
         """Va acomodando de arriba a abajo: el que debe ir en el lugar i se arrastra al lugar i (relee cada vez)."""
         if self.ocr is None:
             self.fallas.append((paso, "sin OCR para ordenar"))
             return antes
+        if paso.get("arriba") or paso.get("abajo"):
+            return self._ordenar_flechas(paso, antes)
         orden = paso["orden"]
         movidas = 0
         for _ in range(len(orden) + 3):
@@ -1334,7 +1698,7 @@ class Ejecutor:
             cajas = motor.detectar_cajas(foto, foto.width / 2, foto.height / 2, self.zoom, self.ocr)
             elegidas, usadas = [], set()
             for texto in orden:
-                mejor = max(((motor.parecido(texto, c["texto"]), i) for i, c in enumerate(cajas) if i not in usadas),
+                mejor = max(((_parecido_renglon(texto, c["texto"]), i) for i, c in enumerate(cajas) if i not in usadas),
                             default=(0, None))
                 if mejor[1] is None or mejor[0] < 0.6:
                     elegidas = None
@@ -1389,7 +1753,9 @@ def describir(pasos):
 def necesita_revision(plan, ejecutor):
     """La revision con la IA se salta solo en lo mas simple: un clic en una pregunta de una sola respuesta que si se
     registro. Todo lo demas (casillas, campos, menus, arrastrar, algo que fallo o se rechazo) se revisa."""
-    if ejecutor.fallas or plan.rechazadas:
+    # (en graficas la IA a veces pide picar la herramienta: eso se rechaza a proposito y no es para revisar)
+    rechazadas = [m for _, m in plan.rechazadas if m != SOLO_PUNTOS]
+    if ejecutor.fallas or rechazadas:
         return True
     tipos = {p["hacer"] for p in plan.pasos}
     if tipos and tipos <= {"escribir", "elegir"} and all(p.get("ok_local") for p in plan.pasos):
@@ -1399,6 +1765,8 @@ def necesita_revision(plan, ejecutor):
     clics = sum(1 for p in plan.pasos if p["hacer"] == "clic")
     if clics == 1 and plan.tipo in ("opcion_unica", "verdadero_falso", "zona_clic", "opcion", ""):
         return False
+    if plan.tipo == "graficar" or all(p.get("plano") for p in plan.pasos if p["hacer"] == "clic"):
+        return False                     # graficas: los puntos van exactos con los ejes; repetir clics la arruina
     return clics >= 1
 
 

@@ -193,6 +193,10 @@ def detectar_cajas(img, px, py, zoom, ocr):
     fondo = fondo_por_zonas(gris, max(24, int(40 * zoom)), suavizar=True)
     oscuras = fondo.point(lambda v: 255 if v < 110 else 0)
     if oscuras.getbbox():
+        # (una caja blanca dentro de un fondo oscuro, como la de escribir en Kahoot o en un juego, NO se invierte:
+        # se ve con zonas mas chicas, si no su texto queda mitad volteado y no se lee)
+        claras = fondo_por_zonas(gris, max(12, int(16 * zoom))).point(lambda v: 255 if v >= 150 else 0)
+        oscuras = ImageChops.subtract(oscuras, claras)
         gris = Image.composite(ImageOps.invert(gris), gris, oscuras.filter(ImageFilter.MaxFilter(3)))
     gris = ImageOps.autocontrast(gris, cutoff=1)
     escala = 2 if zoom < 1.5 else 1
@@ -256,6 +260,30 @@ def rectangulos(img, zoom=1.0, relajado=False):
     umbral = 16 if relajado else 26
     mascara = ImageChops.difference(gris, fondo_por_zonas(gris, max(24, int(40 * zoom)))).point(
         lambda v: 255 if v > umbral else 0)
+    rects = _rects_de_mascara(mascara, zoom, relajado)
+    # Segunda pasada con las ORILLAS (donde cambia el color de un pixel a otro): una caja blanca sobre un fondo de
+    # color (juegos, Kahoot, tarjetas moradas) se ve completa aunque el fondo de su zona sea el color de afuera.
+    orillas = ImageChops.subtract(gris.filter(ImageFilter.MaxFilter(3)), gris.filter(ImageFilter.MinFilter(3))).point(
+        lambda v: 255 if v > umbral + 4 else 0)
+    return _sin_repetidos(rects, _rects_de_mascara(orillas, zoom, relajado, solo_anchos=True))
+
+
+def _hueca(filas, W, izq, der, t1, b0):
+    """True si adentro de una cajita angosta no hay nada (o solo el cursor que parpadea, una rayita vertical).
+    Una letra (8, B, D, 0...) tiene trazos adentro."""
+    x0, x1, y0, y1 = izq + 2, der - 1, t1 + 2, b0 - 1
+    if x1 <= x0 or y1 <= y0:
+        return True
+    renglones = y1 - y0
+    cols = [sum(1 for y in range(y0, y1) if filas[y * W + x] == 255) for x in range(x0, x1)]
+    llenas = [k for k, n in enumerate(cols) if n >= 0.6 * renglones]
+    if len(llenas) > 2 or (len(llenas) == 2 and llenas[1] - llenas[0] > 1):
+        return False
+    resto = sum(n for k, n in enumerate(cols) if k not in llenas)
+    return resto <= 0.06 * renglones * max(1, len(cols) - len(llenas))
+
+
+def _rects_de_mascara(mascara, zoom, relajado, solo_anchos=False):
     W, H = mascara.size
     filas = mascara.tobytes()
     columnas = mascara.transpose(Image.Transpose.TRANSPOSE).tobytes()
@@ -314,8 +342,11 @@ def rectangulos(img, zoom=1.0, relajado=False):
                 radio = max(x0 - izq, der - x1, 0)
                 if (b0 - t1 - 2 * radio) < 0.55 * (b0 - t1) or tinta_col(izq, t1 + 1 + radio, b0 - radio) < 0.9:
                     continue   # lados curvos: es una letra (o, 0, D), no una caja
-                if ancho < 28 * zoom and (h < 1.5 * ancho or h < 24 * zoom):
+                if ancho < 28 * zoom and (solo_anchos or h < 1.3 * ancho or h < 17 * zoom):
                     continue   # cuadrito chico: casilla o letra, no un campo para escribir
+                    # (las cajitas angostas y altas SI son campos: las casillas vacias de ALEKS miden 10 x 22)
+                if ancho < 28 * zoom and not _hueca(filas, W, izq, der, t1, b0):
+                    continue   # cajita angosta con trazos adentro: es una letra (8, B, D), no una casilla vacia
                 tinta = total = 0
                 for y in range(t1 + 2, b0 - 1):
                     seg = filas[y * W + izq + 3: y * W + der - 2]
@@ -324,10 +355,16 @@ def rectangulos(img, zoom=1.0, relajado=False):
                 if total and tinta / total > 0.5:
                     continue
                 rects.append((izq, t0, der, b1))
+    return rects
 
-    rects.sort(key=lambda r: -(r[2] - r[0]) * (r[3] - r[1]))
+
+def _sin_repetidos(rects, extra=()):
+    """Quita los rectangulos que son casi el mismo que otro mas grande (la misma caja vista dos veces). Los de
+    'extra' (segunda pasada) solo entran si no son una caja que ya estaba."""
+    def por_area(lista):
+        return sorted(lista, key=lambda r: -(r[2] - r[0]) * (r[3] - r[1]))
     finales = []
-    for r in rects:
+    for r in por_area(rects) + por_area(extra):
         repetido = False
         for f in finales:
             ix = max(0, min(r[2], f[2]) - max(r[0], f[0]))
@@ -850,10 +887,13 @@ def filtrar_campos(rects, cajas, px, py):
         textos = [c for c in cajas if _dentro(c["cx"], c["cy"], r)]
         if otros or _renglones(textos) >= 2:
             continue   # tiene varias lineas de texto adentro: es un cuadro con la pregunta, no un campo
-        if any(c["caja"][0] - 2 <= r[0] and r[2] <= c["caja"][2] + 2 and c["caja"][1] - 2 <= r[1]
-               and r[3] <= c["caja"][3] + 2 and (c["caja"][3] - c["caja"][1]) < 1.4 * (r[3] - r[1])
-               and (c["caja"][2] - c["caja"][0]) > 1.8 * (r[2] - r[0]) for c in cajas):
+        alta_y_angosta = (r[3] - r[1]) >= 1.35 * (r[2] - r[0])
+        if not alta_y_angosta and any(
+                c["caja"][0] - 2 <= r[0] and r[2] <= c["caja"][2] + 2 and c["caja"][1] - 2 <= r[1]
+                and r[3] <= c["caja"][3] + 2 and (c["caja"][3] - c["caja"][1]) < 1.4 * (r[3] - r[1])
+                and (c["caja"][2] - c["caja"][0]) > 1.8 * (r[2] - r[0]) for c in cajas):
             continue   # es una letra dentro de un renglon de texto
+            # (una cajita alta y angosta en medio de un renglon NO es letra: es una casilla vacia, como en ALEKS)
         campos.append({"caja": r, "cx": cx, "cy": cy})
     if len(campos) > MAX_CAMPOS:
         campos.sort(key=lambda c: (c["cx"] - px) ** 2 + (c["cy"] - py) ** 2)
@@ -1080,6 +1120,19 @@ def _norm(texto):
     return " ".join(re.sub(r"[^0-9a-z]+", " ", texto).split())
 
 
+_DIGITO_EN_PALABRA = re.compile(r"(?<=[a-z])\d(?=[a-z])")
+
+
+def _doblar_ocr(t, otro):
+    """'t' (ya normalizado) con los errores tipicos del OCR corregidos: un digito en medio de una palabra es una
+    letra mal leida ('col6n' -> 'colon') y un 0 solito entre palabras es la palabra 'o' (solo si el otro texto
+    dice 'o')."""
+    t = _DIGITO_EN_PALABRA.sub("o", t)
+    if re.search(r"(?:^| )o(?: |$)", otro):
+        t = re.sub(r"(?<=[a-z] )0(?= [a-z])", "o", t)
+    return t
+
+
 def parecido(a, b):
     """0..1: que tanto se parecen dos textos (aguanta basura del OCR alrededor).
     Si los dos traen numeros y los numeros no son los mismos, se toman como distintos (8466 no es 8488)."""
@@ -1090,7 +1143,14 @@ def parecido(a, b):
         return 1.0
     na, nb = re.findall(r"\d+", a), re.findall(r"\d+", b)
     if na and nb and sorted(na) != sorted(nb):
-        return min(0.3, difflib.SequenceMatcher(None, a, b).ratio())
+        # antes de decir que son distintos: lo que el OCR suele leer mal (una o con acento como 6 en medio de una
+        # palabra, "Col6n"; la palabra "o" como 0, "raices 0 ceros"). Si asi los numeros ya cuadran, se comparan asi.
+        a2, b2 = _doblar_ocr(a, b), _doblar_ocr(b, a)
+        if sorted(re.findall(r"\d+", a2)) != sorted(re.findall(r"\d+", b2)):
+            return min(0.3, difflib.SequenceMatcher(None, a, b).ratio())
+        a, b = a2, b2
+        if a == b:
+            return 0.98
     corto, largo = (a, b) if len(a) <= len(b) else (b, a)
     if re.search(r"(^| )" + re.escape(corto) + r"($| )", largo):
         return 0.6 + 0.4 * len(corto) / len(largo)

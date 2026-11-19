@@ -198,14 +198,14 @@ def _mandar(evento, banderas=0):
     Q.CGEventPost(Q.kCGHIDEventTap, evento)
 
 
-def clic(x, y):
+def clic(x, y, lento=False):
     p = Q.CGPointMake(x / _escala, y / _escala)
     _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventMouseMoved, p, Q.kCGMouseButtonLeft))
-    time.sleep(0.05)
+    time.sleep(0.14 if lento else 0.05)
     abajo = Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseDown, p, Q.kCGMouseButtonLeft)
     Q.CGEventSetIntegerValueField(abajo, Q.kCGMouseEventClickState, 1)
     _mandar(abajo)
-    time.sleep(0.03)
+    time.sleep(0.09 if lento else 0.03)
     arriba = Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseUp, p, Q.kCGMouseButtonLeft)
     Q.CGEventSetIntegerValueField(arriba, Q.kCGMouseEventClickState, 1)
     _mandar(arriba)
@@ -218,6 +218,14 @@ def _tecla(codigo, banderas=0):
 
 def seleccionar_todo():
     _tecla(K_A, Q.kCGEventFlagMaskCommand)
+
+
+K_Z = 6
+
+
+def deshacer():
+    """Cmd + Z: quita lo que se acaba de escribir (cuando cayo en la casilla equivocada)."""
+    _tecla(K_Z, Q.kCGEventFlagMaskCommand)
 
 
 TECLAS = {"derecha": 124, "izquierda": 123, "arriba": 126, "abajo": 125, "retroceso": 51, "escape": 53, "enter": 36}
@@ -288,7 +296,9 @@ def escribir(texto, cancelar=None):
     """Teclea el texto como caracteres Unicode (acentos, ñ, ¿ y √ salen bien con cualquier teclado).
     Si 'cancelar()' devuelve True (o se presiona Esc) se detiene."""
     enviados = 0
-    for i, (c, n) in enumerate(eventos_texto(texto)):
+    eventos = eventos_texto(texto)
+    largo = len(eventos) > 120
+    for i, (c, n) in enumerate(eventos):
         if i % 8 == 0 and ((cancelar and cancelar()) or tecla_abajo(VK_ESCAPE)):
             raise Cancelado()
         for abajo in (True, False):
@@ -296,7 +306,7 @@ def escribir(texto, cancelar=None):
             Q.CGEventKeyboardSetUnicodeString(ev, n, c)
             _mandar(ev)
         enviados += 1
-        time.sleep(0.004 if i % 8 else 0.012)
+        time.sleep(0.008 if largo else 0.018)     # con calma: las paginas pesadas se comen letras si llegan de golpe
     return enviados == len(trozos(texto))
 
 
@@ -316,6 +326,24 @@ def foco_editable():
     try:
         from . import ax
         return ax.foco_editable()
+    except Exception:
+        return None
+
+
+def foco_caja():
+    """Donde esta el cursor del teclado: {'editable': True/False/None, 'caja': (x0, y0, x1, y1) pixeles} o None."""
+    try:
+        from . import ax
+        f = ax.foco()
+        if f is None or not f.get("rol"):
+            return None
+        editable = True if f["editable"] else (None if f["rol"] in ax.AMBIGUOS else False)
+        caja = None
+        if f.get("marco"):
+            x, y, w, h = f["marco"]
+            s = _escala
+            caja = (x * s, y * s, (x + w) * s, (y + h) * s)
+        return {"rol": f["rol"], "editable": editable, "caja": caja}
     except Exception:
         return None
 
@@ -353,6 +381,7 @@ def forma_cursor():
 
 __all__ = ["Cancelado", "tecla_abajo", "boton_izquierdo", "posicion_mouse", "ventana_raiz_en", "clic", "tecla",
            "arrastrar", "mover", "TECLAS", "preparar_accesibilidad", "foco_editable", "controles_en", "que_hay_en",
+           "deshacer", "foco_caja",
            "forma_cursor",
            "eventos_texto", "seleccionar_todo", "escribir", "soltar_ctrl_si_hace_falta", "juego_en_pantalla_completa",
            "bajar_prioridad_hilo", "rect_ventana", "clase_ventana", "ventana_al_frente", "U32", "VK_LBUTTON",
