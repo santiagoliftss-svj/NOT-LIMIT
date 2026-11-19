@@ -37,6 +37,7 @@ let lista = {
   limites: { pro: 5 },
 };
 let geminiPedidos = [];
+let otrosPedidos = [];
 let geminiResp = () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }],
                                                        usageMetadata: { promptTokenCount: 4000, candidatesTokenCount: 300, thoughtsTokenCount: 100 } }), { status: 200 });
 
@@ -44,6 +45,11 @@ const fetchReal = globalThis.fetch;
 globalThis.fetch = async (url, init = {}) => {
   url = String(url);
   if (url.startsWith("https://lista.prueba/")) return new Response(JSON.stringify(lista));
+  if (url.startsWith("https://claude.prueba/") || url.startsWith("https://openai.prueba/")) {
+    otrosPedidos.push({ url, h: init.headers, body: JSON.parse(init.body) });
+    if (url.includes("claude")) return new Response(JSON.stringify({ content: [{ type: "text", text: "hola" }], usage: { input_tokens: 3000, output_tokens: 200 } }));
+    return new Response(JSON.stringify({ choices: [{ message: { content: "hola" } }], usage: { prompt_tokens: 3000, completion_tokens: 200 } }));
+  }
   if (url.startsWith("https://gemini.prueba/")) {
     geminiPedidos.push({ url, key: init.headers["x-goog-api-key"], body: init.body });
     return geminiResp();
@@ -54,17 +60,24 @@ globalThis.fetch = async (url, init = {}) => {
 const env = {
   GEMINI_KEY: "CLAVE-SECRETA-DEL-DUENO",
   GEMINI_URL: "https://gemini.prueba",
+  CLAUDE_KEY: "sk-ant-SECRETA-CLAUDE",
+  CLAUDE_URL: "https://claude.prueba",
+  OPENAI_URL: "https://openai.prueba",
   LISTA_URL: "https://lista.prueba/licencias.json",
   HUELLAS_PRUEBA: JSON.stringify(prueba),
   CUENTAS: { idFromName: () => "todas", get: () => ({ fetch: (u, i) => cuaderno.fetch(new Request(u, i)) }) },
 };
 
-async function pedir(ruta, { codigo, equipo = "compu-A", pid = "p1", modelo = "gemini-flash-latest", metodo } = {}) {
+async function pedir(ruta, { codigo, equipo = "compu-A", pid = "p1", modelo = "gemini-flash-latest", metodo, peso } = {}) {
   const h = { "x-nl-codigo": codigo || "", "x-nl-equipo": equipo, "x-nl-pregunta": pid };
+  if (peso) h["x-nl-peso"] = String(peso);
   const esIA = ruta === "ia";
-  const url = esIA ? `https://srv/v1beta/models/${modelo}:generateContent` : `https://srv${ruta}`;
+  let url = `https://srv${ruta}`, cuerpo;
+  if (esIA && modelo.startsWith("claude")) { url = "https://srv/v1/messages"; cuerpo = { model: modelo, messages: [] }; }
+  else if (esIA && modelo.startsWith("gpt")) { url = "https://srv/v1/chat/completions"; cuerpo = { model: modelo, messages: [] }; }
+  else if (esIA) { url = `https://srv/v1beta/models/${modelo}:generateContent`; cuerpo = { contents: [] }; }
   const r = await worker.fetch(new Request(url, { method: metodo || (esIA ? "POST" : "GET"), headers: h,
-                                                   body: esIA && !metodo ? JSON.stringify({ contents: [] }) : undefined }), env, ctx);
+                                                   body: esIA && !metodo ? JSON.stringify(cuerpo) : undefined }), env, ctx);
   await Promise.all(pendientes.splice(0));
   const t = await r.text();
   let j = null;
@@ -115,16 +128,44 @@ for (let i = 0; i < 12; i++) await pedir("ia", { codigo: C.pro, pid: "e" });
 r = await pedir("ia", { codigo: C.pro, pid: "e" });
 ver("repetir el mismo id para siempre no burla el limite", r.status === 402, r.t);
 
-// --- modelos por plan
+// --- IAs por plan
 geminiPedidos = [];
-await pedir("ia", { codigo: C.bas, pid: "x", modelo: "gemini-flash-latest" });
-ver("Basico usa el modelo ligero", geminiPedidos[0].url.includes("gemini-flash-lite-latest"), geminiPedidos[0].url);
-await pedir("ia", { codigo: C.pre, pid: "x", modelo: "gemini-pro-latest" });
-ver("Premium pidiendo Pro usa Flash (Pro es caro)", geminiPedidos[1].url.includes("/gemini-flash-latest"), geminiPedidos[1].url);
-await pedir("ia", { codigo: C.due, pid: "x", modelo: "gemini-pro-latest" });
-ver("el dueno si puede Pro", geminiPedidos[2].url.includes("gemini-pro-latest"), geminiPedidos[2].url);
-await pedir("ia", { codigo: C.pre, pid: "y", modelo: "gemini-flash-lite-latest" });
-ver("ligero se respeta", geminiPedidos[3].url.includes("gemini-flash-lite-latest"));
+r = await pedir("ia", { codigo: C.bas, pid: "x", modelo: "gemini-flash-latest" });
+ver("Basico pidiendo Gemini Flash -> 403 es del Pro", r.status === 403 && r.j.error.tipo === "plan" && /plan Pro/.test(r.j.error.message) && geminiPedidos.length === 0, r.t);
+r = await pedir("ia", { codigo: C.bas, pid: "x", modelo: "gemini-flash-lite-latest" });
+ver("Basico con Gemini Flash Lite si", r.status === 200 && geminiPedidos[0].url.includes("gemini-flash-lite-latest"), r.t);
+r = await pedir("ia", { codigo: C.bas, pid: "x2", modelo: "claude-haiku-5-5" });
+ver("Basico pidiendo Claude -> 403", r.status === 403, r.t);
+r = await pedir("ia", { codigo: C.pre, pid: "c1", modelo: "claude-opus-5-5" });
+ver("Premium con Claude Opus va a Claude con la clave del dueno", r.status === 200 && otrosPedidos.length === 1 &&
+    otrosPedidos[0].url === "https://claude.prueba/v1/messages" && otrosPedidos[0].h["x-api-key"] === "sk-ant-SECRETA-CLAUDE" &&
+    otrosPedidos[0].h["anthropic-version"] && r.j.content[0].text === "hola", r.t);
+r = await pedir("/estado", { codigo: C.pre });
+ver("Opus cuenta por 5", r.j.usadas === 5, r.t);
+r = await pedir("ia", { codigo: C.pre, pid: "c1", modelo: "claude-haiku-5-5" });
+r = await pedir("/estado", { codigo: C.pre });
+ver("la misma pregunta con la ligera no suma", r.j.usadas === 5, r.t);
+await pedir("ia", { codigo: C.pre, pid: "c2", modelo: "claude-haiku-5-5", peso: 2 });
+await pedir("ia", { codigo: C.pre, pid: "c2", modelo: "claude-sonnet-5-5" });
+r = await pedir("/estado", { codigo: C.pre });
+ver("ubicar con la ligera + contestar con Sonnet cuenta 2 (no 3)", r.j.usadas === 7, r.t);
+await pedir("ia", { codigo: C.pre, pid: "c3", modelo: "gemini-flash-lite-latest", peso: 1 });
+await pedir("ia", { codigo: C.pre, pid: "c3", modelo: "claude-opus-5-5" });
+r = await pedir("/estado", { codigo: C.pre });
+ver("si la app no avisa el peso, Opus igual cobra su 5", r.j.usadas === 12, r.t);
+r = await pedir("ia", { codigo: C.pro, pid: "o1", modelo: "claude-opus-5-5" });
+ver("Pro pidiendo Opus -> 403 es del Premium", r.status === 403 && /plan Premium/.test(r.j.error.message), r.t);
+r = await pedir("ia", { codigo: C.pre, pid: "g1", modelo: "gpt-6-luna" });
+ver("ChatGPT sin clave del dueno -> 503 'elige otra IA'", r.status === 503 && r.j.error.tipo === "ia" && /ChatGPT/.test(r.j.error.message), r.t);
+env.OPENAI_KEY = "sk-SECRETA-OPENAI";
+r = await pedir("ia", { codigo: C.pre, pid: "g1", modelo: "gpt-6-luna" });
+ver("ChatGPT con clave va a OpenAI con Bearer", r.status === 200 && otrosPedidos.at(-1).url === "https://openai.prueba/v1/chat/completions" &&
+    otrosPedidos.at(-1).h.authorization === "Bearer sk-SECRETA-OPENAI", r.t);
+r = await pedir("ia", { codigo: C.due, pid: "z", modelo: "gpt-6.1-terra" });
+ver("el dueno puede todas", r.status === 200, r.t);
+r = await pedir("ia", { codigo: C.pre, pid: "q", modelo: "claude-mythos-9" });
+ver("modelo que no existe -> 404", r.status === 404 && r.j.error.tipo === "modelo", r.t);
+geminiPedidos = [];
 
 // --- compus
 r = await pedir("/estado", { codigo: C.bas, equipo: "compu-B" });
@@ -135,7 +176,7 @@ r = await pedir("/estado", { codigo: C.pre, equipo: "compu-C" });
 ver("Premium en una 3a -> 403", r.status === 403, r.t);
 r = await pedir("/estado", { codigo: C.due, equipo: "compu-Z" });
 ver("el dueno en cualquier compu", r.status === 200 && r.j.limite === null, r.t);
-r = await pedir("ia", { codigo: C.bas, equipo: "" });
+r = await pedir("ia", { codigo: C.bas, equipo: "", modelo: "gemini-flash-lite-latest" });
 ver("sin id de compu (app vieja) -> pide actualizar", r.status === 400 && r.j.error.tipo === "equipo", r.t);
 avanzar(73 * 3600 * 1000);
 r = await pedir("/estado", { codigo: C.bas, equipo: "compu-B" });
@@ -161,10 +202,22 @@ avanzar(24 * 3600 * 1000);
 r = await pedir("ia", { codigo: C.pre, pid: "d4" });
 ver("al otro dia sigue", r.status === 200, r.t);
 
+// --- una cara cuando ya casi no quedan
+r = await pedir("/estado", { codigo: C.pre });
+lista = { ...lista, limites: { pro: 5, premium: r.j.usadas + 2 }, por_dia: {} };
+avanzar(61 * 1000);
+r = await pedir("ia", { codigo: C.pre, pid: "w1", modelo: "claude-opus-5-5" });
+ver("le quedan 2 y Opus cuenta 5 -> 402 con explicacion", r.status === 402 && /cuenta por 5/.test(r.j.error.message), r.t);
+r = await pedir("ia", { codigo: C.pre, pid: "w2", modelo: "claude-haiku-5-5" });
+ver("con una ligera si pasa", r.status === 200, r.t);
+
 // --- errores de Gemini
 geminiResp = () => new Response(JSON.stringify({ error: { code: 400, message: "API key not valid. Please pass a valid API key.", status: "INVALID_ARGUMENT" } }), { status: 400 });
 r = await pedir("ia", { codigo: C.due, pid: "g1" });
-ver("clave del dueno mala -> 502 sin decir nada de la clave", r.status === 502 && !/API key not valid/.test(r.t), r.t);
+ver("clave del dueno mala -> 503 'elige otra' sin decir nada de la clave", r.status === 503 && !/API key not valid/.test(r.t), r.t);
+geminiResp = () => new Response(JSON.stringify({ type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the API." } }), { status: 400 });
+r = await pedir("ia", { codigo: C.due, pid: "g1b" });
+ver("sin saldo del dueno -> 503 sin decir del saldo", r.status === 503 && !/credit/.test(r.t), r.t);
 geminiResp = () => new Response(JSON.stringify({ error: { code: 400, message: "Unknown name \"thinkingLevel\"", status: "INVALID_ARGUMENT" } }), { status: 400 });
 r = await pedir("ia", { codigo: C.due, pid: "g2" });
 ver("400 de variante pasa tal cual (la app prueba otra)", r.status === 400 && /thinkingLevel/.test(r.t), r.t);
@@ -173,7 +226,7 @@ r = await pedir("ia", { codigo: C.due, pid: "g3" });
 ver("429 de Gemini -> 429 limite", r.status === 429 && r.j.error.tipo === "limite", r.t);
 delete env.GEMINI_KEY;
 r = await pedir("ia", { codigo: C.due, pid: "g4" });
-ver("sin GEMINI_KEY -> 503 claro", r.status === 503, r.t);
+ver("sin GEMINI_KEY -> 503 claro", r.status === 503 && /Gemini/.test(r.t), r.t);
 env.GEMINI_KEY = "CLAVE-SECRETA-DEL-DUENO";
 
 // --- dueno
@@ -183,7 +236,7 @@ r = await pedir("/admin", { codigo: C.due });
 const pro = (r.j.clientes || []).find((c) => c.num === 901);
 ver("admin muestra preguntas y gasto", r.status === 200 && pro && pro.preguntas === 5 && pro.tin > 0 && r.j.gasto_dolares > 0, r.t);
 r = await pedir("/salud");
-ver("salud", r.status === 200 && r.j.ia === true && !r.t.includes("CLAVE"));
+ver("salud dice que IAs hay (sin claves)", r.status === 200 && r.j.ias.gemini && r.j.ias.claude && !r.t.includes("SECRETA"), r.t);
 r = await pedir("ia", { codigo: C.pro, metodo: "GET" });
 ver("GET a la IA -> 404", r.status === 404);
 
