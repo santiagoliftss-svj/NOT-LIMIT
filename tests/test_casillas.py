@@ -347,3 +347,11 @@ def prueba_texto_de_ayuda_no_necesita_seleccionar():
     campo = (100, 100, 500, 150)
     assert cerebro._solo_ayuda(campo, [caja("Escribe tu respuesta", 200, 125)])
     assert not cerebro._solo_ayuda(campo, [caja("Paris", 200, 125)])
+
+
+def prueba_texto_claro_en_consola_no_es_campo():
+    """Un pedazo de consola (texto claro sobre negro) no tiene 'cajas para escribir' (antes salia una falsa)."""
+    from PIL import Image
+    from clw import motor
+    im = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "datos", "consola_oscura.png")).convert("RGB")
+    assert motor.rectangulos(im, 1.0) == [], motor.rectangulos(im, 1.0)

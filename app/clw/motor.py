@@ -265,7 +265,9 @@ def rectangulos(img, zoom=1.0, relajado=False):
     # color (juegos, Kahoot, tarjetas moradas) se ve completa aunque el fondo de su zona sea el color de afuera.
     orillas = ImageChops.subtract(gris.filter(ImageFilter.MaxFilter(3)), gris.filter(ImageFilter.MinFilter(3))).point(
         lambda v: 255 if v > umbral + 4 else 0)
-    return _sin_repetidos(rects, _rects_de_mascara(orillas, zoom, relajado, solo_anchos=True))
+    # (en esta pasada la caja tiene que estar casi vacia por dentro: en texto claro sobre fondo oscuro, como una
+    # consola, las letras forman "cajas" llenas de orillas)
+    return _sin_repetidos(rects, _rects_de_mascara(orillas, zoom, relajado, solo_anchos=True, max_tinta=0.25))
 
 
 def _hueca(filas, W, izq, der, t1, b0):
@@ -283,7 +285,7 @@ def _hueca(filas, W, izq, der, t1, b0):
     return resto <= 0.06 * renglones * max(1, len(cols) - len(llenas))
 
 
-def _rects_de_mascara(mascara, zoom, relajado, solo_anchos=False):
+def _rects_de_mascara(mascara, zoom, relajado, solo_anchos=False, max_tinta=0.5):
     W, H = mascara.size
     filas = mascara.tobytes()
     columnas = mascara.transpose(Image.Transpose.TRANSPOSE).tobytes()
@@ -352,7 +354,7 @@ def _rects_de_mascara(mascara, zoom, relajado, solo_anchos=False):
                     seg = filas[y * W + izq + 3: y * W + der - 2]
                     tinta += seg.count(255)
                     total += len(seg)
-                if total and tinta / total > 0.5:
+                if total and tinta / total > max_tinta:
                     continue
                 rects.append((izq, t0, der, b1))
     return rects
