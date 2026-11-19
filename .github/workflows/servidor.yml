@@ -53,3 +53,22 @@ jobs:
             v="${!k}"
             if [ -n "$v" ]; then printf '%s' "$v" | wrangler secret put "$k" >/dev/null && echo "$k: puesta"; else echo "$k: no hay (esa IA queda apagada)"; fi
           done
+      - name: Revisar que el servidor y las claves de IA jalen (sin gastar)
+        if: always()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
+          CLAUDE_KEY: ${{ secrets.CLAUDE_KEY }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+        run: |
+          [ -z "$CLOUDFLARE_API_TOKEN" ] && exit 0
+          URL=https://no-limit.santiago-liftss.workers.dev
+          echo "salud: $(curl -s $URL/salud)"
+          echo "codigo falso: $(curl -s -o /dev/null -w '%{http_code}' -H 'x-nl-codigo: NL-XXXX-XXXX-XXXX' $URL/estado) (debe ser 401)"
+          [ -n "$GEMINI_KEY" ] && echo "Gemini: $(curl -s -o /dev/null -w '%{http_code}' -H "x-goog-api-key: $GEMINI_KEY" 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1') (200 = clave buena)"
+          [ -n "$CLAUDE_KEY" ] && echo "Claude: $(curl -s -o /dev/null -w '%{http_code}' -H "x-api-key: $CLAUDE_KEY" -H 'anthropic-version: 2023-06-01' 'https://api.anthropic.com/v1/models?limit=1') (200 = clave buena)"
+          [ -n "$OPENAI_KEY" ] && echo "OpenAI: $(curl -s -o /dev/null -w '%{http_code}' -H "authorization: Bearer $OPENAI_KEY" https://api.openai.com/v1/models) (200 = clave buena)"
+          if [ -n "$OPENAI_KEY" ]; then curl -s -H "authorization: Bearer $OPENAI_KEY" https://api.openai.com/v1/models | python3 -c "import json,sys; print('modelos OpenAI gpt-6*:', sorted(m['id'] for m in json.load(sys.stdin).get('data',[]) if m['id'].startswith('gpt-6'))[:40])"; fi
+          if [ -n "$CLAUDE_KEY" ]; then curl -s -H "x-api-key: $CLAUDE_KEY" -H 'anthropic-version: 2023-06-01' 'https://api.anthropic.com/v1/models?limit=50' | python3 -c "import json,sys; print('modelos Claude:', [m['id'] for m in json.load(sys.stdin).get('data',[])])"; fi
+          if [ -n "$GEMINI_KEY" ]; then curl -s -H "x-goog-api-key: $GEMINI_KEY" 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200' | python3 -c "import json,sys; print('modelos Gemini latest:', [m['name'] for m in json.load(sys.stdin).get('models',[]) if 'latest' in m['name']])"; fi
+          true
