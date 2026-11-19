@@ -14,9 +14,12 @@ import hashlib
 import json
 import logging
 import os
+import sys
 import threading
 import time
+import urllib.error
 import urllib.request
+import uuid
 
 from . import rutas, version
 from .licencias_validas import HUELLAS
@@ -38,7 +41,9 @@ REVISAR_CADA = 3 * 3600                             # la app vuelve a ver la lis
 SIN_REVISAR_MAX = 3 * 24 * 3600                     # sin poder revisarla en 3 dias: pide internet
 PRUEBA = False                                       # (solo las pruebas automaticas)
 
-_remoto = {"extra": {}, "bloqueadas": set(), "vencen": {}, "planes": {}, "hoy": "", "revisado": 0.0}
+_remoto = {"extra": {}, "bloqueadas": set(), "vencen": {}, "planes": {}, "hoy": "", "revisado": 0.0,
+           "servidor": "", "duenos": set()}
+_uso = {}                                            # lo ultimo que dijo el servidor: usadas, limite, restantes
 _cargado = False
 _candado = threading.Lock()
 _memo = {}
@@ -109,9 +114,14 @@ def _aplicar(datos, hoy=None, revisado=None):
             vencen[int(n)] = dt.date.fromisoformat(str(f)).isoformat()
         except (TypeError, ValueError):
             continue
+    servidor = str(datos.get("servidor") or "").strip().rstrip("/")
+    if not servidor.startswith("https://"):
+        servidor = ""
+    duenos = {int(n) for n in (datos.get("duenos") or []) if str(n).isdigit()}
     with _candado:
         _remoto["extra"], _remoto["bloqueadas"], _remoto["vencen"] = extra, bloq, vencen
         _remoto["planes"] = planes
+        _remoto["servidor"], _remoto["duenos"] = servidor, duenos
         if hoy:
             _remoto["hoy"] = hoy
         if revisado is not None:
@@ -185,6 +195,7 @@ class Estado:
         self.numero = numero
         self.vence = vence            # "AAAA-MM-DD" o None
         self.plan = plan if plan in PLANES else PLAN_NORMAL
+        self.propio = ""              # mensaje del servidor (ej. "ya se usa en otra compu")
 
     @property
     def nombre_plan(self):
@@ -192,6 +203,8 @@ class Estado:
 
     @property
     def mensaje(self):
+        if self.propio:
+            return self.propio
         if self.motivo == "ok":
             p = f"Plan {self.nombre_plan} · "
             return p + (f"activa hasta el {fecha_corta(self.vence)}." if self.vence else "activa.")
@@ -290,3 +303,131 @@ def valido(texto):
 def necesita_revisar():
     with _candado:
         return time.time() - _remoto["revisado"] > REVISAR_CADA
+
+
+# ---------------------------------------------------------------- el servidor de NO LIMIT (la IA incluida en el plan)
+
+MODELO_SERVIDOR = "nolimit"
+
+
+def servidor():
+    """URL del servidor de NO LIMIT ('' si todavia no hay): con el, la IA va incluida y nadie pone claves."""
+    propio = os.environ.get("CLW_SERVIDOR", "").strip().rstrip("/")
+    if propio:
+        return propio
+    if PRUEBA:                                       # (la prueba automatica usa su IA de mentiras)
+        return ""
+    _cargar_cache()
+    with _candado:
+        return _remoto["servidor"]
+
+
+def es_dueno(config):
+    try:
+        num = numero(config.get("licencia") or "")
+    except Exception:
+        return False
+    with _candado:
+        return num is not None and num in _remoto["duenos"]
+
+
+def modelo_efectivo(config, modelos_validos=()):
+    """El modelo que de verdad se usa: con servidor todos usan la IA de NO LIMIT (el dueno puede elegir otra)."""
+    elegido = str(config.get("modelo") or "")
+    if servidor():
+        if elegido == MODELO_SERVIDOR or not es_dueno(config):
+            return MODELO_SERVIDOR
+        return elegido
+    if elegido == MODELO_SERVIDOR:                   # (todavia no hay servidor: la que tenia antes)
+        antes = str(config.get("modelo_antes") or "")
+        return antes if antes and antes != MODELO_SERVIDOR else "claude-haiku-5-5"
+    return elegido
+
+
+def equipo():
+    """Id de esta compu (para que un codigo no se use en mas compus de las del plan). No dice nada de la compu."""
+    global _equipo
+    if _equipo:
+        return _equipo
+    crudo = ""
+    try:
+        if sys.platform == "win32":
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0,
+                                winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0)) as k:
+                crudo = str(winreg.QueryValueEx(k, "MachineGuid")[0])
+        elif sys.platform == "darwin":
+            import subprocess
+            salida = subprocess.run(["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"], capture_output=True,
+                                    text=True, timeout=5).stdout
+            for linea in salida.splitlines():
+                if "IOPlatformUUID" in linea:
+                    crudo = linea.split("=")[-1].strip().strip('"')
+    except Exception as e:
+        log.info("no se pudo leer el id de la compu: %s", e)
+    if not crudo:
+        ruta = os.path.join(rutas.carpeta_datos(), "equipo.txt")
+        try:
+            with open(ruta, encoding="utf-8") as f:
+                crudo = f.read().strip()
+        except OSError:
+            crudo = ""
+        if not crudo:
+            crudo = uuid.uuid4().hex
+            try:
+                os.makedirs(os.path.dirname(ruta), exist_ok=True)
+                with open(ruta, "w", encoding="utf-8") as f:
+                    f.write(crudo)
+            except OSError:
+                pass
+    _equipo = hashlib.sha256(("NL-EQUIPO|" + crudo).encode("utf-8")).hexdigest()[:32]
+    return _equipo
+
+
+_equipo = ""
+
+
+def anotar_uso(restantes=None, limite=None, usadas=None):
+    with _candado:
+        if restantes is not None:
+            _uso["restantes"] = restantes
+        if limite is not None:
+            _uso["limite"] = limite
+        if usadas is not None:
+            _uso["usadas"] = usadas
+
+
+def uso():
+    with _candado:
+        return dict(_uso)
+
+
+def consultar_servidor(codigo, timeout=10):
+    """Pregunta al servidor como va el codigo (y registra esta compu). Devuelve (True, datos) o (False, mensaje)."""
+    url = servidor()
+    if not url:
+        return True, {}
+    req = urllib.request.Request(url + "/estado", headers={
+        "user-agent": "no-limit", "x-nl-codigo": formatear(codigo), "x-nl-equipo": equipo(),
+        "x-nl-version": version.VERSION})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout, context=_ssl()) as r:
+            datos = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:
+            msg = (json.loads(e.read().decode("utf-8")).get("error") or {}).get("message")
+        except Exception:
+            msg = None
+        if e.code in (401, 402, 403) and msg:
+            return False, msg
+        return True, {}                              # el servidor fallo: no se le cierra la puerta al cliente
+    except Exception as e:
+        log.info("no se pudo consultar el servidor: %s", e)
+        return True, {}
+    anotar_uso(datos.get("restantes"), datos.get("limite"), datos.get("usadas"))
+    return True, datos
+
+
+def _ssl():
+    from . import proveedores
+    return proveedores._CTX

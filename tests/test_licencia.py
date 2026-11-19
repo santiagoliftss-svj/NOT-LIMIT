@@ -222,7 +222,7 @@ def prueba_clave_de_otra_ia_se_acomoda_sola():
     with _Sin(vence=_dia(30)):
         ui, app, c = _ui()
         c["licencia"] = CODIGO
-        assert c["modelo"].startswith("claude")
+        assert ui.modelo_actual().id.startswith("claude")   # (sin servidor: la de antes)
         ui.inyectar()
         assert ui.pantalla == "clave" and ui.clave["prov"] == "claude"
         app.portapapeles = "AIzaSyA-clave-gratis-de-gemini-1234567"
@@ -266,3 +266,100 @@ def prueba_planes_basico_pro_y_premium():
     assert licencia.permite("basico", "opcion_unica") and licencia.permite("basico", "abierta")
     assert not licencia.permite("basico", "graficar") and not licencia.permite("basico", "numerica")
     assert licencia.permite("pro", "graficar") and licencia.permite("premium", "arrastrar")
+
+
+# ---------------------------------------------------------------- 2.4: la IA incluida en el plan (servidor)
+
+class _ConServidor(_Sin):
+    def __init__(self, dueno=False, **k):
+        super().__init__(vence=_dia(30), **k)
+        self.dueno = dueno
+
+    def __enter__(self):
+        super().__enter__()
+        os.environ["CLW_SERVIDOR"] = "https://servidor.prueba"
+        licencia._remoto["duenos"] = {NUM} if self.dueno else set()
+        return self
+
+    def __exit__(self, *a):
+        os.environ.pop("CLW_SERVIDOR", None)
+        super().__exit__(*a)
+
+
+def prueba_con_servidor_el_cliente_no_pone_claves():
+    with _ConServidor():
+        ui, app, c = _ui()
+        c["modelo"] = "claude-haiku-5-5"                   # (aunque tuviera otra elegida)
+        assert ui.modelo_actual().id == "nolimit" and ui.ia_incluida()
+        ui.inyectar()
+        assert ui.clave["prov"] == "licencia"              # sin codigo: pide el codigo, no una clave
+        c["licencia"] = CODIGO
+        ui._ir("principal")
+        ui.inyectar()
+        assert "iniciar" in app.log, app.log               # con codigo pagado arranca directo, sin clave de IA
+        grupos, _ = ui._grupos()
+        assert [g[0] for g in grupos] == ["nolimit"]       # no puede elegir otra IA
+        ui.evento_bot(("uso", 37))
+        ui.render()
+        ui._ir("ajustes")
+        ui.render()
+        assert any(z[0] == "planes" for z in ui.zonas), [z[0] for z in ui.zonas]
+        assert not any(str(z[0]).startswith("clave:") for z in ui.zonas)
+        ui._accion("planes")
+        assert ("url", "https://santiagoliftss-svj.github.io/NOT-LIMIT/#precio") in app.log
+
+
+def prueba_con_servidor_el_dueno_puede_usar_su_clave():
+    with _ConServidor(dueno=True):
+        ui, app, c = _ui()
+        c["licencia"] = CODIGO
+        grupos, _ = ui._grupos()
+        assert [g[0] for g in grupos][:2] == ["nolimit", "claude"]
+        ui._accion("modelo:gemini-flash-latest")
+        assert ui.modelo_actual().id == "gemini-flash-latest"
+        ui._ir("ajustes")
+        ui.render()
+        assert any(str(z[0]).startswith("clave:") for z in ui.zonas)
+
+
+def prueba_sin_servidor_todo_sigue_como_antes():
+    with _Sin(vence=_dia(30)):
+        ui, app, c = _ui()
+        assert not licencia.servidor()
+        assert ui.modelo_actual().proveedor != "nolimit"
+        assert "nolimit" not in [g[0] for g in ui._grupos()[0]]
+        assert not c.tiene_clave("nolimit")
+
+
+def prueba_bot_con_servidor_manda_codigo_y_una_pregunta_por_clic():
+    from clw.bot import Bot
+    with _ConServidor():
+        d = tempfile.mkdtemp()
+        c = config.Config(os.path.join(d, "a.json"))
+        c["licencia"] = CODIGO.lower()
+        b = Bot(c, queue.Queue(), ocr=None, cliente=object())
+        m, real = b.modelo()
+        assert m.proveedor == "nolimit" and real == "gemini-flash-latest"
+        k = b._clave(m)
+        assert k["servidor"] == "https://servidor.prueba" and k["codigo"] == CODIGO and len(k["equipo"]) == 32
+        assert k["equipo"] == licencia.equipo()            # siempre la misma compu
+        p1 = k["pregunta"]
+        b._pregunta = "otra"
+        assert b._clave(m)["pregunta"] == "otra" != p1
+
+
+def prueba_restantes_avisa_cuando_quedan_pocas():
+    from clw.bot import Bot
+    with _ConServidor():
+        d = tempfile.mkdtemp()
+        c = config.Config(os.path.join(d, "a.json"))
+
+        class Cli:
+            restantes = 20
+        b = Bot(c, queue.Queue(), ocr=None, cliente=Cli())
+        b._avisar_restantes(21)
+        ev = []
+        while not b.eventos.empty():
+            ev.append(b.eventos.get())
+        assert ("uso", 20) in ev and any(e[0] == "actividad" and "20 preguntas" in e[1] for e in ev), ev
+        assert licencia.uso()["restantes"] == 20

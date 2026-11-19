@@ -23,9 +23,12 @@ class _Manejador(BaseHTTPRequestHandler):
         largo = int(self.headers.get("content-length") or 0)
         cuerpo = json.loads(self.rfile.read(largo) or b"null") if largo else None
         PEDIDOS.append((self.command, self.path, dict(self.headers), cuerpo))
-        estado, datos = GUION["f"](self.command, self.path, self.headers, cuerpo)
+        res = GUION["f"](self.command, self.path, self.headers, cuerpo)
+        estado, datos = res[0], res[1]
         crudo = json.dumps(datos).encode()
         self.send_response(estado)
+        for k, v in (res[2] if len(res) > 2 else {}).items():
+            self.send_header(k, v)
         self.send_header("content-type", "application/json")
         self.send_header("content-length", str(len(crudo)))
         self.end_headers()
@@ -262,3 +265,76 @@ def prueba_si_un_modelo_se_tarda_se_pasa_al_siguiente():
     c._una = una
     assert c.preguntar("gemini", "gemini-flash-latest", "k", "s", "b", "image/png", "t") == ("ok", False)
     assert usados == ["gemini-flash-latest", "gemini-flash-lite-latest"], usados
+
+
+# ---------------------------------------------------------------- servidor de NO LIMIT (IA incluida en el plan)
+
+def _clave_nl(pregunta="p1"):
+    return {"servidor": os.environ["CLW_API_GEMINI"], "codigo": "NL-AAAA-BBBB-CCCC", "equipo": "eq1",
+            "pregunta": pregunta, "version": "2.4.0"}
+
+
+def prueba_servidor_nolimit_manda_codigo_compu_y_pregunta():
+    PEDIDOS.clear()
+
+    def f(m, path, h, body):
+        assert path == "/v1beta/models/gemini-flash-latest:generateContent"
+        assert h["x-nl-codigo"] == "NL-AAAA-BBBB-CCCC" and h["x-nl-equipo"] == "eq1" and h["x-nl-pregunta"] == "p1"
+        assert "x-goog-api-key" not in h                        # la app ya no manda ninguna clave de IA
+        assert body["contents"][0]["parts"][0]["inlineData"]["data"] == "QUJD"
+        return 200, {"candidates": [{"content": {"parts": [{"text": "ok"}]}, "finishReason": "STOP"}]}, {"x-nl-restantes": "41"}
+
+    GUION["f"] = f
+    cli = P.ClienteIA()
+    assert cli.preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t") == ("ok", False)
+    assert cli.restantes == 41
+
+
+def prueba_servidor_nolimit_errores_del_plan():
+    cli = P.ClienteIA()
+    cli.pausa = 0
+    casos = [
+        (402, "cupo", "Ya usaste tus 600 preguntas de este mes.", "saldo"),
+        (402, "dia", "Llegaste al máximo de 120 preguntas por hoy.", "saldo"),
+        (403, "equipo", "Tu código ya se está usando en otra compu.", "licencia"),
+        (401, "vencido", "Tu plan venció el 2026-11-01.", "licencia"),
+        (401, "codigo", "Ese código no sirve.", "licencia"),
+    ]
+    for estado, tipo, msg, esperado in casos:
+        PEDIDOS.clear()
+        GUION["f"] = lambda m, p, h, b, e=estado, t=tipo, ms=msg: (e, {"error": {"tipo": t, "message": ms}})
+        try:
+            cli.preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")
+            raise AssertionError("debio fallar")
+        except P.ErrorIA as e:
+            assert e.tipo == esperado and e.mensaje == msg, (e.tipo, e.mensaje)
+            assert e.tipo != "clave"                          # nunca pide "clave de la IA"
+        assert len(PEDIDOS) == 1, (tipo, len(PEDIDOS))        # no reintenta ni cambia de modelo
+
+
+def prueba_servidor_nolimit_variante_rechazada_prueba_otra():
+    PEDIDOS.clear()
+
+    def f(m, path, h, body):
+        nivel = (body.get("generationConfig") or {}).get("thinkingConfig", {}).get("thinkingLevel")
+        if nivel == "minimal":
+            return 400, {"error": {"code": 400, "message": "Thinking level minimal is not supported", "status": "INVALID_ARGUMENT"}}
+        return 200, {"candidates": [{"content": {"parts": [{"text": "ya"}]}, "finishReason": "STOP"}]}
+
+    GUION["f"] = f
+    assert P.ClienteIA().preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")[0] == "ya"
+    assert len(PEDIDOS) == 2
+
+
+def prueba_servidor_nolimit_saturado_usa_el_ligero():
+    PEDIDOS.clear()
+
+    def f(m, path, h, body):
+        if "lite" not in path:
+            return 429, {"error": {"tipo": "limite", "message": "La IA está saturada ahorita."}}
+        return 200, {"candidates": [{"content": {"parts": [{"text": "lite"}]}, "finishReason": "STOP"}]}
+
+    GUION["f"] = f
+    cli = P.ClienteIA()
+    cli.pausa = 0
+    assert cli.preguntar("nolimit", "gemini-flash-latest", _clave_nl(), "s", "QUJD", "image/png", "t")[0] == "lite"

@@ -9,11 +9,13 @@ import threading
 
 from . import rutas
 
-VERSION_AJUSTES = 2
+VERSION_AJUSTES = 3
 
 _PREDETERMINADO = {
     "version_ajustes": VERSION_AJUSTES,
-    "modelo": "claude-haiku-5-5",
+    "modelo": "nolimit",       # la IA incluida en el plan (servidor de NO LIMIT)
+    "modelo_antes": "",        # la que tenia antes de la 2.4 (por si todavia no hay servidor)
+    "licencia": "",
     "claves": {},
     "modo_preciso": True,
     "guardar_capturas": True,
@@ -96,7 +98,12 @@ class Config:
                         self.datos[k] = v
                 if guardado.get("version_ajustes", 1) < 2:
                     self.datos["modo_preciso"] = True   # 1.1: pensar antes de contestar por defecto
-                    self.datos["version_ajustes"] = VERSION_AJUSTES
+                if guardado.get("version_ajustes", 1) < 3:
+                    # 2.4: todos pasan a la IA incluida en el plan (se recuerda la que tenia)
+                    if self.datos["modelo"] != "nolimit":
+                        self.datos["modelo_antes"] = self.datos["modelo"]
+                    self.datos["modelo"] = "nolimit"
+                self.datos["version_ajustes"] = VERSION_AJUSTES
         except (OSError, ValueError):
             pass
 
@@ -109,9 +116,14 @@ class Config:
 
     # claves
     def clave(self, proveedor):
+        if proveedor == "nolimit":            # la "clave" de la IA incluida es el codigo de NO LIMIT
+            return str(self.datos.get("licencia") or "")
         return desproteger(self.datos["claves"].get(proveedor, ""))
 
     def tiene_clave(self, proveedor):
+        if proveedor == "nolimit":
+            from . import licencia
+            return bool(self.clave(proveedor)) and bool(licencia.servidor())
         return bool(self.clave(proveedor))
 
     def poner_clave(self, proveedor, texto):

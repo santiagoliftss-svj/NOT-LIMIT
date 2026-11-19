@@ -7,18 +7,23 @@ import re
 import threading
 import time
 import traceback
+import uuid
 from datetime import datetime
 
 from . import cerebro, entrada, licencia, motor, rutas
 from .escucha import EscuchaCtrlClic
 from .ocr import OCR
 from .proveedores import ClienteIA, ErrorIA, PROVEEDORES, buscar_modelo
+from .version import VERSION
 
 log = logging.getLogger("clw")
 
 
 # modelo ligero de cada proveedor (para ubicar la pregunta y revisar como quedo)
-LIGEROS = {"gemini": "gemini-flash-lite-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna"}
+LIGEROS = {"gemini": "gemini-flash-lite-latest", "claude": "claude-haiku-5-5", "openai": "gpt-6-luna",
+           "nolimit": "gemini-flash-lite-latest"}
+# con la IA incluida, el servidor de NO LIMIT decide el modelo segun el plan; la app pide estos
+MODELO_SERVIDOR = "gemini-flash-latest"
 
 
 def configurar_registro():
@@ -58,6 +63,7 @@ class Bot:
         self.hwnd_propio = None
         self.escucha = EscuchaCtrlClic(self._disparo, es_propia=self._es_propia, al_ignorar=self._ignorado)
         self.ignorados = {"ctrl_sostenido": 0, "pantalla_completa": 0}
+        self._pregunta = uuid.uuid4().hex          # id de la pregunta en curso (el servidor cuenta preguntas, no llamadas)
 
     # ------------------------------------------------ control
     def _emitir(self, *evento):
@@ -70,8 +76,17 @@ class Bot:
 
     def modelo(self):
         propio = self.config["modelos_propios"]
-        m = buscar_modelo(self.config["modelo"])
+        m = buscar_modelo(licencia.modelo_efectivo(self.config))
+        if m.proveedor == "nolimit":
+            return m, MODELO_SERVIDOR
         return m, propio.get(m.id, m.id)
+
+    def _clave(self, m):
+        """La clave para ese modelo. Con la IA incluida: el codigo, la compu y la pregunta van al servidor."""
+        if m.proveedor != "nolimit":
+            return self.config.clave(m.proveedor)
+        return {"servidor": licencia.servidor(), "codigo": licencia.formatear(self.config.get("licencia") or ""),
+                "equipo": licencia.equipo(), "pregunta": self._pregunta, "version": VERSION}
 
     def puede_iniciar(self):
         m, _ = self.modelo()
@@ -117,6 +132,17 @@ class Bot:
             return
         threading.Thread(target=self._trabajo, args=(x, y), name="trabajo", daemon=True).start()
 
+    def _avisar_restantes(self, antes):
+        """Lo que dijo el servidor de cuantas preguntas le quedan: a la interfaz, y aviso cuando ya son pocas."""
+        n = getattr(self.cliente, "restantes", None)
+        if n is None:
+            return
+        licencia.anotar_uso(restantes=n)
+        self._emitir("uso", n)
+        if n != antes and n in (50, 20, 10, 5, 0):
+            self._emitir("actividad", "Ya no te quedan preguntas este mes" if n == 0 else
+                         f"Te quedan {n} preguntas este mes", "info")
+
     def _esperar_que_suelte_ctrl(self, max_seg=3.0):
         fin = time.time() + max_seg
         while self.acciones.tecla_abajo(entrada.VK_ATAJO) and time.time() < fin:
@@ -137,6 +163,7 @@ class Bot:
 
     def _trabajo(self, x, y):
         self._cancelar.clear()
+        self._pregunta = uuid.uuid4().hex
         entrada.bajar_prioridad_hilo()
         fin = threading.Event()
         threading.Thread(target=self._vigilar_esc, args=(fin,), name="esc", daemon=True).start()
@@ -147,7 +174,9 @@ class Bot:
                 raise entrada.Cancelado()
             img, left, top = motor.capturar(x, y)
             self._tapar_ventana_propia(img, left, top)
+            antes = getattr(self.cliente, "restantes", None)
             self.contestar(img, left, top, x - left, y - top, motor.factor_zoom())
+            self._avisar_restantes(antes)
         except entrada.Cancelado:
             self._emitir("actividad", "Cancelado", "info")
         except ErrorIA as e:
@@ -156,6 +185,8 @@ class Bot:
             if e.tipo == "clave":
                 m, _ = self.modelo()
                 self._emitir("falta_clave", m.proveedor)
+            elif e.tipo == "licencia" and e.detalle in ("vencido", "bloqueado", "sin_activar", "codigo"):
+                self.detener()
         except Exception as e:
             log.error("fallo: %s\n%s", e, traceback.format_exc())
             self._emitir("actividad", f"Algo falló: {_corto(e, 70)}", "error")
@@ -184,7 +215,7 @@ class Bot:
     # ------------------------------------------------ NO LIMIT 2.0: ubicar, leer de cerca, contestar y revisar
     def _preguntador(self):
         m, id_real = self.modelo()
-        clave = self.config.clave(m.proveedor)
+        clave = self._clave(m)
         # el modo preciso es del plan Pro y Premium
         preciso = bool(self.config["modo_preciso"]) and licencia.estado(self.config).plan != "basico"
         # ubicar y revisar van con el modelo ligero del mismo proveedor: es rapido y (en Gemini gratis) usa
@@ -355,7 +386,7 @@ class Bot:
     def analizar(self, img, px, py, zoom=1.0):
         """Lee la captura y pregunta a la IA. Devuelve motor.Resultado (lanza ErrorIA si falla)."""
         m, id_real = self.modelo()
-        clave = self.config.clave(m.proveedor)
+        clave = self._clave(m)
         preciso = bool(self.config["modo_preciso"])
 
         def preguntar(b64, mime, texto):

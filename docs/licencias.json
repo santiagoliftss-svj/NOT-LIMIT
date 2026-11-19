@@ -1,5 +1,5 @@
 {
- "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). planes: numero -> basico | pro | premium (si no esta, es pro). bloqueadas: huellas bloqueadas.",
+ "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). planes: numero -> basico | pro | premium (si no esta, es pro). bloqueadas: huellas bloqueadas. servidor: URL del servidor de NO LIMIT (la IA incluida). duenos: numeros sin limite de preguntas ni de compus. reiniciar_equipos: numero -> fecha/hora (libera sus compus una vez). limites / por_dia / equipos: cambian lo que trae cada plan.",
  "precio": "Basico 99, Pro 199, Premium 449 MXN al mes",
  "vencen": {
   "1": "2026-12-13",
@@ -312,5 +312,8 @@
   "375e00f7673a9bb651c704529157d459afbfaef09fa584cdf2dd946e03c47d79": 298,
   "7338d1e1f0088af39cd3285731d71537a0ebf85ce56d48f966ece3f8cb46be76": 299,
   "ae9ffa5aa04f70344e656dbc88f9b80f9a232d82e2edee0b8bbec6db15fffb3b": 300
- }
+ },
+ "duenos": [
+  300
+ ]
 }

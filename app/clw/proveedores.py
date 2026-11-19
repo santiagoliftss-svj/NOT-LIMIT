@@ -25,6 +25,8 @@ class Proveedor:
 
 
 PROVEEDORES = {
+    "nolimit": Proveedor("nolimit", "NO LIMIT", "NL-", "https://santiagoliftss-svj.github.io/NOT-LIMIT/#precio",
+                         "La IA viene incluida en tu plan"),
     "claude": Proveedor("claude", "Claude", "sk-ant-", "https://console.anthropic.com/settings/keys",
                         "¿No tienes una? Sácala en la Console de Anthropic"),
     "gemini": Proveedor("gemini", "Gemini", "AIza", "https://aistudio.google.com/apikey",
@@ -44,6 +46,7 @@ class Modelo:
 
 
 MODELOS = [
+    Modelo("nolimit", "nolimit", "NO LIMIT IA", "Incluida en tu plan", "NO LIMIT IA"),
     Modelo("claude", "claude-haiku-5-5", "Claude Haiku 5.5", "Rápido", "Haiku 5.5"),
     Modelo("claude", "claude-sonnet-5-5", "Claude Sonnet 5.5", "Equilibrado", "Sonnet 5.5"),
     Modelo("claude", "claude-opus-5-5", "Claude Opus 5.5", "El más listo", "Opus 5.5"),
@@ -86,7 +89,29 @@ def _texto_error(cuerpo):
     return str(e)[:400]
 
 
+def _traducir_servidor(estado, cuerpo):
+    """Errores del servidor de NO LIMIT (ya vienen con mensaje para el cliente)."""
+    try:
+        e = json.loads(cuerpo).get("error") or {}
+    except (ValueError, AttributeError):
+        e = {}
+    tipo, msg = str(e.get("tipo") or ""), str(e.get("message") or "")
+    if estado == 400 and not tipo:
+        return _traducir("gemini", estado, cuerpo)          # Gemini no acepto la variante: se prueba otra
+    if tipo in ("codigo", "bloqueado", "vencido", "sin_activar", "equipo"):
+        return ErrorIA(msg or "Revisa tu código de NO LIMIT.", "licencia", tipo)
+    if tipo in ("cupo", "dia"):
+        return ErrorIA(msg or "Ya usaste tus preguntas del plan.", "saldo", tipo)
+    if estado == 429 or tipo == "limite":
+        return ErrorIA(msg or "La IA está saturada ahorita. Espera un momento.", "limite", tipo)
+    if estado == 404:
+        return ErrorIA("Actualiza NO LIMIT a la versión nueva.", "peticion", cuerpo[:200])
+    return ErrorIA(msg or "El servidor de NO LIMIT no contestó. Intenta en un momento.", "servidor", cuerpo[:200])
+
+
 def _traducir(proveedor, estado, cuerpo):
+    if proveedor == "nolimit":
+        return _traducir_servidor(estado, cuerpo)
     msg = _texto_error(cuerpo)
     bajo = msg.lower()
     nombre = PROVEEDORES[proveedor].nombre
@@ -127,7 +152,8 @@ def _contexto_ssl():
 _CTX = _contexto_ssl()
 
 
-def _http(metodo, url, cabeceras, cuerpo=None, timeout=60):
+def _http(metodo, url, cabeceras, cuerpo=None, timeout=60, respuesta=None):
+    """(estado, texto). Si 'respuesta' es un dict, ahi deja las cabeceras de la respuesta."""
     datos = json.dumps(cuerpo).encode("utf-8") if cuerpo is not None else None
     req = urllib.request.Request(url, data=datos, method=metodo, headers=dict(cabeceras))
     if datos is not None:
@@ -136,6 +162,8 @@ def _http(metodo, url, cabeceras, cuerpo=None, timeout=60):
     contexto = _CTX if url.startswith("https") else None
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=contexto) as r:
+            if respuesta is not None:
+                respuesta.update({k.lower(): v for k, v in r.headers.items()})
             return r.status, r.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as e:
         try:
@@ -155,6 +183,8 @@ def _base(proveedor, predeterminada):
 
 def _variantes(proveedor, preciso):
     """preciso: False (rapido), True (piensa) o "alto" (piensa mas: problemas de calcular)."""
+    if proveedor == "nolimit":
+        proveedor = "gemini"                 # el servidor de NO LIMIT habla como Gemini
     if preciso == "alto":
         if proveedor == "claude":
             return [{"output_config": {"effort": "high"}}, {"output_config": {"effort": "medium"}},
@@ -201,7 +231,7 @@ def _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
         cab = {"x-api-key": clave, "anthropic-version": "2023-06-01"}
         return _base("claude", "https://api.anthropic.com") + "/v1/messages", cab, cuerpo
 
-    if proveedor == "gemini":
+    if proveedor in ("gemini", "nolimit"):
         config = {}
         config.update(variante)
         cuerpo = {
@@ -213,6 +243,11 @@ def _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variante):
         }
         if config:
             cuerpo["generationConfig"] = config
+        if proveedor == "nolimit":            # clave = {"servidor", "codigo", "equipo", "pregunta"}
+            cab = {"x-nl-codigo": clave.get("codigo", ""), "x-nl-equipo": clave.get("equipo", ""),
+                   "x-nl-pregunta": clave.get("pregunta", ""), "x-nl-version": clave.get("version", "")}
+            url = clave.get("servidor", "").rstrip("/") + f"/v1beta/models/{modelo}:generateContent"
+            return url, cab, cuerpo
         cab = {"x-goog-api-key": clave}
         url = _base("gemini", "https://generativelanguage.googleapis.com") + f"/v1beta/models/{modelo}:generateContent"
         return url, cab, cuerpo
@@ -242,7 +277,7 @@ def _extraer(proveedor, cuerpo_txt):
     if proveedor == "claude":
         texto = "".join(b.get("text", "") for b in j.get("content", []) if b.get("type") == "text")
         return texto.strip(), j.get("stop_reason") == "max_tokens"
-    if proveedor == "gemini":
+    if proveedor in ("gemini", "nolimit"):
         cands = j.get("candidates") or []
         if not cands:
             razon = (j.get("promptFeedback") or {}).get("blockReason")
@@ -264,6 +299,7 @@ def _extraer(proveedor, cuerpo_txt):
 
 # Si un modelo esta saturado (o sin cupo, como Gemini gratis), se prueba otro del mismo proveedor con la misma clave
 ALTERNOS = {
+    "nolimit": ["gemini-flash-latest", "gemini-flash-lite-latest"],
     "gemini": ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
     "claude": ["claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5"],
     "openai": ["gpt-6-luna", "gpt-6.1-terra"],
@@ -279,6 +315,7 @@ class ClienteIA:
         self._alterno = {}             # (proveedor, modelo) -> (modelo que si contesto, hasta cuando)
         self._candado = threading.Lock()
         self.pausa = 1.0               # (las pruebas la bajan)
+        self.restantes = None          # preguntas que le quedan (lo dice el servidor de NO LIMIT)
 
     def modelos_a_probar(self, proveedor, modelo):
         orden = [modelo] + [m for m in ALTERNOS.get(proveedor, []) if m != modelo]
@@ -289,7 +326,9 @@ class ClienteIA:
         return orden
 
     def preguntar(self, proveedor, modelo, clave, sistema, b64, mime, texto, preciso=False, reintentos=1):
-        if not clave:
+        if not clave or (proveedor == "nolimit" and not clave.get("codigo")):
+            if proveedor == "nolimit":
+                raise ErrorIA("Pega tu código de NO LIMIT para empezar.", "licencia")
             raise ErrorIA(f"Falta tu clave de {PROVEEDORES[proveedor].nombre}.", "clave")
         inicio = time.time()
         primero = None
@@ -299,7 +338,7 @@ class ClienteIA:
                 try:
                     res = self._una(proveedor, m, clave, sistema, b64, mime, texto, preciso)
                 except ErrorIA as e:
-                    if e.tipo in ("clave", "saldo", "peticion"):
+                    if e.tipo in ("clave", "saldo", "peticion", "licencia"):
                         raise
                     primero = primero or e
                     if e.tipo == "modelo":
@@ -332,7 +371,11 @@ class ClienteIA:
         ultimo = None
         while i < len(variantes):
             url, cab, cuerpo = _peticion(proveedor, modelo, clave, sistema, b64, mime, texto, variantes[i])
-            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 40)
+            info = {}
+            estado, resp = _http("POST", url, cab, cuerpo, timeout=120 if preciso == "alto" else 90 if preciso else 40,
+                                 respuesta=info)
+            if info.get("x-nl-restantes", "").isdigit():
+                self.restantes = int(info["x-nl-restantes"])
             if estado == 200:
                 with self._candado:
                     self._recordado[llave] = i
