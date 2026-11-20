@@ -1,0 +1,776 @@
+{
+  "ocr": {
+    "ok": true,
+    "seg": 0.03,
+    "detalle": {
+      "exe": "/Users/runner/work/NOT-LIMIT/NOT-LIMIT/dist/NO LIMIT.app/Contents/Resources/tesseract/tesseract",
+      "tessdata": "/Users/runner/work/NOT-LIMIT/NOT-LIMIT/dist/NO LIMIT.app/Contents/Resources/tesseract/tessdata",
+      "idiomas": [
+        "eng",
+        "osd",
+        "spa"
+      ]
+    }
+  },
+  "motor": {
+    "ok": true,
+    "seg": 3.43,
+    "detalle": {
+      "quiz": [
+        [
+          "clic",
+          573,
+          168
+        ]
+      ],
+      "cajitas": [
+        [
+          "clic",
+          239,
+          122
+        ],
+        [
+          "escribe",
+          "13/12"
+        ],
+        [
+          "clic",
+          239,
+          242
+        ],
+        [
+          "escribe",
+          "5/13"
+        ],
+        [
+          "clic",
+          239,
+          362
+        ],
+        [
+          "escribe",
+          "√3/2"
+        ]
+      ]
+    }
+  },
+  "proveedores": {
+    "ok": true,
+    "seg": 0.11,
+    "detalle": {
+      "claude": "{\"tipo\":\"opcion\",\"ids\":[0]}",
+      "gemini": "{\"tipo\":\"opcion\",\"ids\":[0]}",
+      "openai": "{\"tipo\":\"opcion\",\"ids\":[0]}"
+    }
+  },
+  "cifrado": {
+    "ok": true,
+    "seg": 0.03,
+    "detalle": "mac:I2"
+  },
+  "interfaz": {
+    "ok": true,
+    "seg": 0.87,
+    "detalle": [
+      1.0,
+      1.5
+    ]
+  },
+  "red": {
+    "ok": true,
+    "seg": 0.62,
+    "detalle": {
+      "cert": "/Users/runner/work/NOT-LIMIT/NOT-LIMIT/dist/NO LIMIT.app/Contents/Frameworks/certifi/cacert.pem",
+      "openssl": "OpenSSL 3.0.16 11 Feb 2025",
+      "github": 403,
+      "google": 403,
+      "sin_contexto": 403
+    }
+  },
+  "ventana": {
+    "ok": true,
+    "detalle": {
+      "tam": [
+        380,
+        629
+      ],
+      "escala": 1.0,
+      "render": [
+        380,
+        600
+      ],
+      "bandeja": true,
+      "permisos": {
+        "accesibilidad": true,
+        "pantalla": true
+      },
+      "diferencia": 2.09,
+      "diferencia_al_reves": 32.38,
+      "escala_pantalla": 1.0,
+      "nitida": true
+    }
+  },
+  "rendimiento": {
+    "ok": true,
+    "detalle": {
+      "escala": 1.0,
+      "ms": {
+        "mouse_principal": {
+          "prom": 1.81,
+          "p90": 2.28,
+          "max": 10.02,
+          "n": 48
+        },
+        "quieta_animada": {
+          "prom": 1.17,
+          "p90": 1.59,
+          "max": 13.46,
+          "n": 514
+        },
+        "transicion_ajustes": {
+          "prom": 0.01,
+          "p90": 0.0,
+          "max": 4.14,
+          "n": 27738
+        },
+        "hoja_abriendo": {
+          "prom": 0.02,
+          "p90": 0.0,
+          "max": 4.81,
+          "n": 15257
+        }
+      }
+    }
+  },
+  "bandeja": {
+    "ok": true,
+    "detalle": {
+      "activo": true,
+      "visible": false,
+      "estado": "withdrawn",
+      "bandeja": true,
+      "escucha": true,
+      "sin_permiso": false,
+      "actividad": []
+    }
+  },
+  "reabrir": {
+    "ok": true,
+    "detalle": {
+      "visible": true,
+      "estado": "normal",
+      "activo": true
+    }
+  },
+  "e2e": {
+    "ok": true,
+    "detalle": {
+      "opcion": {
+        "ok": true,
+        "clics": [
+          [
+            554.0,
+            170.5
+          ],
+          [
+            554.0,
+            170.5
+          ]
+        ],
+        "esperado": [
+          490,
+          140,
+          850,
+          200
+        ],
+        "actividad": [
+          [
+            "19:54",
+            "Marcó 1 opción · revisa, algo no quedó",
+            "info"
+          ]
+        ],
+        "pedidos_ia": 7,
+        "escala": 1.0
+      },
+      "escribir": {
+        "ok": true,
+        "exacto": true,
+        "texto": "Cuatro, señor ¿sí?",
+        "diag": {
+          "ia_campo": "C0"
+        },
+        "actividad": [
+          [
+            "19:54",
+            "Marcó 1 opción · revisa, algo no quedó",
+            "info"
+          ]
+        ]
+      },
+      "casillas": {
+        "ok": true,
+        "valores": {
+          "Rojo": 1,
+          "Verde": 0,
+          "Azul": 1,
+          "Gato": 0
+        },
+        "actividad": [
+          [
+            "19:54",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Marcó 1 opción · revisa, algo no quedó",
+            "info"
+          ]
+        ],
+        "seg": 7.9
+      },
+      "menu": {
+        "ok": true,
+        "valor": "Mitocondria",
+        "actividad": [
+          [
+            "19:54",
+            "Eligió 1 en menús",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Escribió: Cuatro, señor ¿sí?",
+            "ok"
+          ]
+        ],
+        "seg": 7.1
+      },
+      "arrastrar": {
+        "ok": true,
+        "centro": [
+          571.25,
+          229.0
+        ],
+        "actividad": [
+          [
+            "19:54",
+            "Acomodó 1",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Eligió 1 en menús",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Marcó 2",
+            "ok"
+          ]
+        ],
+        "seg": 9.0
+      },
+      "candado": {
+        "ok": true,
+        "clics_siguiente": 0,
+        "teclas": [],
+        "actividad": [
+          [
+            "19:55",
+            "No encontré dónde escribir. Respuesta: Cervantes",
+            "info"
+          ],
+          [
+            "19:54",
+            "Acomodó 1",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Eligió 1 en menús",
+            "ok"
+          ]
+        ],
+        "seg": 7.9
+      },
+      "juego": {
+        "ok": true,
+        "texto": "Roma",
+        "diag": {
+          "campo": "A0",
+          "controles": [
+            "[A0] (400,248) campo '' (vacio)"
+          ]
+        },
+        "actividad": [
+          [
+            "19:55",
+            "No encontré dónde escribir. Respuesta: Cervantes",
+            "info"
+          ],
+          [
+            "19:54",
+            "Acomodó 1",
+            "ok"
+          ],
+          [
+            "19:54",
+            "Eligió 1 en menús",
+            "ok"
+          ]
+        ],
+        "seg": 6.4
+      },
+      "grafica": {
+        "ok": true,
+        "puntos": [
+          [
+            0.0,
+            2.0
+          ],
+          [
+            -1.0,
+            0.0
+          ]
+        ],
+        "actividad": [
+          [
+            "19:55",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "19:55",
+            "Escribió: Roma",
+            "ok"
+          ],
+          [
+            "19:55",
+            "No encontré dónde escribir. Respuesta: Cervantes",
+            "info"
+          ]
+        ],
+        "seg": 6.7
+      },
+      "accesibilidad": {
+        "confiable": true,
+        "controles": [
+          [
+            "campo",
+            "Tu respuesta",
+            [
+              69,
+              139,
+              402,
+              38
+            ]
+          ],
+          [
+            "casilla",
+            "Azul",
+            [
+              71,
+              210,
+              200,
+              24
+            ]
+          ],
+          [
+            "circulo",
+            "Rojo",
+            [
+              71,
+              260,
+              200,
+              24
+            ]
+          ]
+        ],
+        "ve_campo": true,
+        "ve_casilla": true,
+        "ve_circulo": true,
+        "en_campo": {
+          "rol": "AXTextField",
+          "campo": true,
+          "enlace": false
+        },
+        "en_etiqueta": {
+          "rol": "AXStaticText",
+          "campo": false,
+          "enlace": false
+        },
+        "en_casilla": {
+          "rol": "AXCheckBox",
+          "campo": false,
+          "enlace": false
+        },
+        "foco_en_campo": true,
+        "listo": true,
+        "ok": true,
+        "actividad": [
+          [
+            "19:55",
+            "Marcó 2",
+            "ok"
+          ],
+          [
+            "19:55",
+            "Escribió: Roma",
+            "ok"
+          ],
+          [
+            "19:55",
+            "No encontré dónde escribir. Respuesta: Cervantes",
+            "info"
+          ]
+        ],
+        "seg": 1.7
+      }
+    }
+  },
+  "cpu": {
+    "ok": true,
+    "detalle": {
+      "ventana_al_frente": 3.45,
+      "escondida_y_activa": 0.25
+    }
+  },
+  "permisos": {
+    "ok": true,
+    "detalle": {
+      "faltaban": [],
+      "pantalla_sin_permisos": null
+    }
+  },
+  "_version": "2.5.2",
+  "_obligatorias": [
+    "ocr",
+    "motor",
+    "proveedores",
+    "cifrado",
+    "interfaz",
+    "ventana",
+    "navegador",
+    "red",
+    "e2e"
+  ],
+  "_sistema": "darwin",
+  "navegador": {
+    "ok": true,
+    "navegador": "Google Chrome",
+    "bien": "14/14",
+    "seg": 196.1,
+    "detalle": {
+      "aleks": {
+        "ok": true,
+        "valores": {
+          "A": "39",
+          "b": "41.1",
+          "c": "34.6",
+          "_ignorados": 2
+        },
+        "actividad": [
+          "Escribió 3"
+        ],
+        "seg": 16.2,
+        "pedidos_ia": 4,
+        "foco_antes": "c",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "juego": {
+        "ok": true,
+        "valores": {
+          "1": "4",
+          "2": "15",
+          "3": "5",
+          "4": "5"
+        },
+        "actividad": [
+          "Escribió 4"
+        ],
+        "seg": 14.7,
+        "pedidos_ia": 3,
+        "foco_antes": "4",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "kahoot": {
+        "ok": true,
+        "valores": {
+          "texto": "56"
+        },
+        "actividad": [
+          "Escribió: 56"
+        ],
+        "seg": 8.4,
+        "pedidos_ia": 4,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "menus": {
+        "ok": true,
+        "valores": {
+          "Antigua Grecia": "Democracia ateniense y filosofía clásica",
+          "Imperio Inca": "Sistema de caminos Qhapaq Ñan en los Andes",
+          "Antigua Roma": "Construcción de acueductos y derecho romano"
+        },
+        "actividad": [
+          "Eligió 3 en menús"
+        ],
+        "seg": 12.4,
+        "pedidos_ia": 2,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "flechas": {
+        "ok": true,
+        "valores": {
+          "orden": [
+            "Invención de la escritura cuneiforme",
+            "Caída del Imperio romano de Occidente",
+            "Llegada de Cristóbal Colón a América",
+            "Inicio de la Revolución Francesa"
+          ],
+          "arrastres": 0
+        },
+        "actividad": [
+          "Ordenó la lista"
+        ],
+        "seg": 8.8,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "casillas": {
+        "ok": true,
+        "valores": {
+          "marcadas": [
+            0,
+            2,
+            3
+          ]
+        },
+        "actividad": [
+          "Marcó 3"
+        ],
+        "seg": 9.4,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "completar": {
+        "ok": true,
+        "valores": {
+          "texto": "imprenta de tipos móviles"
+        },
+        "actividad": [
+          "Escribió: imprenta de tipos móviles"
+        ],
+        "seg": 8.2,
+        "pedidos_ia": 2,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "aleks_cosenos": {
+        "ok": true,
+        "valores": {
+          "p2-1": "a",
+          "p2-2": "a",
+          "p2-3": "x",
+          "p4-1": "a",
+          "p4-2": "c",
+          "p4-3": "a",
+          "p4-4": "x",
+          "p1": "3",
+          "p3": "2"
+        },
+        "actividad": [
+          "Marcó 2 · Escribió 7"
+        ],
+        "seg": 23.9,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "grafica": {
+        "ok": true,
+        "valores": {
+          "puntos": [
+            [
+              0,
+              2
+            ],
+            [
+              -1,
+              0
+            ]
+          ],
+          "crudos": [
+            [
+              0,
+              2
+            ],
+            [
+              -1,
+              0
+            ]
+          ]
+        },
+        "actividad": [
+          "Marcó 2"
+        ],
+        "seg": 9.1,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "grafica_parabola": {
+        "ok": true,
+        "valores": {
+          "puntos": [
+            [
+              1,
+              -4
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "crudos": [
+            [
+              1,
+              -4
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          "herramienta": 0,
+          "trazos": 0
+        },
+        "actividad": [
+          "Marcó 2"
+        ],
+        "seg": 8.1,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "grafica_oscura": {
+        "ok": true,
+        "valores": {
+          "puntos": [
+            [
+              -3,
+              4
+            ],
+            [
+              2,
+              -1
+            ]
+          ],
+          "crudos": [
+            [
+              -3,
+              4
+            ],
+            [
+              2,
+              -1
+            ]
+          ]
+        },
+        "actividad": [
+          "Marcó 2"
+        ],
+        "seg": 7.4,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "ordenar_arrastrar": {
+        "ok": true,
+        "valores": {
+          "orden": [
+            "Mercurio",
+            "Venus",
+            "Tierra",
+            "Marte",
+            "Júpiter"
+          ],
+          "arrastres": 3
+        },
+        "actividad": [
+          "Ordenó la lista"
+        ],
+        "seg": 19.5,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "ordenar_puntero": {
+        "ok": true,
+        "valores": {
+          "orden": [
+            "Observación",
+            "Hipótesis",
+            "Experimentación",
+            "Análisis de resultados",
+            "Conclusión"
+          ],
+          "arrastres": 3
+        },
+        "actividad": [
+          "Ordenó la lista"
+        ],
+        "seg": 19.4,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      },
+      "etiquetas": {
+        "ok": true,
+        "valores": {
+          "arrastres": 3,
+          "Intercambian oxígeno y dióxido de carbono": "Pulmones",
+          "Bombea la sangre a todo el cuerpo": "Corazón",
+          "Filtran la sangre y forman la orina": "Riñones"
+        },
+        "actividad": [
+          "Acomodó 3"
+        ],
+        "seg": 21.4,
+        "pedidos_ia": 3,
+        "foco_antes": "",
+        "escala": 1.0,
+        "dpr": 1
+      }
+    }
+  }
+}

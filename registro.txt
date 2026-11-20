@@ -1,0 +1,216 @@
+2026-11-20 19:54:08,381 INFO activado con claude-haiku-5-5
+2026-11-20 19:54:09,573 INFO ventana escondida junto al reloj
+2026-11-20 19:54:16,094 INFO ax: 0 controles en 2 nodos (0.01s)
+2026-11-20 19:54:19,215 INFO modelo=claude-haiku-5-5 ubicar=4.3s ia=0.0s region=(0, 0, 1024, 768) tipo=opcion/opcion cajas=20 campos=12 controles=0 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "opcion", "ids": [11]}
+2026-11-20 19:54:21,307 INFO ax: 0 controles en 2 nodos (0.00s)
+2026-11-20 19:54:22,910 INFO revisar: {"tipo": "opcion", "ids": [11]}
+2026-11-20 19:54:22,911 INFO hecho={'clic': 1, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=['el clic no cambio nada'] total=8.0s
+2026-11-20 19:54:25,873 INFO ax: 1 controles en 4 nodos (0.00s)
+2026-11-20 19:54:29,438 INFO modelo=claude-haiku-5-5 ubicar=4.8s ia=0.0s region=(0, 0, 1024, 768) tipo=abierta/abierta cajas=14 campos=3 controles=1 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "abierta", "respuestas": [{"campo": "C0", "texto": "Cuatro, se\u00f1or \u00bfs\u00ed?"}]}
+2026-11-20 19:54:32,848 INFO hecho={'clic': 0, 'escribir': 1, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=8.3s
+2026-11-20 19:54:35,305 INFO ax: 4 controles en 7 nodos (0.01s)
+2026-11-20 19:54:37,758 INFO modelo=claude-haiku-5-5 ubicar=3.4s ia=0.0s region=(0, 0, 1024, 614) tipo=opcion_multiple/opcion_multiple cajas=16 campos=1 controles=4 pasos=2 rechazadas=[] cuentas=[] plano={} salida={"tipo": "opcion_multiple", "respuesta": "Rojo | Azul", "acciones": [{"hacer": "clic", "en": 12, "texto": "Rojo"}, {"hacer": "clic", "en": 14, "texto": "Azul"}]}
+2026-11-20 19:54:40,140 INFO ax: 4 controles en 7 nodos (0.00s)
+2026-11-20 19:54:41,190 INFO revisar: {"ok": true}
+2026-11-20 19:54:41,191 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=6.9s
+2026-11-20 19:54:43,555 INFO ax: 1 controles en 4 nodos (0.01s)
+2026-11-20 19:54:46,043 INFO modelo=claude-haiku-5-5 ubicar=3.3s ia=0.0s region=(0, 0, 1024, 614) tipo=desplegable/desplegable cajas=14 campos=2 controles=1 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "desplegable", "respuesta": "Mitocondria", "acciones": [{"hacer": "elegir", "en": 12, "opcion": "Mitocondria"}]}
+2026-11-20 19:54:48,694 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 1, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=6.0s
+2026-11-20 19:54:50,863 INFO ax: 0 controles en 2 nodos (0.00s)
+2026-11-20 19:54:53,329 INFO modelo=claude-haiku-5-5 ubicar=3.3s ia=0.0s region=(0, 0, 1024, 612) tipo=arrastrar/arrastrar cajas=13 campos=3 controles=0 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "arrastrar", "acciones": [{"hacer": "arrastrar", "desde": 11, "hasta": 12}]}
+2026-11-20 19:54:57,222 INFO ax: 0 controles en 2 nodos (0.00s)
+2026-11-20 19:54:57,894 INFO revisar: {"ok": true}
+2026-11-20 19:54:57,894 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 1, 'ordenar': 0} fallas=[] total=7.9s
+2026-11-20 19:55:00,102 INFO ax: 0 controles en 3 nodos (0.00s)
+2026-11-20 19:55:02,356 INFO modelo=claude-haiku-5-5 ubicar=2.9s ia=0.0s region=(0, 0, 1024, 614) tipo=abierta/abierta cajas=13 campos=2 controles=0 pasos=1 rechazadas=['es un boton para avanzar o mandar (Siguiente)'] cuentas=[] plano={} salida={"tipo": "abierta", "respuesta": "Cervantes", "acciones": [{"hacer": "clic", "en": 12}, {"hacer": "escribir", "en": {"x": 211, "y": 223}, "texto": "zzz"}]}
+2026-11-20 19:55:05,232 INFO ax: 0 controles en 3 nodos (0.00s)
+2026-11-20 19:55:06,032 INFO revisar: {"ok": true}
+2026-11-20 19:55:06,032 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=['no se confirmo que ahi haya un campo: no escribi nada'] total=6.6s
+2026-11-20 19:55:08,366 INFO ax: 1 controles en 4 nodos (0.02s)
+2026-11-20 19:55:10,840 INFO modelo=claude-haiku-5-5 ubicar=3.3s ia=0.0s region=(0, 0, 1024, 614) tipo=abierta/abierta cajas=12 campos=2 controles=1 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "abierta", "respuesta": "Roma", "acciones": [{"hacer": "escribir", "en": "A0", "texto": "Roma"}]}
+2026-11-20 19:55:12,882 INFO hecho={'clic': 0, 'escribir': 1, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=5.3s
+2026-11-20 19:55:16,502 INFO ax: 0 controles en 3 nodos (0.00s)
+2026-11-20 19:55:17,814 INFO segunda opinion: cuadra (0.0s)
+2026-11-20 19:55:17,814 INFO modelo=claude-haiku-5-5 ubicar=2.4s ia=0.0s region=(0, 0, 1024, 748) tipo=graficar/graficar cajas=21 campos=2 controles=0 pasos=2 rechazadas=[] cuentas=[] plano={'x': (-10.0, 10.038, 1), 'y': (-10.038, 10.0, 1)} salida={"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [{"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+2026-11-20 19:55:19,878 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=4.5s
+2026-11-20 19:55:21,312 INFO ax: 3 controles en 6 nodos (0.00s)
+2026-11-20 19:55:24,612 INFO detenido
+2026-11-20 19:55:31,819 INFO navegador: aleks: abrir la pagina
+2026-11-20 19:55:33,261 INFO navegador: aleks: buscar la pagina en la pantalla
+2026-11-20 19:55:33,413 INFO navegador: aleks: traer el navegador al frente
+2026-11-20 19:55:34,045 INFO navegador: aleks: dejar el cursor en una casilla
+2026-11-20 19:55:34,937 INFO navegador: aleks: Ctrl / Option + clic
+2026-11-20 19:55:36,346 INFO navegador: aleks: NO LIMIT contestando
+2026-11-20 19:55:37,173 INFO ax: 3 controles en 15 nodos (0.02s)
+2026-11-20 19:55:37,209 INFO segunda opinion: cuadra (0.0s)
+2026-11-20 19:55:37,210 INFO modelo=claude-haiku-5-5 ubicar=1.6s ia=0.0s region=(0, 2, 994, 352) tipo=numerica/numerica cajas=19 campos=3 controles=3 pasos=3 rechazadas=[] cuentas=[] plano={} salida={"tipo": "numerica", "respuesta": "A = 39 | b = 41.1 | c = 34.6", "acciones": [{"hacer": "escribir", "en": "C1", "texto": "39"}, {"hacer": "escribir", "en": "C2", "texto": "41.1"}, {"hacer": "escribir", "en": "C0", "texto": "34.6"}], "calculo": ["180-84-57", "26*sind(84)/sind(39)", "26*sind(57)/sind(39)"]}
+2026-11-20 19:55:45,217 INFO ax: 3 controles en 15 nodos (0.02s)
+2026-11-20 19:55:46,479 INFO revisar: {"ok": true}
+2026-11-20 19:55:46,480 INFO hecho={'clic': 0, 'escribir': 3, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=10.9s
+2026-11-20 19:55:48,065 INFO navegador: aleks: ver que quedo
+2026-11-20 19:55:48,065 INFO navegador: aleks: guardar las fotos
+2026-11-20 19:55:48,149 INFO navegador: aleks: listo
+2026-11-20 19:55:48,150 INFO navegador: juego: abrir la pagina
+2026-11-20 19:55:49,754 INFO navegador: juego: buscar la pagina en la pantalla
+2026-11-20 19:55:49,857 INFO navegador: juego: traer el navegador al frente
+2026-11-20 19:55:50,483 INFO navegador: juego: dejar el cursor en una casilla
+2026-11-20 19:55:51,443 INFO navegador: juego: Ctrl / Option + clic
+2026-11-20 19:55:52,844 INFO navegador: juego: NO LIMIT contestando
+2026-11-20 19:55:52,912 INFO ax: 3 controles en 15 nodos (0.03s)
+2026-11-20 19:55:52,997 INFO modelo=claude-haiku-5-5 ubicar=0.9s ia=0.0s region=(0, 2, 994, 456) tipo=completar/completar cajas=9 campos=4 controles=3 pasos=4 rechazadas=[] cuentas=[] plano={} salida={"tipo": "completar", "respuesta": "4 | 15 | 5 | 5", "acciones": [{"hacer": "escribir", "en": "C0", "texto": "4"}, {"hacer": "escribir", "en": "C1", "texto": "15"}, {"hacer": "escribir", "en": "C2", "texto": "5"}, {"hacer": "escribir", "en": "C3", "texto": "5"}], "calculo": ["2+2", "5*3", "9-4", "10/2"]}
+2026-11-20 19:56:00,708 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:01,525 INFO revisar: {"ok": true}
+2026-11-20 19:56:01,525 INFO hecho={'clic': 0, 'escribir': 4, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=9.5s
+2026-11-20 19:56:02,899 INFO navegador: juego: ver que quedo
+2026-11-20 19:56:02,899 INFO navegador: juego: guardar las fotos
+2026-11-20 19:56:03,013 INFO navegador: juego: listo
+2026-11-20 19:56:03,016 INFO navegador: kahoot: abrir la pagina
+2026-11-20 19:56:04,618 INFO navegador: kahoot: buscar la pagina en la pantalla
+2026-11-20 19:56:04,740 INFO navegador: kahoot: traer el navegador al frente
+2026-11-20 19:56:05,320 INFO navegador: kahoot: Ctrl / Option + clic
+2026-11-20 19:56:06,677 INFO navegador: kahoot: NO LIMIT contestando
+2026-11-20 19:56:06,890 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:06,978 INFO segunda opinion: cuadra (0.0s)
+2026-11-20 19:56:06,978 INFO modelo=claude-haiku-5-5 ubicar=1.0s ia=0.0s region=(0, 2, 994, 439) tipo=numerica/numerica cajas=16 campos=2 controles=3 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "numerica", "respuesta": "56", "calculo": "7*8", "acciones": [{"hacer": "escribir", "en": "C1", "texto": "56"}]}
+2026-11-20 19:56:09,173 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:09,840 INFO revisar: {"ok": true}
+2026-11-20 19:56:09,840 INFO hecho={'clic': 0, 'escribir': 1, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=3.9s
+2026-11-20 19:56:11,379 INFO navegador: kahoot: ver que quedo
+2026-11-20 19:56:11,379 INFO navegador: kahoot: guardar las fotos
+2026-11-20 19:56:11,476 INFO navegador: kahoot: listo
+2026-11-20 19:56:11,479 INFO navegador: menus: abrir la pagina
+2026-11-20 19:56:12,850 INFO navegador: menus: buscar la pagina en la pantalla
+2026-11-20 19:56:12,945 INFO navegador: menus: traer el navegador al frente
+2026-11-20 19:56:13,564 INFO navegador: menus: Ctrl / Option + clic
+2026-11-20 19:56:15,000 INFO navegador: menus: NO LIMIT contestando
+2026-11-20 19:56:15,048 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:15,075 INFO modelo=claude-haiku-5-5 ubicar=0.9s ia=0.0s region=(0, 2, 994, 326) tipo=desplegable/desplegable cajas=25 campos=3 controles=3 pasos=3 rechazadas=[] cuentas=[] plano={} salida={"tipo": "desplegable", "respuesta": "Democracia ateniense y filosof\u00eda cl\u00e1sica | Sistema de caminos Qhapaq \u00d1an en los Andes | Construcci\u00f3n de acueductos y derecho romano", "acciones": [{"hacer": "elegir", "en": 22, "opcion": "Democracia ateniense y filosof\u00eda cl\u00e1sica"}, {"hacer": "elegir", "en": 23, "opcion": "Sistema de caminos Qhapaq \u00d1an en los Andes"}, {"hacer": "elegir", "en": 24, "opcion": "Construcci\u00f3n de acueductos y derecho romano"}]}
+2026-11-20 19:56:22,367 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 3, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=8.2s
+2026-11-20 19:56:23,882 INFO navegador: menus: ver que quedo
+2026-11-20 19:56:23,882 INFO navegador: menus: guardar las fotos
+2026-11-20 19:56:23,963 INFO navegador: menus: listo
+2026-11-20 19:56:23,965 INFO navegador: flechas: abrir la pagina
+2026-11-20 19:56:25,533 INFO navegador: flechas: buscar la pagina en la pantalla
+2026-11-20 19:56:25,617 INFO navegador: flechas: traer el navegador al frente
+2026-11-20 19:56:26,189 INFO navegador: flechas: Ctrl / Option + clic
+2026-11-20 19:56:27,554 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:27,586 INFO modelo=claude-haiku-5-5 ubicar=0.8s ia=0.0s region=(0, 2, 994, 486) tipo=ordenar/ordenar cajas=29 campos=10 controles=3 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "ordenar", "respuesta": "escritura, Roma, Col\u00f3n, Revoluci\u00f3n Francesa", "acciones": [{"hacer": "ordenar", "orden": ["Invenci\u00f3n de la escritura cuneiforme (3200 a. C.)", "Ca\u00edda del Imperio romano de Occidente (476 d. C.)", "Llegada de Crist\u00f3bal Col\u00f3n a Am\u00e9rica (1492)", "Inicio de la Revoluci\u00f3n Francesa (1789)"], "flechas": {"arriba": {"x": 752, "y": 217}}}]}
+2026-11-20 19:56:27,591 INFO navegador: flechas: NO LIMIT contestando
+2026-11-20 19:56:30,410 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:31,298 INFO revisar: {"ok": true}
+2026-11-20 19:56:31,298 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 1} fallas=[] total=4.5s
+2026-11-20 19:56:32,719 INFO navegador: flechas: ver que quedo
+2026-11-20 19:56:32,720 INFO navegador: flechas: guardar las fotos
+2026-11-20 19:56:32,828 INFO navegador: flechas: listo
+2026-11-20 19:56:32,830 INFO navegador: casillas: abrir la pagina
+2026-11-20 19:56:34,413 INFO navegador: casillas: buscar la pagina en la pantalla
+2026-11-20 19:56:34,557 INFO navegador: casillas: traer el navegador al frente
+2026-11-20 19:56:35,226 INFO navegador: casillas: Ctrl / Option + clic
+2026-11-20 19:56:36,642 INFO navegador: casillas: NO LIMIT contestando
+2026-11-20 19:56:36,933 INFO ax: 3 controles en 15 nodos (0.02s)
+2026-11-20 19:56:36,994 INFO modelo=claude-haiku-5-5 ubicar=1.2s ia=0.0s region=(0, 2, 994, 446) tipo=opcion_multiple/opcion_multiple cajas=19 campos=4 controles=3 pasos=3 rechazadas=[] cuentas=[] plano={} salida={"tipo": "opcion_multiple", "respuesta": "1, 3 y 4", "acciones": [{"hacer": "clic", "en": 15, "texto": "Sus ra\u00edces o ceros son x = 1 y x = 3."}, {"hacer": "clic", "en": 17, "texto": "Su v\u00e9rtice se encuentra en x = 2."}, {"hacer": "clic", "en": 18, "texto": "Interseca al eje y en el punto (0, 3)."}]}
+2026-11-20 19:56:39,980 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:40,836 INFO revisar: {"ok": true}
+2026-11-20 19:56:40,836 INFO hecho={'clic': 3, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=5.0s
+2026-11-20 19:56:42,222 INFO navegador: casillas: ver que quedo
+2026-11-20 19:56:42,222 INFO navegador: casillas: guardar las fotos
+2026-11-20 19:56:42,339 INFO navegador: casillas: listo
+2026-11-20 19:56:42,340 INFO navegador: completar: abrir la pagina
+2026-11-20 19:56:43,885 INFO navegador: completar: buscar la pagina en la pantalla
+2026-11-20 19:56:44,001 INFO navegador: completar: traer el navegador al frente
+2026-11-20 19:56:44,621 INFO navegador: completar: Ctrl / Option + clic
+2026-11-20 19:56:45,997 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:46,019 INFO modelo=claude-haiku-5-5 ubicar=0.8s ia=0.0s region=(0, 2, 994, 320) tipo=completar/completar cajas=17 campos=1 controles=3 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "completar", "respuesta": "imprenta de tipos m\u00f3viles", "acciones": [{"hacer": "escribir", "en": "C0", "texto": "imprenta de tipos m\u00f3viles"}]}
+2026-11-20 19:56:46,066 INFO navegador: completar: NO LIMIT contestando
+2026-11-20 19:56:49,205 INFO hecho={'clic': 0, 'escribir': 1, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=4.0s
+2026-11-20 19:56:50,581 INFO navegador: completar: ver que quedo
+2026-11-20 19:56:50,582 INFO navegador: completar: guardar las fotos
+2026-11-20 19:56:50,684 INFO navegador: completar: listo
+2026-11-20 19:56:50,686 INFO navegador: aleks_cosenos: abrir la pagina
+2026-11-20 19:56:52,533 INFO navegador: aleks_cosenos: buscar la pagina en la pantalla
+2026-11-20 19:56:52,646 INFO navegador: aleks_cosenos: traer el navegador al frente
+2026-11-20 19:56:53,326 INFO navegador: aleks_cosenos: Ctrl / Option + clic
+2026-11-20 19:56:54,760 INFO navegador: aleks_cosenos: NO LIMIT contestando
+2026-11-20 19:56:55,619 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:56:55,687 INFO modelo=claude-haiku-5-5 ubicar=1.6s ia=0.0s region=(0, 0, 1024, 627) tipo=completar/completar cajas=38 campos=7 controles=3 pasos=9 rechazadas=[] cuentas=[] plano={} salida={"tipo": "completar", "respuesta": "1) b\u00b2=(a\u2212x)\u00b2+h\u00b2 | 2) a, a, x | 3) c\u00b2=x\u00b2+h\u00b2 | 4) a, c, a, x", "acciones": [{"hacer": "clic", "en": 22, "texto": "b\u00b2 = (a \u2212 x)\u00b2 + h\u00b2"}, {"hacer": "escribir", "en": "C0", "texto": "a"}, {"hacer": "escribir", "en": "C1", "texto": "a"}, {"hacer": "escribir", "en": "C2", "texto": "x"}, {"hacer": "escribir", "en": "C3", "texto": "a"}, {"hacer": "escribir", "en": "C4", "texto": "c"}, {"hacer": "escribir", "en": "C
+2026-11-20 19:57:11,430 INFO ax: 3 controles en 15 nodos (0.02s)
+2026-11-20 19:57:13,106 INFO revisar: {"ok": true}
+2026-11-20 19:57:13,107 INFO hecho={'clic': 2, 'escribir': 7, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=19.1s
+2026-11-20 19:57:14,606 INFO navegador: aleks_cosenos: ver que quedo
+2026-11-20 19:57:14,606 INFO navegador: aleks_cosenos: guardar las fotos
+2026-11-20 19:57:14,731 INFO navegador: aleks_cosenos: listo
+2026-11-20 19:57:14,734 INFO navegador: grafica: abrir la pagina
+2026-11-20 19:57:16,221 INFO navegador: grafica: buscar la pagina en la pantalla
+2026-11-20 19:57:16,326 INFO navegador: grafica: traer el navegador al frente
+2026-11-20 19:57:16,918 INFO navegador: grafica: Ctrl / Option + clic
+2026-11-20 19:57:18,345 INFO navegador: grafica: NO LIMIT contestando
+2026-11-20 19:57:19,391 INFO ax: 3 controles en 15 nodos (0.03s)
+2026-11-20 19:57:20,147 INFO segunda opinion: cuadra (0.0s)
+2026-11-20 19:57:20,147 INFO modelo=claude-haiku-5-5 ubicar=2.5s ia=0.0s region=(0, 2, 994, 768) tipo=graficar/graficar cajas=37 campos=25 controles=3 pasos=2 rechazadas=['en graficas solo se pican los puntos'] cuentas=[] plano={'x': (-10.0, 10.038, 1), 'y': (-10.038, 10.0, 1)} salida={"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [{"hacer": "clic", "en": 15, "texto": "Recta"}, {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+2026-11-20 19:57:22,246 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=4.7s
+2026-11-20 19:57:23,793 INFO navegador: grafica: ver que quedo
+2026-11-20 19:57:23,793 INFO navegador: grafica: guardar las fotos
+2026-11-20 19:57:23,922 INFO navegador: grafica: listo
+2026-11-20 19:57:23,925 INFO navegador: grafica_parabola: abrir la pagina
+2026-11-20 19:57:25,526 INFO navegador: grafica_parabola: buscar la pagina en la pantalla
+2026-11-20 19:57:25,636 INFO navegador: grafica_parabola: traer el navegador al frente
+2026-11-20 19:57:26,335 INFO navegador: grafica_parabola: Ctrl / Option + clic
+2026-11-20 19:57:27,719 INFO navegador: grafica_parabola: NO LIMIT contestando
+2026-11-20 19:57:27,950 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:57:28,543 INFO segunda opinion: cuadra (0.0s)
+2026-11-20 19:57:28,543 INFO modelo=claude-haiku-5-5 ubicar=1.6s ia=0.0s region=(0, 2, 994, 633) tipo=graficar/graficar cajas=52 campos=6 controles=3 pasos=2 rechazadas=['en graficas solo se pican los puntos', 'en graficas solo se pican los puntos'] cuentas=[] plano={'x': (-10.0, 10.05, 1), 'y': (-10.05, 10.0, 1)} salida={"tipo": "graficar", "respuesta": "vertice (1, -4) y el punto (3, 0)", "acciones": [{"hacer": "clic", "en": 11, "texto": "Par\u00e1bola"}, {"hacer": "clic", "en": {"gx": 1, "gy": -4}}, {"hacer": "arrastrar", "desde": {"gx": 1, "gy": -4}, "hasta": {"gx": 3, "gy": 0}}, {"hacer": "clic", "en": {"gx": 3, "gy": 0}}]}
+2026-11-20 19:57:30,631 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=3.7s
+2026-11-20 19:57:32,041 INFO navegador: grafica_parabola: ver que quedo
+2026-11-20 19:57:32,041 INFO navegador: grafica_parabola: guardar las fotos
+2026-11-20 19:57:32,153 INFO navegador: grafica_parabola: listo
+2026-11-20 19:57:32,154 INFO navegador: grafica_oscura: abrir la pagina
+2026-11-20 19:57:33,758 INFO navegador: grafica_oscura: buscar la pagina en la pantalla
+2026-11-20 19:57:33,847 INFO navegador: grafica_oscura: traer el navegador al frente
+2026-11-20 19:57:34,484 INFO navegador: grafica_oscura: Ctrl / Option + clic
+2026-11-20 19:57:35,759 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:57:35,894 INFO navegador: grafica_oscura: NO LIMIT contestando
+2026-11-20 19:57:36,290 INFO segunda opinion: cuadra (0.0s)
+2026-11-20 19:57:36,290 INFO modelo=claude-haiku-5-5 ubicar=1.2s ia=0.0s region=(0, 2, 994, 639) tipo=graficar/graficar cajas=28 campos=20 controles=3 pasos=2 rechazadas=[] cuentas=[] plano={'x': (-10.0, 10.05, 1), 'y': (-10.05, 10.0, 1)} salida={"tipo": "graficar", "respuesta": "(-3, 4) y (2, -1)", "acciones": [{"hacer": "clic", "en": {"gx": -3, "gy": 4}}, {"hacer": "clic", "en": {"gx": 2, "gy": -1}}]}
+2026-11-20 19:57:38,320 INFO hecho={'clic': 2, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 0} fallas=[] total=3.2s
+2026-11-20 19:57:39,575 INFO navegador: grafica_oscura: ver que quedo
+2026-11-20 19:57:39,575 INFO navegador: grafica_oscura: guardar las fotos
+2026-11-20 19:57:39,662 INFO navegador: grafica_oscura: listo
+2026-11-20 19:57:39,663 INFO navegador: ordenar_arrastrar: abrir la pagina
+2026-11-20 19:57:41,192 INFO navegador: ordenar_arrastrar: buscar la pagina en la pantalla
+2026-11-20 19:57:41,334 INFO navegador: ordenar_arrastrar: traer el navegador al frente
+2026-11-20 19:57:41,967 INFO navegador: ordenar_arrastrar: Ctrl / Option + clic
+2026-11-20 19:57:43,410 INFO navegador: ordenar_arrastrar: NO LIMIT contestando
+2026-11-20 19:57:43,573 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:57:43,606 INFO modelo=claude-haiku-5-5 ubicar=1.0s ia=0.0s region=(0, 2, 994, 486) tipo=ordenar/ordenar cajas=21 campos=5 controles=3 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "ordenar", "respuesta": "Mercurio, Venus, Tierra, Marte, J\u00fapiter", "acciones": [{"hacer": "ordenar", "orden": ["Mercurio", "Venus", "Tierra", "Marte", "J\u00fapiter"]}]}
+2026-11-20 19:57:56,763 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:57:57,705 INFO revisar: {"ok": true}
+2026-11-20 19:57:57,705 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 1} fallas=[] total=15.1s
+2026-11-20 19:57:59,114 INFO navegador: ordenar_arrastrar: ver que quedo
+2026-11-20 19:57:59,114 INFO navegador: ordenar_arrastrar: guardar las fotos
+2026-11-20 19:57:59,213 INFO navegador: ordenar_arrastrar: listo
+2026-11-20 19:57:59,214 INFO navegador: ordenar_puntero: abrir la pagina
+2026-11-20 19:58:00,970 INFO navegador: ordenar_puntero: buscar la pagina en la pantalla
+2026-11-20 19:58:01,087 INFO navegador: ordenar_puntero: traer el navegador al frente
+2026-11-20 19:58:01,693 INFO navegador: ordenar_puntero: Ctrl / Option + clic
+2026-11-20 19:58:03,079 INFO navegador: ordenar_puntero: NO LIMIT contestando
+2026-11-20 19:58:03,442 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:58:03,479 INFO modelo=claude-haiku-5-5 ubicar=1.2s ia=0.0s region=(0, 2, 994, 486) tipo=ordenar/ordenar cajas=21 campos=5 controles=3 pasos=1 rechazadas=[] cuentas=[] plano={} salida={"tipo": "ordenar", "respuesta": "Observaci\u00f3n, Hip\u00f3tesis, Experimentaci\u00f3n, An\u00e1lisis, Conclusi\u00f3n", "acciones": [{"hacer": "ordenar", "orden": ["Observaci\u00f3n", "Hip\u00f3tesis", "Experimentaci\u00f3n", "An\u00e1lisis de resultados", "Conclusi\u00f3n"]}]}
+2026-11-20 19:58:16,487 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:58:17,330 INFO revisar: {"ok": true}
+2026-11-20 19:58:17,330 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 0, 'ordenar': 1} fallas=[] total=15.1s
+2026-11-20 19:58:18,609 INFO navegador: ordenar_puntero: ver que quedo
+2026-11-20 19:58:18,609 INFO navegador: ordenar_puntero: guardar las fotos
+2026-11-20 19:58:18,720 INFO navegador: ordenar_puntero: listo
+2026-11-20 19:58:18,721 INFO navegador: etiquetas: abrir la pagina
+2026-11-20 19:58:20,536 INFO navegador: etiquetas: buscar la pagina en la pantalla
+2026-11-20 19:58:20,706 INFO navegador: etiquetas: traer el navegador al frente
+2026-11-20 19:58:21,375 INFO navegador: etiquetas: Ctrl / Option + clic
+2026-11-20 19:58:22,793 INFO navegador: etiquetas: NO LIMIT contestando
+2026-11-20 19:58:23,609 INFO ax: 3 controles en 15 nodos (0.03s)
+2026-11-20 19:58:23,656 INFO modelo=claude-haiku-5-5 ubicar=1.7s ia=0.0s region=(0, 2, 994, 418) tipo=arrastrar/arrastrar cajas=31 campos=3 controles=3 pasos=3 rechazadas=[] cuentas=[] plano={} salida={"tipo": "arrastrar", "respuesta": "Coraz\u00f3n: bombea | Pulmones: intercambian | Ri\u00f1ones: filtran", "acciones": [{"hacer": "arrastrar", "desde": 15, "texto": "Coraz\u00f3n", "hasta": {"x": 177, "y": 291}}, {"hacer": "arrastrar", "desde": 16, "texto": "Pulmones", "hasta": {"x": 470, "y": 291}}, {"hacer": "arrastrar", "desde": 14, "texto": "Ri\u00f1ones", "hasta": {"x": 762, "y": 291}}]}
+2026-11-20 19:58:36,929 INFO ax: 3 controles en 15 nodos (0.01s)
+2026-11-20 19:58:38,665 INFO revisar: {"ok": true}
+2026-11-20 19:58:38,665 INFO hecho={'clic': 0, 'escribir': 0, 'elegir': 0, 'arrastrar': 3, 'ordenar': 0} fallas=[] total=16.7s
+2026-11-20 19:58:40,139 INFO navegador: etiquetas: ver que quedo
+2026-11-20 19:58:40,140 INFO navegador: etiquetas: guardar las fotos
+2026-11-20 19:58:40,277 INFO navegador: etiquetas: listo
