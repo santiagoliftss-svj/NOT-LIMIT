@@ -1030,6 +1030,28 @@ def _ctrl_clic(x, y):
     entrada._enviar([(entrada.VK_CONTROL, 0, 2)])
 
 
+def _diagnostico(salida):
+    """Si la app se cae en la prueba (sin aviso), que quede por que: los errores de cualquier hilo van al registro y
+    un tronido de verdad (de C) deja las pilas de todos los hilos en tronido.txt."""
+    import faulthandler
+    import logging
+    log = logging.getLogger("clw")
+    try:
+        _diagnostico.archivo = open(os.path.join(salida, "tronido.txt"), "w", encoding="utf-8")
+        faulthandler.enable(file=_diagnostico.archivo, all_threads=True)
+    except Exception:
+        pass
+
+    def gancho(tipo, valor, traza):
+        log.error("error sin atrapar: %s", "".join(traceback.format_exception(tipo, valor, traza))[-3000:])
+    sys.excepthook = gancho
+    threading.excepthook = lambda a: log.error("error sin atrapar en el hilo %s: %s", getattr(a.thread, "name", "?"),
+                                               "".join(traceback.format_exception(a.exc_type, a.exc_value,
+                                                                                  a.exc_traceback))[-3000:])
+    import atexit
+    atexit.register(lambda: log.info("la app se cierra (atexit)"))
+
+
 def main(salida):
     from . import licencia
     licencia.PRUEBA = True           # (la prueba automatica no tiene codigo)
@@ -1039,6 +1061,7 @@ def main(salida):
     h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logging.getLogger("clw").addHandler(h)
     logging.getLogger("clw").setLevel(logging.INFO)
+    _diagnostico(salida)
     srv = _servidor_ia()
     _paso("ocr", p_ocr)
     _paso("motor", p_motor)
