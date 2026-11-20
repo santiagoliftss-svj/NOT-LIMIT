@@ -484,24 +484,25 @@ _REDONDOS = (0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 5
 
 
 def _lineas_largas(buf, W, H, zoom):
-    """Lineas oscuras largas (posibles ejes): [(desde, hasta, fila0, fila1)]."""
+    """Lineas oscuras largas (posibles ejes): [(desde, hasta, fila0, fila1)]. Se ven TODOS los tramos de cada
+    renglon (no solo el mas largo): asi un eje no se pierde junto a una zona oscura grande (el escritorio)."""
     patron = re.compile(rb"\x01{%d,}" % max(20, min(int(0.35 * W), max(int(100 * zoom), int(0.2 * W)))))
-    filas = []
+    abiertas, cerradas = [], []
     for k in range(H):
-        mejor = None
+        siguen = []
         for m in patron.finditer(buf, k * W, (k + 1) * W):
-            if mejor is None or m.end() - m.start() > mejor[1] - mejor[0]:
-                mejor = (m.start() - k * W, m.end() - k * W)
-        if mejor:
-            filas.append((k, mejor[0], mejor[1]))
-    lineas = []
-    for k, d, h in filas:
-        if lineas and k - lineas[-1][3] <= 1 and abs(d - lineas[-1][0]) < 12 * zoom:
-            u = lineas[-1]
-            lineas[-1] = (min(u[0], d), max(u[1], h), u[2], k)
-        else:
-            lineas.append((d, h, k, k))
-    return [l for l in lineas if l[3] - l[2] <= max(4, int(4 * zoom))]
+            d, h = m.start() - k * W, m.end() - k * W
+            for l in abiertas:
+                if l[3] == k - 1 and abs(d - l[0]) < 12 * zoom:
+                    l[0], l[1], l[3] = min(l[0], d), max(l[1], h), k
+                    break
+            else:
+                siguen.append([d, h, k, k])
+        cerradas += [l for l in abiertas if l[3] < k]
+        abiertas = [l for l in abiertas if l[3] == k] + siguen
+    cerradas += abiertas
+    grueso = max(4, int(4 * zoom))
+    return sorted((tuple(l) for l in cerradas if l[3] - l[2] <= grueso), key=lambda l: (l[2], l[0]))
 
 
 def _agrupar(cols, zoom):
@@ -1011,12 +1012,24 @@ def ejes_del_plano(img, zoom=1.0, ocr=None):
     W, H = gris.size
     if W < 60 or H < 60:
         return out
+    out = _ejes_de(img, gris, zoom, _OCRContado(ocr, 10))
+    if out["x"] or out["y"]:
+        return out
     hist = gris.histogram()
-    if max(range(256), key=lambda v: hist[v]) < 110:
-        # tema oscuro: se voltea (ejes y numeros claros sobre fondo oscuro -> oscuros sobre claro)
-        gris = ImageOps.invert(gris)
-        img = ImageOps.invert(img.convert("RGB"))
-    ocr = _OCRContado(ocr, 10)           # (tope de lecturas: en una pantalla sin plano no se gasta tiempo)
+    if max(range(256), key=lambda v: hist[v]) < 110 or sum(hist[:90]) >= 0.25 * W * H:
+        # tema oscuro (ejes y numeros claros sobre fondo oscuro): se voltea y se busca otra vez. (Primero se busca
+        # sin voltear: una ventana blanca sobre un escritorio oscuro NO es tema oscuro.)
+        otro = _ejes_de(ImageOps.invert(img.convert("RGB")), ImageOps.invert(gris), zoom, _OCRContado(ocr, 8))
+        if otro["x"] or otro["y"]:
+            return otro
+        out["lineas"] = out["lineas"] or otro["lineas"]
+    return out
+
+
+def _ejes_de(img, gris, zoom, ocr):
+    """ejes_del_plano con la imagen ya en gris (ejes oscuros sobre fondo claro)."""
+    out = {"x": None, "y": None, "rango": {}, "lineas": {}}
+    W, H = gris.size
     usados = {}
     pares_de = {}
     probadas = []

@@ -1189,3 +1189,18 @@ def prueba_buscar_el_plano_en_una_pantalla_sin_plano_es_rapido():
     assert not pl["x"] and not pl["y"], pl
     assert contadas and contadas[0].usadas <= 10, contadas[0].usadas
     assert dt < 8, dt
+
+
+def prueba_grafica_en_una_ventana_sobre_el_escritorio_oscuro():
+    """Captura de verdad (autoprueba en una Mac Intel): la ventana blanca con el plano sobre el escritorio negro.
+    NO es tema oscuro (no se voltea) y el eje x no se pierde junto a la zona negra del mismo renglon."""
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        return
+    img = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "datos", "grafica_mac_escritorio.png")).convert("RGB")
+    for recorte in ((0, 0, 1369, 971), (0, 0, img.width, img.height)):
+        pl = motor.ejes_del_plano(img.crop(recorte), 1.0, ocr)
+        assert pl["x"] and pl["y"], (recorte, pl)
+        assert abs(pl["x"][0] - 26) <= 0.3 and abs(pl["x"][1] - 440) <= 2, pl
+        assert abs(pl["y"][0] + 26) <= 0.3 and abs(pl["y"][1] - 390) <= 2, pl
