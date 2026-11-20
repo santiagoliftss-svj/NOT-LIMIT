@@ -962,9 +962,10 @@ def _texto_cuadra(texto, i, cajas):
     leido = cajas[i]["texto"]
     if _es_formula(texto):
         # una formula: el OCR la lee a medias. Cuadra si se parece y ninguna otra caja se parece claramente mas
+        # (si ninguna se lee bien, se le cree a la IA, que si ve la imagen)
         mio = _parecido_formula(texto, i, cajas)
         mejor = max((_parecido_formula(texto, j, cajas) for j in range(len(cajas))), default=0.0)
-        return mio >= 0.45 and mio >= mejor - 0.08
+        return mio >= 0.25 and (mio >= mejor - 0.15 or mejor < 0.7)
     if motor.parecido(texto, leido) >= 0.45:
         return True
 

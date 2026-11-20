@@ -767,7 +767,7 @@ def _opciones_de(t, desde, hasta):
     if y0 is None:
         return []
     ops = [(int(i), x, y) for i, x, y, tx in lin
-           if i.isdigit() and y0 + 12 < y < y1 - 12 and len(tx.strip()) >= 4]
+           if i.isdigit() and y0 + 12 < y < y1 - 12 and "=" in tx and x < 900]   # (la formula de cada opcion)
     return sorted(ops, key=lambda k: (round(k[2] / 30), k[1]))
 
 
