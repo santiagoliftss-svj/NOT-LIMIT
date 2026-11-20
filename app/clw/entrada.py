@@ -229,31 +229,32 @@ def mover(x, y):
     _mover_abs(x, y)
 
 
-def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
-    """Presiona en (x0, y0), se mueve poco a poco y suelta en (x1, y1)."""
+def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None, lento=False):
+    """Presiona en (x0, y0), se mueve poco a poco y suelta en (x1, y1). lento: se detiene un rato al presionar y
+    antes de soltar (hay listas y quizzes que piden "mantener presionado" para empezar a arrastrar)."""
     x0, y0, x1, y1 = (int(round(v)) for v in (x0, y0, x1, y1))
     U32.SetCursorPos(x0, y0)
     _mover_abs(x0, y0)
-    time.sleep(0.08)
+    time.sleep(0.25 if lento else 0.08)
     U32.mouse_event(0x0002, 0, 0, 0, 0)          # izquierdo abajo
-    time.sleep(0.15)
+    time.sleep(0.45 if lento else 0.15)
     try:
         for dx in (3, 6, 9):                        # primero poquito: asi la pagina sabe que empieza a arrastrar
             _mover_abs(x0 + dx, y0 + dx // 3)
-            time.sleep(0.03)
+            time.sleep(0.06 if lento else 0.03)
         for i in range(1, pasos + 1):
             if cancelar and cancelar():
                 break
             t = i / pasos
             t = t * t * (3 - 2 * t)                 # arranca y frena suave
             _mover_abs(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)
-            time.sleep(0.016)
+            time.sleep(0.025 if lento else 0.016)
         _mover_abs(x1, y1)
-        time.sleep(0.12)
+        time.sleep(0.3 if lento else 0.12)
         _mover_abs(x1 + 1, y1)
         time.sleep(0.06)
         _mover_abs(x1, y1)
-        time.sleep(0.1)
+        time.sleep(0.25 if lento else 0.1)
     finally:
         U32.mouse_event(0x0004, 0, 0, 0, 0)       # izquierdo arriba
 

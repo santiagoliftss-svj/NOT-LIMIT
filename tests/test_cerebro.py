@@ -870,19 +870,20 @@ def prueba_campo_vacio_no_selecciona_todo():
 
 
 def prueba_las_instrucciones_no_arrastran_para_trazar():
-    assert "NUNCA arrastres para trazar" in cerebro.SISTEMA_CONTESTAR
+    assert "SOLO clics en los puntos: NUNCA arrastres, NUNCA traces" in cerebro.SISTEMA_CONTESTAR
 
 
 # ---------------------------------------------------------------- 2.2: graficas de muchos estilos
 
 def _plano_estilo(zoom=1.0, xr=(-10, 10), yr=(-10, 10), cada=1, etiqueta=2, unidad=28, rayitas="cruz", grilla="puntos",
-          origen_borde=False, tam_letra=15, halo=False, fmt=None, cruz=None):
+          origen_borde=False, tam_letra=15, halo=False, fmt=None, cruz=None, eje=(0, 0, 0), num=(0, 0, 0),
+          fondo=(255, 255, 255), col_grilla=None, solo_y=None, sin_numeros=False):
     z = lambda v: v * zoom
     nx, ny = round((xr[1] - xr[0]) / cada), round((yr[1] - yr[0]) / cada)
     u = z(unidad)
     x0, y0 = z(60), z(30)
     W, H = int(x0 + nx * u + z(60)), int(y0 + ny * u + z(60))
-    img = Image.new("RGB", (W, H), "white"); d = ImageDraw.Draw(img)
+    img = Image.new("RGB", (W, H), fondo); d = ImageDraw.Draw(img)
     f = __import__('PIL.ImageFont', fromlist=['x']).load_default(size=int(z(tam_letra)))
     px = lambda g: x0 + (g - xr[0]) / cada * u
     py = lambda g: y0 + (yr[1] - g) / cada * u
@@ -891,38 +892,39 @@ def _plano_estilo(zoom=1.0, xr=(-10, 10), yr=(-10, 10), cada=1, etiqueta=2, unid
     for k in range(nx + 1):
         g = xr[0] + k * cada; X = px(g)
         if grilla == "puntos":
-            for t in range(int(y0), int(py(yr[0])), int(z(4))): d.point((X, t), fill=(60, 60, 60))
+            for t in range(int(y0), int(py(yr[0])), int(z(4))): d.point((X, t), fill=col_grilla or (60, 60, 60))
         elif grilla == "lineas":
-            d.line([X, y0, X, py(yr[0])], fill=(225, 225, 225) if round(g / cada) % 2 else (190, 190, 190), width=max(1, int(z(1))))
+            d.line([X, y0, X, py(yr[0])], fill=col_grilla or ((225, 225, 225) if round(g / cada) % 2 else (190, 190, 190)), width=max(1, int(z(1))))
     for k in range(ny + 1):
         g = yr[0] + k * cada; Y = py(g)
         if grilla == "puntos":
-            for t in range(int(x0), int(px(xr[1])), int(z(4))): d.point((t, Y), fill=(60, 60, 60))
+            for t in range(int(x0), int(px(xr[1])), int(z(4))): d.point((t, Y), fill=col_grilla or (60, 60, 60))
         elif grilla == "lineas":
-            d.line([x0, Y, px(xr[1]), Y], fill=(225, 225, 225) if round(g / cada) % 2 else (190, 190, 190), width=max(1, int(z(1))))
+            d.line([x0, Y, px(xr[1]), Y], fill=col_grilla or ((225, 225, 225) if round(g / cada) % 2 else (190, 190, 190)), width=max(1, int(z(1))))
     w = max(1, int(z(1.5)))
-    d.line([px(xr[0]) - z(8), py(ax_x), px(xr[1]) + z(8), py(ax_x)], fill=(0, 0, 0), width=w)
-    d.line([px(ax_y), py(yr[1]) - z(8), px(ax_y), py(yr[0]) + z(8)], fill=(0, 0, 0), width=w)
+    d.line([px(xr[0]) - z(8), py(ax_x), px(xr[1]) + z(8), py(ax_x)], fill=eje, width=w)
+    d.line([px(ax_y), py(yr[1]) - z(8), px(ax_y), py(yr[0]) + z(8)], fill=eje, width=w)
     fmt = fmt or (lambda v: str(int(v)) if float(v).is_integer() else str(v))
     for k in range(nx + 1):
         g = xr[0] + k * cada
-        if rayitas == "cruz": d.line([px(g), py(ax_x) - z(5), px(g), py(ax_x) + z(5)], fill=(0, 0, 0), width=max(1, int(z(1))))
-        elif rayitas == "abajo": d.line([px(g), py(ax_x), px(g), py(ax_x) + z(6)], fill=(0, 0, 0), width=max(1, int(z(1))))
-        if abs(round(g / etiqueta) * etiqueta - g) < 1e-9 and g != ax_y:
+        if rayitas == "cruz": d.line([px(g), py(ax_x) - z(5), px(g), py(ax_x) + z(5)], fill=eje, width=max(1, int(z(1))))
+        elif rayitas == "abajo": d.line([px(g), py(ax_x), px(g), py(ax_x) + z(6)], fill=eje, width=max(1, int(z(1))))
+        if abs(round(g / etiqueta) * etiqueta - g) < 1e-9 and g != ax_y and not sin_numeros:
             t = fmt(g); bw = d.textlength(t, font=f)
-            if halo: d.rectangle([px(g) - bw / 2 - z(2), py(ax_x) + z(9), px(g) + bw / 2 + z(2), py(ax_x) + z(9) + z(tam_letra) + z(2)], fill="white")
-            d.text((px(g) - bw / 2, py(ax_x) + z(10)), t, fill=(0, 0, 0), font=f)
+            if halo: d.rectangle([px(g) - bw / 2 - z(2), py(ax_x) + z(9), px(g) + bw / 2 + z(2), py(ax_x) + z(9) + z(tam_letra) + z(2)], fill=fondo)
+            d.text((px(g) - bw / 2, py(ax_x) + z(10)), t, fill=num, font=f)
     for k in range(ny + 1):
         g = yr[0] + k * cada
-        if rayitas == "cruz": d.line([px(ax_y) - z(5), py(g), px(ax_y) + z(5), py(g)], fill=(0, 0, 0), width=max(1, int(z(1))))
-        elif rayitas == "abajo": d.line([px(ax_y) - z(6), py(g), px(ax_y), py(g)], fill=(0, 0, 0), width=max(1, int(z(1))))
-        if abs(round(g / etiqueta) * etiqueta - g) < 1e-9 and g != ax_x:
+        if rayitas == "cruz": d.line([px(ax_y) - z(5), py(g), px(ax_y) + z(5), py(g)], fill=eje, width=max(1, int(z(1))))
+        elif rayitas == "abajo": d.line([px(ax_y) - z(6), py(g), px(ax_y), py(g)], fill=eje, width=max(1, int(z(1))))
+        lleva = abs(round(g / etiqueta) * etiqueta - g) < 1e-9 if solo_y is None else g in solo_y
+        if lleva and g != ax_x and not sin_numeros:
             t = fmt(g); bw = d.textlength(t, font=f)
-            if halo: d.rectangle([px(ax_y) - bw - z(12), py(g) - z(tam_letra) / 2 - z(1), px(ax_y) - z(8), py(g) + z(tam_letra) / 2 + z(2)], fill="white")
-            d.text((px(ax_y) - bw - z(10), py(g) - z(tam_letra) * 0.55), t, fill=(0, 0, 0), font=f)
+            if halo: d.rectangle([px(ax_y) - bw - z(12), py(g) - z(tam_letra) / 2 - z(1), px(ax_y) - z(8), py(g) + z(tam_letra) / 2 + z(2)], fill=fondo)
+            d.text((px(ax_y) - bw - z(10), py(g) - z(tam_letra) * 0.55), t, fill=num, font=f)
     if cruz:
-        d.line([x0, py(cruz[1]), px(xr[1]), py(cruz[1])], fill=(0, 0, 0), width=int(z(2)))
-        d.line([px(cruz[0]), y0, px(cruz[0]), py(yr[0])], fill=(0, 0, 0), width=int(z(2)))
+        d.line([x0, py(cruz[1]), px(xr[1]), py(cruz[1])], fill=eje, width=int(z(2)))
+        d.line([px(cruz[0]), y0, px(cruz[0]), py(yr[0])], fill=eje, width=int(z(2)))
     return img, px, py
 
 
@@ -934,6 +936,14 @@ ESTILOS_GRAFICA = {
     "primer_cuadrante": dict(xr=(0, 10), yr=(0, 10), etiqueta=1, unidad=40, rayitas="abajo", grilla="lineas", origen_borde=True),
     "y_de_10_en_10": dict(xr=(0, 10), yr=(0, 100), cada=1, etiqueta=1, unidad=36, rayitas="abajo", grilla="lineas", origen_borde=True),
     "decimales": dict(xr=(-2, 2), yr=(-2, 2), cada=0.5, etiqueta=0.5, unidad=60, grilla="lineas"),
+    # 2.5.1: los que no salian (ejes grises o de color, tema oscuro, numeros chiquitos de 1 en 1, pocos numeros en y)
+    "ejes_grises": dict(eje=(138, 138, 138), num=(100, 100, 100), grilla="lineas", col_grilla=(225, 228, 235)),
+    "ejes_azules": dict(eje=(59, 111, 216), num=(59, 111, 216), grilla="lineas", col_grilla=(225, 228, 235)),
+    "tema_oscuro": dict(fondo=(30, 30, 30), eje=(235, 235, 235), num=(235, 235, 235), grilla="lineas",
+                        col_grilla=(60, 60, 60)),
+    "chiquitos_de_1_en_1": dict(etiqueta=1, unidad=20, tam_letra=11, grilla="lineas", col_grilla=(213, 216, 226),
+                                num=(51, 51, 51)),
+    "pocos_numeros_en_y": dict(solo_y=(4, -6), grilla="lineas"),
 }
 
 
@@ -1063,3 +1073,64 @@ def prueba_plan_basico_no_contesta_graficas_solo_avisa():
     act = [e[1] for e in _eventos(b) if e[0] == "actividad"]
     # avisa que es del Pro, sin decir la respuesta (y ni la resuelve: la vista ya dijo que es grafica)
     assert any("plan Pro" in a for a in act) and not any("y = 2x + 2" in a for a in act), act
+
+
+def prueba_planos_de_chrome_que_no_salian():
+    """2.5.1: capturas de Chrome de planos que antes no se leian: numeros chiquitos de 1 en 1 (ALEKS), cuadricula
+    punteada (MyLab), tema oscuro y ejes grises. En todas el origen esta en (240, 240) y cada rayita mide 19 px."""
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        return
+    malas = []
+    for n in ("aleks_1en1", "mylab_punteada", "oscuro", "ejes_grises"):
+        img = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "datos", f"plano_{n}.png")).convert("RGB")
+        pl = motor.ejes_del_plano(img, 1.0, ocr)
+        if not (pl["x"] and pl["y"]):
+            malas.append((n, pl["x"], pl["y"]))
+            continue
+        for v in (-10, 10):
+            if abs(pl["x"][0] * v + pl["x"][1] - (240 + 19 * v)) > 2 or abs(pl["y"][0] * v + pl["y"][1] - (240 - 19 * v)) > 2:
+                malas.append((n, v, pl["x"], pl["y"]))
+    assert not malas, malas
+
+
+def prueba_grafica_sin_numeros_legibles_usa_los_ejes_de_la_ia():
+    """Si NO LIMIT ve los ejes y sus rayitas pero no puede leer los numeros, la IA dice dos numeros de cada eje con
+    su pixel (aunque mida con error) y se pegan a las rayitas: los puntos quedan exactos."""
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        return
+    img, px, py = _plano_estilo(1.0, sin_numeros=True, grilla="lineas")
+    pl = cerebro.plano_de(img, [], 1.0, ocr)
+    assert not pl["x"] and not pl["y"] and set(pl["lineas"]) == {"x", "y"}, pl
+    # la IA mide con unos pixeles de error (y la imagen que ve la IA esta a escala 0.8)
+    s = 0.8
+    datos = {"tipo": "graficar", "respuesta": "y = 2x + 2",
+             "ejes": {"x": [[-8, (px(-8) + 4) * s], [6, (px(6) - 3) * s]], "y": [[8, (py(8) - 4) * s], [-4, (py(-4) + 3) * s]]},
+             "acciones": [{"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+    plan = cerebro.planear(datos, [], [], s, img, 1.0, ocr=ocr, plano=pl)
+    puntos = [p["p"] for p in plan.pasos]
+    assert len(puntos) == 2, (plan.pasos, plan.rechazadas)
+    for (x, y), (gx, gy) in zip(puntos, ((0, 2), (-1, 0))):
+        assert abs(x - px(gx)) <= 1.5 and abs(y - py(gy)) <= 1.5, ((x, y), (px(gx), py(gy)))
+
+
+def prueba_en_graficas_solo_se_pican_puntos_dentro_del_plano():
+    img = Image.new("RGB", (700, 640), "white")
+    plano = {"x": (28.0, 320.0), "y": (-28.0, 300.0), "rango": {"x": (-10, 10, 1), "y": (-10, 10, 1)}}
+    cajas = [caja(600, 20, 660, 44, "Recta")]
+    datos = {"tipo": "graficar", "respuesta": "y = 2x + 2", "acciones": [
+        {"hacer": "arrastrar", "desde": {"gx": 0, "gy": 2}, "hasta": {"gx": -1, "gy": 0}},     # trazar: no
+        {"hacer": "clic", "en": {"x": 630, "y": 32}},                                        # la herramienta: no
+        {"hacer": "clic", "en": {"gx": 12, "gy": 0}},                                        # fuera del plano: no
+        {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
+    plan = cerebro.planear(datos, cajas, [], 1.0, img, 1.0, plano=plano)
+    assert [p["hacer"] for p in plan.pasos] == ["clic", "clic"], plan.pasos
+    assert [p["p"] for p in plan.pasos] == [(320, 244), (292, 300)], plan.pasos
+    assert [m for _, m in plan.rechazadas] == [cerebro.SOLO_PUNTOS] * 3, plan.rechazadas
+    # sin plano detectado: un punto {"x","y"} encima de un texto con letras (un boton) tampoco se pica
+    plan = cerebro.planear({"tipo": "graficar", "acciones": [{"hacer": "clic", "en": {"x": 630, "y": 32}}]},
+                           cajas, [], 1.0, img, 1.0, plano={"x": None, "y": None})
+    assert not plan.pasos and plan.rechazadas, plan.pasos

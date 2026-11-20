@@ -1220,6 +1220,15 @@
   .pr-casillas .op.si { border-color: #2a9d8f; background: #eefaf7; }
   .pr-casillas .op.si .c { background: #2a9d8f; border-color: #2a9d8f; }
   /* grafica */
+  .pr-arrastrar .it, .pr-vuela.it { border: 1.5px solid #cfd6e4; border-radius: 12px; padding: 9px 12px; margin: 8px 0; background: #f7f9fc; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .pr-arrastrar .hueco { border: 1.5px dashed #b9c3d8; border-radius: 12px; margin: 8px 0; }
+  .pr-etiquetas .banco { display: flex; flex-wrap: wrap; gap: 10px; min-height: 42px; margin: 4px 0 10px; }
+  .pr-etiquetas .et, .pr-vuela.et { border: 1.5px solid #e0a83a; background: #fff4dc; border-radius: 8px; padding: 7px 14px; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .pr-etiquetas .fila { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+  .pr-etiquetas .fila .d { flex: 1; }
+  .pr-etiquetas .zona { flex: none; width: 128px; min-height: 42px; border: 2px dashed #aab; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #888; font-size: 13px; }
+  .pr-etiquetas .zona .et { cursor: pointer; padding: 6px 10px; color: #1d1d1f; }
+  .pr-vuela { position: fixed; z-index: 300; margin: 0; pointer-events: none; box-shadow: 0 8px 20px rgba(0,0,0,.25); font: 400 15.5px/1.5 Arial, Helvetica, sans-serif; color: #1d1d1f; box-sizing: border-box; }
   .pr-grafica canvas { display: block; margin: 6px auto 0; max-width: 100%; height: auto; cursor: crosshair; }
   /* menu dentro de un texto y abierta */
   .pr-menu select { font: inherit; padding: 4px 6px; border: 1px solid #999; border-radius: 4px; background: #fff; color: #222; }
@@ -1313,7 +1322,7 @@
 
     <a class="chip-nuevo entra" href="#como" style="--retraso:.05s">
       <span class="vivo" aria-hidden="true"></span>
-      <span>Nuevo: <span class="js-version">v2.5</span> · cada respuesta en su casilla</span>
+      <span>Nuevo: <span class="js-version">v2.5.1</span> · gráficas y arrastrar</span>
       <span class="flecha" aria-hidden="true">→</span>
     </a>
 
@@ -1450,6 +1459,23 @@
           <div class="pr-hoja pr-grafica">
             <p class="pr-q">Grafica la recta cuya intersección con el eje y es 2 y con el eje x es −1. Herramienta: Recta.</p>
             <canvas width="300" height="300" aria-label="Plano cartesiano de -5 a 5"></canvas>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela data-pr="arrastrar">
+          <div class="pr-cabeza"><div><b>Ordenar arrastrando</b><small>Sin flechas: cada una a su lugar</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-arrastrar">
+            <p class="pr-q">Ordena los planetas del más cercano al Sol (arriba) al más lejano (abajo):</p>
+            <div class="lista"></div>
+          </div>
+        </article>
+
+        <article class="pr-tarjeta" data-revela style="--retraso:.05s" data-pr="etiquetas">
+          <div class="pr-cabeza"><div><b>Arrastrar a su lugar</b><small>Cada etiqueta en su caja</small></div><span class="pr-estado">Sin contestar</span></div>
+          <div class="pr-hoja pr-etiquetas">
+            <p class="pr-q">Arrastra cada órgano a la función que le corresponde:</p>
+            <div class="banco"></div>
+            <div class="cols"></div>
           </div>
         </article>
 
@@ -2040,7 +2066,7 @@
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Se puede equivocar?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Como cualquier IA, sí. Por eso el <b>modo preciso</b> viene prendido y la app revisa que el clic caiga en la opción que eligió. Si el quiz tiene la respuesta mal escrita, elige la más cercana a la real.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Dónde dejo una queja o una idea?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>En <a href="#contacto">Contacto</a>: escribe tu queja o sugerencia y se abre WhatsApp o tu correo con el mensaje listo. Ahí mismo puedes calificar NO LIMIT. También estamos en Instagram como <a href="https://www.instagram.com/no.limit.mx77" target="_blank" rel="noopener">@no.limit.mx77</a>.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Por qué en las de números tarda un poquito más?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Porque en Pro y Premium las resuelve <b>dos veces desde cero</b> y, si no dan lo mismo, revisa las dos paso a paso para quedarse con la buena. Además comprueba la cuenta con una calculadora. Todo eso cuenta como <b>una sola pregunta</b>.</p></div></div></div>
-        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo sé que me funciona antes de usarla en mi tarea?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>En <a href="#practica">Practica con la app</a> hay preguntas de verdad, como las de ALEKS, Kahoot y los quizzes (varias casillas, menús “Seleccionar”, ordenar con flechas, gráficas). Con NO LIMIT prendido haz Ctrl + clic en cada una: se ponen en verde cuando quedan bien.</p></div></div></div>
+        <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cómo sé que me funciona antes de usarla en mi tarea?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>En <a href="#practica">Practica con la app</a> hay preguntas de verdad, como las de ALEKS, Kahoot y los quizzes (varias casillas, menús “Seleccionar”, ordenar con flechas o arrastrando, arrastrar etiquetas, gráficas). Con NO LIMIT prendido haz Ctrl + clic en cada una: se ponen en verde cuando quedan bien.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Cuántas preguntas trae cada plan?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p><b>Básico 300, Pro 500 y Premium 1,000 preguntas al mes.</b> Una pregunta es cada Ctrl + clic; con las IAs más listas cuenta más (Sonnet, Terra y Gemini Pro x2, Opus x5). Se reinician cada mes y en la app ves cuántas te quedan. Si se te acaban, puedes subir de plan cuando quieras.</p></div></div></div>
         <div class="faq-item"><button class="faq-q" type="button" aria-expanded="false">¿Funciona en Mac?<span class="mas" aria-hidden="true"></span></button><div class="faq-r"><div><p>Sí, en Mac con macOS 15 o más nuevo (chip M1 a M4 o Intel). Ahí el atajo es <b>Option + clic</b> y se queda en la barra de arriba. Como no está firmada por Apple, la primera vez abre Terminal y pega <code>xattr -dr com.apple.quarantine "/Applications/NO LIMIT.app"</code>. Luego te pide dos permisos (Accesibilidad y Grabación de pantalla). Desde la 1.5 se actualiza sola, igual que en Windows; después de actualizar, la app te vuelve a pedir esos dos permisos (es normal en Mac). En el cel todavía no.</p></div></div></div>
       </div>
@@ -3748,6 +3774,105 @@
     return puntos.every(function (p) { return p[1] === 2 * p[0] + 2; });
   };
 
+  /* ordenar arrastrando (sin flechas): la tarjeta sigue al puntero y las demas se recorren */
+  var PLANETAS = ["Marte", "Mercurio", "Júpiter", "Tierra", "Venus"], BIEN_P = ["Mercurio", "Venus", "Tierra", "Marte", "Júpiter"];
+  var ordenP = PLANETAS.slice(), listaA = q('[data-pr="arrastrar"] .lista', raiz), arr = null;
+  function pintarArrastrar() {
+    listaA.innerHTML = "";
+    ordenP.forEach(function (t) { var d = document.createElement("div"); d.className = "it"; d.textContent = t; listaA.appendChild(d); });
+  }
+  listaA.addEventListener("pointerdown", function (e) {
+    var el = e.target.closest ? e.target.closest(".it") : null;
+    if (!el || el.parentNode !== listaA) return;
+    e.preventDefault();
+    var b = el.getBoundingClientRect();
+    arr = { el: el, x0: e.clientX, y0: e.clientY, dx: e.clientX - b.left, dy: e.clientY - b.top, w: b.width, h: b.height, va: false };
+  });
+  document.addEventListener("pointermove", function (e) {
+    if (!arr) return;
+    if (!arr.va) {
+      if (Math.abs(e.clientX - arr.x0) + Math.abs(e.clientY - arr.y0) < 5) return;
+      arr.va = true;
+      arr.hueco = document.createElement("div"); arr.hueco.className = "hueco"; arr.hueco.style.height = arr.h + "px";
+      listaA.insertBefore(arr.hueco, arr.el);
+      arr.el.classList.add("pr-vuela"); arr.el.style.width = arr.w + "px"; document.body.appendChild(arr.el);
+    }
+    arr.el.style.left = (e.clientX - arr.dx) + "px"; arr.el.style.top = (e.clientY - arr.dy) + "px";
+    var antes = null;
+    qq(".it", listaA).some(function (o) { var b = o.getBoundingClientRect(); if (e.clientY < b.top + b.height / 2) { antes = o; return true; } return false; });
+    if (antes) listaA.insertBefore(arr.hueco, antes); else listaA.appendChild(arr.hueco);
+  });
+  function soltarArrastre() {
+    if (!arr) return;
+    if (arr.va) {
+      var nuevo = [];
+      Array.prototype.forEach.call(listaA.children, function (c) { nuevo.push(c === arr.hueco ? arr.el.textContent : c.textContent); });
+      ordenP = nuevo;
+      if (arr.el.parentNode) arr.el.parentNode.removeChild(arr.el);
+      pintarArrastrar(); revisar();
+    }
+    arr = null;
+  }
+  document.addEventListener("pointerup", soltarArrastre);
+  document.addEventListener("pointercancel", soltarArrastre);
+  revisores.arrastrar = function () { return ordenP.join() === BIEN_P.join(); };
+
+  /* arrastrar etiquetas a su lugar (como H5P o Wordwall); un clic en una ya puesta la regresa */
+  var ORGANOS = ["Riñones", "Corazón", "Pulmones"];
+  var FUNCIONES = [["Bombea la sangre a todo el cuerpo", "Corazón"], ["Intercambian oxígeno y dióxido de carbono", "Pulmones"],
+                   ["Filtran la sangre y forman la orina", "Riñones"]];
+  var puesto = {}, tarjE = q('[data-pr="etiquetas"]', raiz), bancoE = q(".banco", tarjE), colsE = q(".cols", tarjE), et = null;
+  function pintarEtiquetas() {
+    bancoE.innerHTML = ""; colsE.innerHTML = "";
+    ORGANOS.forEach(function (o) {
+      if (Object.keys(puesto).some(function (k) { return puesto[k] === o; })) return;
+      var d = document.createElement("div"); d.className = "et"; d.textContent = o; bancoE.appendChild(d);
+    });
+    FUNCIONES.forEach(function (f, i) {
+      var fila = document.createElement("div"); fila.className = "fila";
+      fila.innerHTML = '<div class="d"></div><div class="zona"></div>';
+      q(".d", fila).textContent = f[0];
+      var z = q(".zona", fila); z.setAttribute("data-i", i);
+      if (puesto[i]) {
+        var d = document.createElement("div"); d.className = "et"; d.textContent = puesto[i]; z.appendChild(d);
+        d.addEventListener("click", function () { delete puesto[i]; pintarEtiquetas(); revisar(); });
+      } else z.textContent = "Suelta aquí";
+      colsE.appendChild(fila);
+    });
+  }
+  bancoE.addEventListener("pointerdown", function (e) {
+    var el = e.target.closest ? e.target.closest(".et") : null;
+    if (!el) return;
+    e.preventDefault();
+    var b = el.getBoundingClientRect();
+    et = { el: el, x0: e.clientX, y0: e.clientY, dx: e.clientX - b.left, dy: e.clientY - b.top, va: false };
+  });
+  document.addEventListener("pointermove", function (e) {
+    if (!et) return;
+    if (!et.va) {
+      if (Math.abs(e.clientX - et.x0) + Math.abs(e.clientY - et.y0) < 4) return;
+      et.va = true; et.el.classList.add("pr-vuela"); document.body.appendChild(et.el);
+    }
+    et.el.style.left = (e.clientX - et.dx) + "px"; et.el.style.top = (e.clientY - et.dy) + "px";
+  });
+  function soltarEtiqueta(e) {
+    if (!et) return;
+    if (et.va) {
+      var z = null;
+      (document.elementsFromPoint ? document.elementsFromPoint(e.clientX, e.clientY) : []).some(function (x) {
+        if (x.classList && x.classList.contains("zona") && colsE.contains(x)) { z = x; return true; } return false; });
+      if (z && !puesto[z.getAttribute("data-i")]) puesto[z.getAttribute("data-i")] = et.el.textContent;
+      if (et.el.parentNode === document.body) document.body.removeChild(et.el);
+    }
+    et = null; pintarEtiquetas(); revisar();
+  }
+  document.addEventListener("pointerup", soltarEtiqueta);
+  document.addEventListener("pointercancel", function () {
+    if (et && et.el.parentNode === document.body) document.body.removeChild(et.el);
+    et = null; pintarEtiquetas();
+  });
+  revisores.etiquetas = function () { return FUNCIONES.every(function (f, i) { return puesto[i] === f[1]; }); };
+
   /* menu y abierta */
   var menu = q('[data-pr="menu"] select', raiz), abierta = q('[data-pr="abierta"] input', raiz);
   revisores.menu = function () { return menu.value === "100 °C"; };
@@ -3758,8 +3883,8 @@
   function revisar() { Object.keys(revisores).forEach(function (k) { estado(k, revisores[k]()); }); }
   function empezar() {
     qq(".caja", aleks).forEach(function (c) { c.textContent = ""; });
-    kahoot.value = ""; menu.value = ""; abierta.value = ""; orden = [0, 1, 2, 3]; puntos = [];
-    pintarSel(); pintarFlechas(); pintarCasillas(); pintarGrafica(); revisar();
+    kahoot.value = ""; menu.value = ""; abierta.value = ""; orden = [0, 1, 2, 3]; puntos = []; ordenP = PLANETAS.slice(); puesto = {};
+    pintarSel(); pintarFlechas(); pintarCasillas(); pintarGrafica(); pintarArrastrar(); pintarEtiquetas(); revisar();
   }
   var btn = document.getElementById("prReiniciar");
   if (btn) btn.addEventListener("click", empezar);

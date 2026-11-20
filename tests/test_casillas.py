@@ -276,7 +276,7 @@ def prueba_en_graficas_no_toca_la_barra_de_herramientas():
 def prueba_las_instrucciones_nuevas():
     t = cerebro.SISTEMA_CONTESTAR
     for frase in ("NO toques la barra de herramientas", "Seleccionar", "flechas", "VARIAS CASILLAS",
-                  "Arrastra SOLO si la pregunta pide arrastrar"):
+                  "ARRASTRAR Y SOLTAR"):
         assert frase in t, frase
 
 

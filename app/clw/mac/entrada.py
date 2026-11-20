@@ -245,16 +245,17 @@ def mover(x, y):
     _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventMouseMoved, p, Q.kCGMouseButtonLeft))
 
 
-def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
-    """Presiona en (x0, y0), se mueve poco a poco (eventos de 'arrastrar') y suelta en (x1, y1). Pixeles."""
+def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None, lento=False):
+    """Presiona en (x0, y0), se mueve poco a poco (eventos de 'arrastrar') y suelta en (x1, y1). Pixeles.
+    lento: se detiene un rato al presionar y antes de soltar (listas que piden "mantener presionado")."""
     s = _escala
     a = Q.CGPointMake(x0 / s, y0 / s)
     _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventMouseMoved, a, Q.kCGMouseButtonLeft))
-    time.sleep(0.08)
+    time.sleep(0.25 if lento else 0.08)
     abajo = Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseDown, a, Q.kCGMouseButtonLeft)
     Q.CGEventSetIntegerValueField(abajo, Q.kCGMouseEventClickState, 1)
     _mandar(abajo)
-    time.sleep(0.15)
+    time.sleep(0.45 if lento else 0.15)
     ultimo = a
     try:
         puntos = [(x0 + d, y0 + d // 3) for d in (3, 6, 9)]
@@ -265,11 +266,11 @@ def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None):
             t = t * t * (3 - 2 * t)
             puntos.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
         puntos += [(x1, y1), (x1 + 1, y1), (x1, y1)]
-        for (x, y) in puntos:
+        for k, (x, y) in enumerate(puntos):
             ultimo = Q.CGPointMake(x / s, y / s)
             _mandar(Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseDragged, ultimo, Q.kCGMouseButtonLeft))
-            time.sleep(0.016)
-        time.sleep(0.12)
+            time.sleep((0.06 if k < 3 else 0.025) if lento else 0.016)
+        time.sleep(0.35 if lento else 0.12)
     finally:
         arriba = Q.CGEventCreateMouseEvent(None, Q.kCGEventLeftMouseUp, ultimo, Q.kCGMouseButtonLeft)
         Q.CGEventSetIntegerValueField(arriba, Q.kCGMouseEventClickState, 1)

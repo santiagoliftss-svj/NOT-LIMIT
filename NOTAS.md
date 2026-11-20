@@ -4,13 +4,22 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 La primera vez te enseña cómo se usa (3 pasos) y aceptas los Términos. Toca **INYECTAR**, pega tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y listo: la IA ya viene incluida. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.5.1 (gráficas y arrastrar)**
+
+- Gráficas: lee el plano en muchos más estilos (números chiquitos de 1 en 1 como ALEKS, cuadrícula punteada como MyLab, ejes grises o de color, tema oscuro, escalas de 5 o 10, planos chicos o con zoom de Windows).
+- Gráficas: SOLO pica los puntos que dice la instrucción y en ese orden. Nunca traza ni arrastra, nunca toca la barra de herramientas y nunca pica fuera del plano.
+- Si no alcanza a leer los números de un eje, la IA le dice cuánto vale cada rayita y NO LIMIT pone los puntos exactos sobre las rayitas (antes decía que no se podía).
+- Ordenar arrastrando: si la lista no tiene flechas, arrastra cada elemento a su lugar hasta que queda en orden (listas normales y las que se recorren mientras arrastras).
+- Arrastrar y soltar: etiquetas a cajas, huecos, categorías o esquemas. Si al soltar una las demás se recorren, las vuelve a buscar antes de arrastrar. Si una página no agarra el arrastre, lo repite más despacio.
+- En la página, en **Practica con la app**, hay 2 nuevas para probar: ordenar arrastrando y arrastrar etiquetas.
+
 **Nuevo en 2.5 (cada respuesta en su lugar)**
 
 - Varias casillas (como ALEKS, juegos o tablas): cada respuesta va en SU casilla. Antes de escribir revisa dónde quedó el cursor; si el texto cae en otra casilla, lo borra y lo vuelve a intentar con un clic más lento. Ya no escribe todo en la última.
 - Ya no selecciona el texto de la página: Ctrl/Cmd + A solo se hace cuando el cursor de verdad está en la casilla.
 - Escribe con más calma (las páginas que se trababan con lo rápido ya lo agarran).
 - Menús "Seleccionar" (como los quizzes de Gemini), también con opciones largas de dos renglones: elige uno por cada tarjeta.
-- Ordenar con flechas ↑↓: pica las flechas hasta que queda en orden. Solo arrastra si la pregunta dice arrastrar.
+- Ordenar con flechas ↑↓: pica las flechas hasta que queda en orden.
 - Gráficas: la herramienta (lápiz, recta, punto...) la eliges tú; NO LIMIT solo da clic en los puntos exactos.
 - Problemas con números (Pro y Premium): los resuelve dos veces desde cero y, si no dan lo mismo, revisa las dos para quedarse con la buena. Cuenta como una sola pregunta.
 - Lee mejor cajas blancas sobre fondos de color (Kahoot, juegos) y los acentos que el OCR confundía.

@@ -484,7 +484,7 @@ _REDONDOS = (0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 5
 
 def _lineas_largas(buf, W, H, zoom):
     """Lineas oscuras largas (posibles ejes): [(desde, hasta, fila0, fila1)]."""
-    patron = re.compile(rb"\x01{%d,}" % max(20, int(0.35 * W)))
+    patron = re.compile(rb"\x01{%d,}" % max(20, min(int(0.35 * W), max(int(100 * zoom), int(0.2 * W)))))
     filas = []
     for k in range(H):
         mejor = None
@@ -702,6 +702,111 @@ def _numeros_por_rayita(img, zoom, ocr, marcas, paso, horizontal, rejilla=None):
     return out
 
 
+def _quitar_lineas(px, W, H, umbral, zoom=1.0):
+    """Borra las lineas largas de una banda de numeros (el otro eje, la cuadricula, punteada o no) sin borrar los
+    numeros: solo se blanquean los pixeles de la linea que tienen su mismo tono (los numeros casi siempre son mas
+    oscuros que la cuadricula) o que van solos (sin tinta a los lados)."""
+    def tinta(x, y):
+        return 0 <= x < W and 0 <= y < H and px[x, y] < umbral
+    salto = max(6, int(6 * zoom))
+    for vertical in (True, False):
+        largo, n = (H, W) if vertical else (W, H)
+        for k in range(n):
+            pts = [(k, t) if vertical else (t, k) for t in range(largo)]
+            con = [p for p in pts if tinta(*p)]
+            if len(con) < 0.25 * largo:
+                continue
+            # cuanto cubre (los huecos chicos de una linea punteada cuentan como linea)
+            cubre, ultimo = 0, None
+            for t in range(largo):
+                if tinta(*pts[t]):
+                    cubre += 1 if ultimo is None or t - ultimo > salto else t - ultimo
+                    ultimo = t
+            if cubre < 0.6 * largo:
+                continue
+            tono = sorted(px[p] for p in con)[len(con) // 2]
+            for x, y in con:
+                lados = (tinta(x - 1, y) or tinta(x + 1, y)) if vertical else (tinta(x, y - 1) or tinta(x, y + 1))
+                if px[x, y] >= tono - 25 or not lados:
+                    px[x, y] = 255
+
+
+def _numeros_por_ventana(img, zoom, ocr, marcas, paso, horizontal, umbral=170):
+    """Otra forma de leer los numeros de un eje, sin destruir los numeros chiquitos (11 px, de colores, grises):
+    se sube el contraste, se quitan las lineas, y lo escrito junto a cada rayita va en su propio renglon (con mucho
+    espacio) para leerlo todo de una vez. Devuelve [(valor, posicion_de_la_rayita)] en la imagen."""
+    g = ImageOps.autocontrast(ImageOps.grayscale(img), cutoff=1)
+    W, H = g.size
+    if W < 6 or H < 6 or not marcas:
+        return []
+    px = g.load()
+    _quitar_lineas(px, W, H, umbral, zoom)
+    tinta = [[px[x, y] < umbral for x in range(W)] for y in range(H)]
+    visto = [[False] * W for _ in range(H)]
+    grupos = {}
+    for y in range(H):
+        for x in range(W):
+            if not tinta[y][x] or visto[y][x]:
+                continue
+            pila, xs, ys = [(x, y)], [], []
+            visto[y][x] = True
+            while pila:
+                cx, cy = pila.pop()
+                xs.append(cx)
+                ys.append(cy)
+                for nx in (cx - 1, cx, cx + 1):
+                    for ny in (cy - 1, cy, cy + 1):
+                        if 0 <= nx < W and 0 <= ny < H and tinta[ny][nx] and not visto[ny][nx]:
+                            visto[ny][nx] = True
+                            pila.append((nx, ny))
+            x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)
+            if (x1 - x0) > 30 * zoom or (y1 - y0) > 26 * zoom:
+                continue                               # algo grande que no es un numero
+            centro = (x0 + x1) / 2 if horizontal else (y0 + y1) / 2
+            m = min(marcas, key=lambda t: abs(t - centro))
+            if abs(m - centro) > 0.55 * paso:
+                continue
+            gr = grupos.setdefault(m, [x0, y0, x1, y1, 0])
+            gr[0], gr[1], gr[2], gr[3] = min(gr[0], x0), min(gr[1], y0), max(gr[2], x1), max(gr[3], y1)
+            gr[4] += len(xs)
+    # lo que quedo de cada rayita: debe parecer un numero (alto de letra, con tinta)
+    buenos = [(m, gr) for m, gr in sorted(grupos.items()) if gr[3] - gr[1] >= 4 * zoom and gr[4] >= 6 * zoom]
+    if not buenos:
+        return []
+    alto = sorted(gr[3] - gr[1] + 1 for _, gr in buenos)[len(buenos) // 2]
+    f = max(1.0, 34.0 / alto)
+    blanco = g.point(lambda v: 255 if v >= umbral + 40 else v)
+    hueco = int(alto * 1.4) + 4
+    trozos = [(m, blanco.crop((gr[0] - 1, gr[1] - 1, gr[2] + 2, gr[3] + 2))) for m, gr in buenos]
+    ancho = max(t.width for _, t in trozos) + 2 * hueco
+    hoja = Image.new("L", (ancho, sum(t.height for _, t in trozos) + hueco * (len(trozos) + 1)), 255)
+    lugares, y = [], hueco
+    for m, t in trozos:
+        hoja.paste(t, (hueco, y))
+        lugares.append((y, y + t.height, m))
+        y += t.height + hueco
+    grande = ImageOps.expand(hoja.resize((int(hoja.width * f), int(hoja.height * f)), Image.LANCZOS),
+                             border=20, fill=255)
+    out = []
+    for psm in (6, 4):
+        try:
+            d = ocr.datos(grande, psm=psm, solo="-0123456789.")
+        except Exception:
+            continue
+        for i, t in enumerate(d.get("text", [])):
+            t = (t or "").strip().strip(".")
+            if not re.fullmatch(r"-?\d{1,4}(?:\.\d{1,3})?", t):
+                continue
+            cy = (d["top"][i] + d["height"][i] / 2 - 20) / f
+            for y0, y1, m in lugares:
+                if y0 - 4 <= cy <= y1 + 4:
+                    out.append((float(t), m))
+                    break
+        if len({m for _, m in out}) >= 0.7 * len(lugares):
+            break
+    return out
+
+
 def _recta_robusta(pares, paso, signo=0):
     """pixel = a*valor + b con los pares que cuadran (algun numero puede venir mal leido, por ejemplo sin el signo
     menos). signo: +1 / -1 si la recta debe crecer o bajar. None si no hay 3 que cuadren."""
@@ -715,7 +820,7 @@ def _recta_robusta(pares, paso, signo=0):
             if signo and a * signo <= 0:
                 continue
             b = p1 - a * v1
-            buenos = list({p: (v, p) for v, p in pares if abs(a * v + b - p) <= max(3.0, 0.3 * paso)}.values())
+            buenos = list({p: (v, p) for v, p in pares if abs(a * v + b - p) <= max(3.0, 0.08 * paso)}.values())
             if len(buenos) >= 3 and (mejor is None or len(buenos) > len(mejor)):
                 mejor = buenos
     if not mejor:
@@ -750,72 +855,136 @@ def _ejes_candidatos(buf, gbuf, W, H, zoom):
     return out[:3]
 
 
+def _bandas(linea, horizontal, zoom, W, H):
+    """Donde pueden estar los numeros de un eje: abajo del eje x (si no, arriba); a la izquierda del eje y (si no, a
+    la derecha). Sin las rayitas y un poco mas alla de las puntas."""
+    desde, hasta, a, b = linea
+    r7, r14 = int(7 * zoom), int(14 * zoom)
+    if horizontal:
+        d0, d1 = max(0, desde - r14), min(W, hasta + r14)
+        return [(d0, b + r7, d1, min(H, b + int(34 * zoom))), (d0, max(0, a - int(34 * zoom)), d1, a - r7)]
+    d0, d1 = max(0, desde - r14), min(H, hasta + r14)
+    return [(max(0, a - int(56 * zoom)), d0, a - r7, d1), (b + r7, d0, min(W, b + int(56 * zoom)), d1)]
+
+
+def _redondo(por_rayita):
+    return next((n for n in _REDONDOS if abs(por_rayita - n) <= 0.08 * n), None)
+
+
+def _leer_eje(img, linea, marcas, paso, horizontal, zoom, ocr, rejilla, W, H):
+    """Lee los numeros de un eje de tres formas (de la mas rapida a la mas lenta) hasta que cuadren.
+    Devuelve ((a, b) o None, por_rayita, todos los pares (valor, rayita) leidos)."""
+    signo = 1 if horizontal else -1
+    todos = []
+    for banda in _bandas(linea, horizontal, zoom, W, H):
+        if banda[2] - banda[0] < 6 or banda[3] - banda[1] < 6:
+            continue
+        base = banda[0] if horizontal else banda[1]
+        rel = [m - base for m in marcas]
+        rej = ([c - banda[0] for c in rejilla[0]], [f - banda[1] for f in rejilla[1]])
+        trozo = img.crop(banda)
+
+        def por_ventana():
+            return [(v, m + base) for v, m in _numeros_por_ventana(trozo, zoom, ocr, rel, paso, horizontal)]
+
+        def sueltos():
+            out = []
+            for v, cx, cy in _numeros_de(trozo, zoom, ocr, rej):
+                pos = (cx + banda[0]) if horizontal else (cy + banda[1])
+                m = min(marcas, key=lambda t: abs(t - pos))
+                if abs(m - pos) <= 0.6 * paso:
+                    out.append((v, m))
+            return out
+
+        def por_rayita():
+            return [(v, m + base) for v, m in _numeros_por_rayita(trozo, zoom, ocr, rel, paso, horizontal, rej)]
+        pares = []
+        for leer in (por_ventana, sueltos, por_rayita):
+            try:
+                nuevos = leer()
+            except Exception:
+                continue
+            pares += nuevos
+            todos += nuevos
+            r = _recta_robusta(pares, paso, signo)
+            if not r or r[0] * signo <= 0:
+                continue
+            # que cuadre con la cuadricula: cada rayita vale un numero "redondo" (1, 2, 5, 0.5...)
+            n = _redondo(paso / abs(r[0]))
+            if n:
+                return r, n, todos
+    return None, None, todos
+
+
+def _con_origen(pares, origen, paso, signo, otro_por_rayita):
+    """Un eje con pocos numeros leidos, pero ya se sabe donde esta su 0 (donde lo cruza el otro eje):
+    pixel = a * valor + origen. Cada numero leido "vota" por cuanto vale cada rayita."""
+    votos = {}
+    for v, m in pares:
+        if not v:
+            continue
+        a = (m - origen) / v
+        if a * signo <= 0:
+            continue
+        n = _redondo(paso / abs(a))
+        if n and abs(abs(a) * n - paso) <= max(2.0, 0.08 * paso):
+            votos[n] = votos.get(n, 0) + 1
+    if not votos:
+        return None
+    n, cuantos = max(votos.items(), key=lambda t: t[1])
+    if cuantos < 2 and n != otro_por_rayita:
+        return None                  # un solo numero que no cuadra con el otro eje: puede estar mal leido
+    return signo * paso / n, origen, n
+
+
 def ejes_del_plano(img, zoom=1.0, ocr=None):
     """Plano cartesiano en la imagen: encuentra los ejes por sus rayitas (o por la cuadricula) y lee el numero de
     cada una con OCR de solo numeros. No se confunde con la cruz que sigue al mouse ni con el marco.
-    Devuelve {"x": (a, b) o None, "y": (a, b) o None, "rango": {"x": (min, max, paso), "y": ...}}
-    con pixel = a * valor + b."""
-    out = {"x": None, "y": None, "rango": {}}
+    Sirve con ejes negros, grises o de color, cuadricula clara o punteada, fondo oscuro, numeros chiquitos.
+    Devuelve {"x": (a, b) o None, "y": (a, b) o None, "rango": {"x": (min, max, paso), "y": ...},
+    "lineas": {"x": (linea, rayitas, paso), "y": ...}} con pixel = a * valor + b. "lineas" trae los ejes que se
+    vieron aunque no se pudieran leer sus numeros (asi la IA puede decir cuanto vale cada rayita)."""
+    out = {"x": None, "y": None, "rango": {}, "lineas": {}}
     if ocr is None or not getattr(ocr, "disponible", False):
         return out
     gris = ImageOps.grayscale(img)
     W, H = gris.size
     if W < 60 or H < 60:
         return out
-    oscuro = gris.point(lambda v: 1 if v < 120 else 0)
-    vistas = {"x": (oscuro.tobytes(), gris.tobytes(), W, H),
-              "y": (oscuro.transpose(Image.Transpose.TRANSPOSE).tobytes(),
-                    gris.transpose(Image.Transpose.TRANSPOSE).tobytes(), H, W)}
+    hist = gris.histogram()
+    if max(range(256), key=lambda v: hist[v]) < 110:
+        # tema oscuro: se voltea (ejes y numeros claros sobre fondo oscuro -> oscuros sobre claro)
+        gris = ImageOps.invert(gris)
+        img = ImageOps.invert(img.convert("RGB"))
     usados = {}
-    candidatos = {eje: _ejes_candidatos(buf, gbuf, w, h, zoom) for eje, (buf, gbuf, w, h) in vistas.items()}
-    lineas_x = candidatos["x"][0][1] if candidatos["x"] else []      # columnas de la cuadricula
-    lineas_y = candidatos["y"][0][1] if candidatos["y"] else []      # renglones de la cuadricula
-    for eje, (buf, gbuf, w, h) in vistas.items():
-        horizontal = eje == "x"
-        for linea, marcas, paso in candidatos[eje]:
-            desde, hasta, a, b = linea
-            r7, r14 = int(7 * zoom), int(14 * zoom)       # (sin las rayitas; un poco mas alla de las puntas)
-            d0, d1 = max(0, desde - r14), min(w, hasta + r14)
-            if horizontal:          # numeros abajo del eje x (si no, arriba)
-                bandas = [(d0, b + r7, d1, min(H, b + int(34 * zoom))), (d0, max(0, a - int(34 * zoom)), d1, a - r7)]
-            else:                   # numeros a la izquierda del eje y (si no, a la derecha)
-                bandas = [(max(0, a - int(50 * zoom)), d0, a - r7, d1), (b + r7, d0, min(W, b + int(50 * zoom)), d1)]
-            hecho = False
-            for banda in bandas:
-                if banda[2] - banda[0] < 6 or banda[3] - banda[1] < 6:
-                    continue
-                pares = []
-                rejilla = ([c - banda[0] for c in lineas_x], [f - banda[1] for f in lineas_y])
-                signo = 1 if horizontal else -1
-                try:
-                    trozo = img.crop(banda)
-                    for v, cx, cy in _numeros_de(trozo, zoom, ocr, rejilla):
-                        pos = (cx + banda[0]) if horizontal else (cy + banda[1])
-                        m = min(marcas, key=lambda t: abs(t - pos))
-                        if abs(m - pos) <= 0.6 * paso:
-                            pares.append((v, m))
-                    r = _recta_robusta(pares, paso, signo)
-                    if not r or len(pares) < 4:
-                        base = banda[0] if horizontal else banda[1]
-                        rel = [m - base for m in marcas]
-                        pares += [(v, m + base) for v, m in _numeros_por_rayita(trozo, zoom, ocr, rel, paso, horizontal,
-                                                                                rejilla)]
-                except Exception:
-                    continue
-                r = _recta_robusta(pares, paso, signo)
-                if not r or not ((horizontal and r[0] > 0) or (not horizontal and r[0] < 0)):
-                    continue
-                # que cuadre con la cuadricula: cada rayita vale un numero "redondo" (1, 2, 5, 0.5...)
-                por_rayita = paso / abs(r[0])
-                if not any(abs(por_rayita - n) <= 0.08 * n for n in _REDONDOS):
+    pares_de = {}
+    for umbral in (120, 175):            # ejes negros; luego grises o de color
+        if out["x"] and out["y"]:
+            break
+        oscuro = gris.point(lambda v, u=umbral: 1 if v < u else 0)
+        vistas = {"x": (oscuro.tobytes(), gris.tobytes(), W, H),
+                  "y": (oscuro.transpose(Image.Transpose.TRANSPOSE).tobytes(),
+                        gris.transpose(Image.Transpose.TRANSPOSE).tobytes(), H, W)}
+        candidatos = {eje: _ejes_candidatos(buf, gbuf, w, h, zoom) if not out[eje] else []
+                      for eje, (buf, gbuf, w, h) in vistas.items()}
+        rejilla = (candidatos["x"][0][1] if candidatos["x"] else [],      # columnas de la cuadricula
+                   candidatos["y"][0][1] if candidatos["y"] else [])      # renglones de la cuadricula
+        for eje in ("x", "y"):
+            if out[eje]:
+                continue
+            horizontal = eje == "x"
+            for linea, marcas, paso in candidatos[eje]:
+                out["lineas"].setdefault(eje, (linea, marcas, paso))
+                r, n, todos = _leer_eje(img, linea, marcas, paso, horizontal, zoom, ocr, rejilla, W, H)
+                pares_de.setdefault(eje, (linea, marcas, paso, todos))
+                if not r:
                     continue
                 out[eje] = r
-                usados[eje] = (linea, por_rayita)
+                out["lineas"][eje] = (linea, marcas, paso)
+                usados[eje] = (linea, n)
+                desde, hasta = linea[0], linea[1]
                 vals = sorted(((desde - r[1]) / r[0], (hasta - r[1]) / r[0]))
-                out["rango"][eje] = (round(vals[0], 3), round(vals[1], 3), round(por_rayita, 3))
-                hecho = True
-                break
-            if hecho:
+                out["rango"][eje] = (round(vals[0], 3), round(vals[1], 3), round(n, 3))
                 break
     # el otro eje cruza en un numero de la cuadricula (casi siempre el 0): si no, algo se leyo mal
     for eje, otro in (("x", "y"), ("y", "x")):
@@ -827,6 +996,27 @@ def ejes_del_plano(img, zoom=1.0, ocr=None):
             if abs(v / paso - round(v / paso)) > 0.3:
                 out[eje] = None
                 out["rango"].pop(eje, None)
+                usados.pop(eje, None)
+    # solo se pudo leer un eje: si el otro eje lo cruza en el 0, ahi esta el 0 del otro (el origen) y con
+    # poquitos numeros leidos ya se sabe cuanto vale cada rayita
+    for eje, otro in (("x", "y"), ("y", "x")):
+        if out[eje] or not out[otro] or otro not in usados or eje not in out["lineas"]:
+            continue
+        linea_e, marcas, paso = out["lineas"][eje]
+        cruce_otro = (linea_e[2] + linea_e[3]) / 2           # donde el eje que falta cruza al que si se leyo
+        v0 = (cruce_otro - out[otro][1]) / out[otro][0]
+        if abs(v0) > 0.3 * usados[otro][1]:
+            continue
+        linea_o = usados[otro][0]
+        origen = (linea_o[2] + linea_o[3]) / 2               # renglon del eje x (o columna del eje y)
+        pares = pares_de.get(eje, (None, None, None, []))[3]
+        r = _con_origen(pares, origen, paso, 1 if eje == "x" else -1, usados[otro][1])
+        if r:
+            a, b, n = r
+            out[eje] = (a, b)
+            usados[eje] = (linea_e, n)
+            vals = sorted(((linea_e[0] - b) / a, (linea_e[1] - b) / a))
+            out["rango"][eje] = (round(vals[0], 3), round(vals[1], 3), round(n, 3))
     return out
 
 

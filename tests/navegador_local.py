@@ -57,11 +57,15 @@ class Pantalla:
         time.sleep(0.09 if lento else 0.03)
         self.page.mouse.up()
 
-    def arrastrar(self, x0, y0, x1, y1, pasos=24, cancelar=None):
-        self.log.append(("arrastrar", round(x0), round(y0), round(x1), round(y1)))
+    def arrastrar(self, x0, y0, x1, y1, pasos=24, cancelar=None, lento=False):
+        self.log.append(("arrastrar", round(x0), round(y0), round(x1), round(y1)) + (("lento",) if lento else ()))
         self.page.mouse.move(x0, y0)
         self.page.mouse.down()
+        if lento:
+            time.sleep(0.4)
         self.page.mouse.move(x1, y1, steps=pasos)
+        if lento:
+            time.sleep(0.3)
         self.page.mouse.up()
 
     def escribir(self, texto, cancelar=None):

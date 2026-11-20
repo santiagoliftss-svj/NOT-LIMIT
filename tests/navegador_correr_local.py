@@ -129,10 +129,22 @@ def instalar():
             f["caja"] = (x0 + VENTANA[0], y0 + VENTANA[1], x1 + VENTANA[0], y1 + VENTANA[1])
         return f
 
+    def arrastrar(x0, y0, x1, y1, pasos=24, cancelar=None, lento=False):
+        NAV.pedir("mover", *a_pagina(x0, y0))
+        time.sleep(0.25 if lento else 0.08)
+        NAV.pedir("abajo")
+        time.sleep(0.45 if lento else 0.15)
+        for i in range(1, pasos + 1):
+            t = i / pasos
+            NAV.pedir("mover", *a_pagina(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
+            time.sleep(0.016)
+        time.sleep(0.3 if lento else 0.12)
+        NAV.pedir("arriba")
+
     mapa = {"derecha": "ArrowRight", "izquierda": "ArrowLeft", "arriba": "ArrowUp", "abajo": "ArrowDown",
             "retroceso": "Backspace", "escape": "Escape", "enter": "Enter"}
     nuevos = {
-        "clic": clic, "mover": lambda x, y: NAV.pedir("mover", *a_pagina(x, y)),
+        "clic": clic, "arrastrar": arrastrar, "mover": lambda x, y: NAV.pedir("mover", *a_pagina(x, y)),
         "escribir": lambda texto, cancelar=None: NAV.pedir("teclas", texto) or True,
         "seleccionar_todo": lambda: NAV.pedir("tecla", "Control+A"),
         "deshacer": lambda: NAV.pedir("tecla", "Control+Z"),

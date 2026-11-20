@@ -107,11 +107,12 @@ Por tipo:
   3) Da clic en cada punto con coordenadas DEL PLANO: {"hacer":"clic","en":{"gx":2,"gy":-3}}. NO LIMIT los pone exactos con los numeros de los ejes. En el orden que pide la instruccion (si dice "primero la interseccion con y", esa va primero) y si no:
      punto: el punto | recta: dos puntos de la recta | segmento: sus dos extremos | rayo: el extremo y otro punto hacia donde va | parabola: el vertice y otro punto | valor absoluto: el vertice y otro punto | circulo: el centro y un punto del circulo | recta vertical (x = a) u horizontal (y = b): dos puntos con la misma x o la misma y | exponencial, logaritmo o raiz: los puntos que pida la herramienta (y la asintota si la pide) | desigualdad: los dos puntos de la frontera y luego un punto del lado que se sombrea (uno que SI cumpla la desigualdad) | sistema: cada recta, una tras otra.
   4) Usa puntos con coordenadas enteras que se vean DENTRO del plano (mira el "PLANO CARTESIANO detectado"). Si uno se sale, usa otro punto de la misma recta.
-  NUNCA arrastres para trazar y NUNCA escribas en una grafica. "arrastrar" con "hasta":{"gx":..,"gy":..} es solo para mover un punto o una figura que YA esta dibujada. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
+  5) Si NO viene "PLANO CARTESIANO detectado", agrega al JSON "ejes": {"x":[[valor,x],[valor,x]],"y":[[valor,y],[valor,y]]}: dos numeros de cada eje, lejos uno del otro, con la x (en el eje x) o la y (en el eje y) EXACTA de su rayita en la imagen, medida con las reglas. Con eso NO LIMIT ubica el plano.
+  SOLO clics en los puntos: NUNCA arrastres, NUNCA traces, NUNCA escribas en una grafica y no piques nada fuera del plano. Si los ejes no tienen numeros, usa puntos {"x","y"} de la imagen.
 - PASOS GUIADOS: contesta solo los pasos que se ven ahorita.
 - GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la orilla de arriba de cada barra hasta su valor con "hasta":{"x": x de la barra, "gy": valor}, o da clic en cada punto con {"gx","gy"}.
-- ORDENAR: usa "ordenar" con el orden final, revisado con cuidado (fechas, numeros, pasos). Si los elementos tienen botones de flechas para subir y bajar, pon "flechas" con el centro de esos botones: NUNCA arrastres en ese caso.
-- ARRASTRAR ETIQUETAS (a un esquema, plano anatomico, mapa o categorias): un "arrastrar" por etiqueta, desde la etiqueta hasta el lugar exacto donde va. Arrastra SOLO si la pregunta pide arrastrar o soltar y no hay otra forma (menus, flechas, casillas).
+- ORDENAR: usa "ordenar" con el orden final, revisado con cuidado (fechas, numeros, pasos), con el texto de cada elemento tal cual se ve. Si los elementos tienen botones de flechas para subir y bajar, pon "flechas" con el centro de esos botones (NO LIMIT pica las flechas). Si no tienen flechas, NO LIMIT los arrastra a su lugar uno por uno: solo da el orden.
+- ARRASTRAR Y SOLTAR (etiquetas o tarjetas que se sueltan en cajas, huecos de un texto, categorias, una tabla, un esquema, un mapa o una imagen): un "arrastrar" por elemento, "desde" el id de su texto (o su centro) "hasta" el centro EXACTO del lugar donde va (la caja vacia, el hueco, la columna de su categoria o el punto del esquema). Si varios van a la misma categoria, sueltalos en la misma caja. Si la pregunta tiene menus, casillas o campos para lo mismo, usa esos en vez de arrastrar.
 - MATRIZ (tabla con circulos o casillas): un clic por renglon en la columna correcta con {"fila": id, "columna": id}.
 - SIMULACION: contesta con lo que se ve y con la teoria; no muevas controles a lo loco.
 - AUDIO O VIDEO: no puedes escuchar ni ver el video completo; si la respuesta no se puede saber con lo que se ve, "acciones": [] y "no_se_puede": "es de audio o video".
@@ -605,6 +606,62 @@ def _centro(caja):
     return (caja[0] + caja[2]) / 2, (caja[1] + caja[3]) / 2
 
 
+def _pares_de_ia(lista, eje, s):
+    """Los pares (valor, pixel de la region) que dio la IA para un eje, como sea que los haya escrito."""
+    out = []
+    for par in lista if isinstance(lista, (list, tuple)) else []:
+        v = p = None
+        if isinstance(par, (list, tuple)) and len(par) >= 2:
+            v, p = motor._numero(par[0]), motor._numero(par[1])
+        elif isinstance(par, dict):
+            v = motor._numero(par.get("valor", par.get("v", par.get("numero"))))
+            p = motor._numero(par.get(eje, par.get("pixel", par.get("p"))))
+        if v is not None and p is not None and s > 0:
+            out.append((float(v), float(p) / s))
+    return out
+
+
+def plano_con_ia(plano, datos, s):
+    """Si NO LIMIT no pudo leer los numeros de un eje, la IA dice dos numeros de ese eje con su pixel ("ejes"). Se
+    pegan a las rayitas que si se vieron (asi queda exacto aunque la IA mida con unos pixeles de error) y cada rayita
+    debe valer un numero redondo (1, 2, 5, 0.5...). Devuelve el plano con los ejes que falten."""
+    ejes_ia = datos.get("ejes") if isinstance(datos, dict) else None
+    if not isinstance(ejes_ia, dict) or (plano.get("x") and plano.get("y")):
+        return plano
+    out = dict(plano)
+    for eje in ("x", "y"):
+        if out.get(eje):
+            continue
+        pares = sorted(set(_pares_de_ia(ejes_ia.get(eje), eje, s)))
+        if len(pares) < 2:
+            continue
+        (v1, p1), (v2, p2) = pares[0], pares[-1]
+        if v1 == v2 or abs(p2 - p1) < 8:
+            continue
+        signo = 1 if eje == "x" else -1
+        a = (p2 - p1) / (v2 - v1)
+        if a * signo <= 0:
+            continue                       # el eje x crece a la derecha y el y hacia arriba
+        b = p1 - a * v1
+        linea = (plano.get("lineas") or {}).get(eje)
+        if linea:
+            _, marcas, paso = linea
+            n = motor._redondo(paso / abs(a))
+            if n:
+                a2 = signo * paso / n
+                # el 0 del eje: que cada numero de la IA caiga justo en una rayita
+                bs = []
+                for v, p in pares:
+                    m = min(marcas, key=lambda t: abs(t - p))
+                    if abs(m - p) <= 0.45 * paso:
+                        bs.append(m - a2 * v)
+                if bs:
+                    bs.sort()
+                    a, b = a2, bs[len(bs) // 2]
+        out[eje] = (a, b)
+    return out
+
+
 def resolver(obj, cajas, campos, s, W, H, plano=None, controles=()):
     """Lo que eligio la IA -> (x, y, i_caja, i_campo, i_control) en pixeles de la region, o None si no cuadra."""
     if isinstance(obj, str):
@@ -683,7 +740,8 @@ def plano_de(img, cajas, zoom=1.0, ocr=None):
         fino = motor.ejes_del_plano(img, zoom, ocr)
     except Exception:
         fino = {"x": None, "y": None, "rango": {}}
-    return {"x": fino["x"] or p["x"], "y": fino["y"] or p["y"], "rango": fino.get("rango") or {}}
+    return {"x": fino["x"] or p["x"], "y": fino["y"] or p["y"], "rango": fino.get("rango") or {},
+            "lineas": fino.get("lineas") or {}}
 
 
 import ast as _ast  # noqa: E402
@@ -910,6 +968,21 @@ def _comprobar_cuentas(acciones, datos, plan):
 SOLO_PUNTOS = "en graficas solo se pican los puntos"
 
 
+def _dentro_del_plano(x, y, plano, cajas, i, margen):
+    """En una grafica: True si (x, y) cae dentro de la cuadricula del plano (no en la barra de herramientas, un
+    boton o los numeros de los ejes). Si no se sabe donde esta el plano, basta con que no sea un texto con letras."""
+    rango = (plano or {}).get("rango") or {}
+    if plano and plano.get("x") and plano.get("y") and rango.get("x") and rango.get("y"):
+        vx = (x - plano["x"][1]) / plano["x"][0]
+        vy = (y - plano["y"][1]) / plano["y"][0]
+        (x0, x1, px), (y0, y1, py) = rango["x"], rango["y"]
+        tx, ty = 0.5 * px + margen / abs(plano["x"][0]), 0.5 * py + margen / abs(plano["y"][0])
+        return x0 - tx <= vx <= x1 + tx and y0 - ty <= vy <= y1 + ty
+    if i is not None and len(re.findall(r"[A-Za-zÁÉÍÓÚáéíóúÑñ]", str(cajas[i].get("texto") or ""))) >= 2:
+        return False
+    return True
+
+
 # ================================================================ segunda opinion (preguntas de calcular)
 
 _COMPROBAR = ("SEGUNDA OPINION: resuelve esta pregunta OTRA VEZ desde cero, como si fuera la primera vez: vuelve a leer "
@@ -1027,7 +1100,10 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
             fino = motor.ejes_del_plano(region_img, zoom, ocr)
         except Exception:
             fino = {"x": None, "y": None}
-        plano = {"x": fino["x"] or plano["x"], "y": fino["y"] or plano["y"]}
+        plano = {"x": fino["x"] or plano["x"], "y": fino["y"] or plano["y"], "rango": fino.get("rango") or {},
+                 "lineas": fino.get("lineas") or plano.get("lineas") or {}}
+    if (not plano["x"] or not plano["y"]) and _usa_plano(datos):
+        plano = plano_con_ia(plano, datos, s)
 
     def _res(obj):
         return resolver(obj, cajas, campos, s, W, H, plano, controles)
@@ -1059,6 +1135,10 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
                 rechazar(a, "fuera de la pregunta o no existe")
                 continue
             x, y, i, _, ic = r
+            if plan.tipo == "graficar" and not _dentro_del_plano(x, y, plano, cajas, i, 2 * zoom):
+                # un punto fuera de la cuadricula (la barra de herramientas, un boton, los numeros): no se pica
+                rechazar(a, SOLO_PUNTOS)
+                continue
             es_id = not isinstance(obj, dict) and motor._numero(obj) is not None
             if i is not None and es_id:
                 j = _corregir_id(i, a.get("texto"), cajas)
@@ -1173,6 +1253,10 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
                                    controles[ic].get("etiqueta") if ic is not None else "menu") or "menu"})
 
         elif hacer == "arrastrar":
+            if plan.tipo == "graficar":
+                # en una grafica NO se traza ni se arrastra: solo se pican los puntos
+                rechazar(a, SOLO_PUNTOS)
+                continue
             r1 = _res(a.get("desde"))
             r2 = _res(a.get("hasta"))
             if r1 is None or r2 is None:
@@ -1184,8 +1268,14 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
             if r1[2] is not None and es_navegacion(cajas[r1[2]]["texto"]):
                 rechazar(a, "es un boton")
                 continue
+            # (el texto de lo que se arrastra y del lugar, si son textos: si algo se recorre al soltar otro, se
+            # vuelven a buscar en la pantalla antes de arrastrar)
+            es_texto = lambda o, r: r[2] if (r[2] is not None and not isinstance(o, dict)) else None  # noqa: E731
+            i1, i2 = es_texto(a.get("desde"), r1), es_texto(a.get("hasta"), r2)
             plan.pasos.append({"hacer": "arrastrar", "p": (r1[0], r1[1]), "p2": (r2[0], r2[1]),
-                               "desc": cajas[r1[2]]["texto"] if r1[2] is not None else "elemento"})
+                               "desc": cajas[r1[2]]["texto"] if r1[2] is not None else "elemento",
+                               "texto_desde": cajas[i1]["texto"] if i1 is not None else None,
+                               "texto_hasta": cajas[i2]["texto"] if i2 is not None else None})
 
         elif hacer == "ordenar":
             orden = [str(t).strip() for t in (a.get("orden") or []) if str(t).strip()]
@@ -1726,21 +1816,55 @@ class Ejecutor:
         paso["ok_local"] = self._se_lee(foto, paso["p"], None, paso["opcion"])
         return foto
 
+    def _donde_esta(self, foto, texto, cerca):
+        """Donde esta ahorita (en la foto) el texto de un elemento: el que mas se parece y, si hay varios, el mas
+        cercano a donde estaba. None si no se encuentra."""
+        if foto is None or self.ocr is None or not texto:
+            return None
+        try:
+            cajas = motor.detectar_cajas(foto, foto.width / 2, foto.height / 2, self.zoom, self.ocr)
+        except Exception:
+            return None
+        puntos = [(_parecido_renglon(texto, c["texto"]), c) for c in cajas]
+        if not puntos:
+            return None
+        mejor = max(v for v, _ in puntos)
+        if mejor < 0.6:
+            return None
+        c = min((c for v, c in puntos if v >= mejor - 0.05),
+                key=lambda c: math.hypot(c["cx"] - cerca[0], c["cy"] - cerca[1]))
+        return c["cx"], c["cy"]
+
     def _arrastrar(self, paso, antes):
-        X0, Y0 = self.pantalla(*paso["p"])
-        X1, Y1 = self.pantalla(*paso["p2"])
+        p, p2 = paso["p"], paso["p2"]
+        if paso.get("texto_desde") or paso.get("texto_hasta"):
+            # al soltar uno, los demas se pueden recorrer (el banco de etiquetas, una lista): se buscan otra vez
+            foto = antes if antes is not None else self.foto()
+            if paso.get("texto_desde"):
+                p = self._donde_esta(foto, paso["texto_desde"], p) or p
+            if paso.get("texto_hasta"):
+                p2 = self._donde_esta(foto, paso["texto_hasta"], p2) or p2
+        X0, Y0 = self.pantalla(*p)
+        X1, Y1 = self.pantalla(*p2)
         self.a.arrastrar(X0, Y0, X1, Y1, cancelar=self.cancelar)
         time.sleep(0.45)
         despues = self.foto()
         if antes is not None and despues is not None and not hubo_cambio(antes, despues):
+            # no se movio nada: otra vez, mas despacio (hay paginas que piden detener el mouse antes de arrastrar)
             self._revisar_cancelar()
-            self.a.arrastrar(X0, Y0, X1, Y1, cancelar=self.cancelar)
+            self._arrastre_lento(X0, Y0, X1, Y1)
             time.sleep(0.5)
             despues = self.foto()
             if not hubo_cambio(antes, despues):
                 self.fallas.append((paso, "el arrastre no movio nada"))
         self.hecho["arrastrar"] += 1
         return despues
+
+    def _arrastre_lento(self, X0, Y0, X1, Y1):
+        try:
+            self.a.arrastrar(X0, Y0, X1, Y1, pasos=48, cancelar=self.cancelar, lento=True)
+        except TypeError:                       # (una pantalla de pruebas sin "lento")
+            self.a.arrastrar(X0, Y0, X1, Y1, cancelar=self.cancelar)
 
     def _leer_orden(self, orden):
         """(fotos, cajas de cada elemento en el orden pedido) o (foto, None) si no se encontraron todos."""
@@ -1844,6 +1968,15 @@ class Ejecutor:
             self.a.arrastrar(X0, Y0, X1, Y1, cancelar=self.cancelar)
             movidas += 1
             time.sleep(0.6)
+            despues = self.foto()
+            if despues is not None and not hubo_cambio(foto, despues):
+                # no se movio: otra vez mas despacio (listas que piden mantener presionado para arrastrar)
+                self._revisar_cancelar()
+                self._arrastre_lento(X0, Y0, X1, Y1)
+                time.sleep(0.6)
+                if not hubo_cambio(foto, self.foto()):
+                    self.fallas.append((paso, "el arrastre no movio nada"))
+                    break
         else:
             self.fallas.append((paso, "no quedo en orden"))
         return self.foto()

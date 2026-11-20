@@ -3,7 +3,8 @@
 Las preguntas que fallaban en ALEKS, en el juego de los amigos, en Kahoot y en los quizzes de Gemini se recrean
 como paginas web: casillas angostas que crecen al escribir (y que ignoran el clic rapido, como ALEKS), varias
 casillas en una tarjeta, menus "Seleccionar" con opciones de dos renglones, ordenar con flechas, "selecciona todas",
-completar y una grafica con la herramienta ya elegida.
+completar, graficas (la herramienta ya elegida, numeros chiquitos, tema oscuro: solo se pican los puntos), ordenar
+arrastrando (sin flechas) y arrastrar etiquetas a su lugar.
 
 NO LIMIT las contesta con el mouse y el teclado de verdad. La IA es de mentiras (siempre dice lo correcto): asi se
 prueba que cada respuesta quede EN SU LUGAR. La pagina le dice a la prueba que quedo escrito o marcado.
@@ -252,6 +253,176 @@ PAGINAS["grafica"] = """<body data-prueba="grafica">
 </script>"""
 
 
+# ---- 2.5.1: grafica tipo ALEKS con numeros chiquitos de 1 en 1 y barra de herramientas (Parabola ya elegida).
+# NO LIMIT solo pica los dos puntos: ni la herramienta, ni trazar arrastrando.
+PAGINAS["grafica_parabola"] = """<body data-prueba="grafica_parabola">
+<style>
+ .fila{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+ .barra{display:flex;flex-direction:column;gap:8px}
+ .barra div{border:1px solid #9aa;border-radius:6px;padding:7px 10px;font-size:14px;background:#f3f4f6;cursor:pointer}
+ .barra div.si{background:#dfe9ff;border-color:#2348d6}
+</style>
+<div class="q" data-r="pregunta">
+ <div style="font-size:18px">Grafica la parábola y = (x − 1)² − 4. Primero pica el vértice y luego otro punto de la parábola.</div>
+ <div class="fila">
+  <div class="barra"><div>Punto</div><div>Recta</div><div class="si">Parábola</div><div>Borrar</div></div>
+  <canvas id="c" width="440" height="440" data-r="plano"></canvas>
+ </div>
+</div>
+<script>
+ const c=document.getElementById('c'), g=c.getContext('2d'); const U=20, O=220; const pts=[], crudos=[]; let herramienta=0;
+ document.querySelectorAll('.barra div').forEach(b=>b.addEventListener('click',()=>herramienta++));
+ function px(v){return O+v*U} function py(v){return O-v*U}
+ function linea(x0,y0,x1,y1){ g.beginPath(); g.moveTo(Math.round(x0)+0.5,Math.round(y0)+0.5); g.lineTo(Math.round(x1)+0.5,Math.round(y1)+0.5); g.stroke(); }
+ function pintar(){   // como ALEKS: cuadricula clara, ejes negros, numeros chiquitos en CADA rayita
+   g.fillStyle='#fff'; g.fillRect(0,0,440,440); g.lineWidth=1;
+   for(let k=-10;k<=10;k++){ g.strokeStyle='#d5d8e2'; linea(px(k),py(10),px(k),py(-10)); linea(px(-10),py(k),px(10),py(k)); }
+   g.strokeStyle='#000'; linea(px(-10),O,px(10),O); linea(O,py(-10),O,py(10));
+   g.fillStyle='#333'; g.font='11px Arial';
+   for(let k=-10;k<=10;k++){ if(!k) continue; linea(px(k),O-4,px(k),O+4); linea(O-4,py(k),O+4,py(k));
+     const t=String(k); const w=g.measureText(t).width; g.fillText(t, px(k)-w/2, O+16); g.fillText(t, O-7-w, py(k)+4); }
+   pts.forEach(p=>{ g.fillStyle='#c0392b'; g.beginPath(); g.arc(px(p[0]),py(p[1]),5,0,7); g.fill(); });
+   if(pts.length>=2){ const [v,q]=pts; const a=(q[1]-v[1])/(((q[0]-v[0])**2)||1e-9); g.strokeStyle='#c0392b'; g.lineWidth=2; g.beginPath();
+     for(let i=0;i<=80;i++){ const x=-10+i/4; const y=a*(x-v[0])**2+v[1]; i?g.lineTo(px(x),py(y)):g.moveTo(px(x),py(y)); } g.stroke(); g.lineWidth=1; }
+ }
+ pintar();
+ let trazos=0; c.addEventListener('mousemove', e=>{ if(e.buttons&1) trazos++; });
+ c.addEventListener('click', e=>{ const b=c.getBoundingClientRect(); const x=(e.clientX-b.left-O)/U, y=(O-(e.clientY-b.top))/U;
+   crudos.push([Math.round(x*100)/100, Math.round(y*100)/100]);
+   if(pts.length<2){ pts.push([Math.round(x), Math.round(y)]); pintar(); } });
+ window.valores = ()=>({puntos: pts, crudos, herramienta, trazos});
+</script>"""
+
+# ---- 2.5.1: plano con tema oscuro (como Desmos en modo oscuro): solo picar los puntos que pide la instruccion.
+PAGINAS["grafica_oscura"] = """<body data-prueba="grafica_oscura" style="background:#121212;color:#eee">
+<div class="q" data-r="pregunta">
+ <div style="font-size:18px">Plot the points (−3, 4) and (2, −1) in that order.</div>
+ <canvas id="c" width="440" height="440" data-r="plano" style="margin-top:10px"></canvas>
+</div>
+<script>
+ const c=document.getElementById('c'), g=c.getContext('2d'); const U=20, O=220; const pts=[], crudos=[];
+ function px(v){return O+v*U} function py(v){return O-v*U}
+ function linea(x0,y0,x1,y1){ g.beginPath(); g.moveTo(Math.round(x0)+0.5,Math.round(y0)+0.5); g.lineTo(Math.round(x1)+0.5,Math.round(y1)+0.5); g.stroke(); }
+ function pintar(){
+   g.fillStyle='#1e1e1e'; g.fillRect(0,0,440,440); g.lineWidth=1;
+   for(let k=-10;k<=10;k++){ g.strokeStyle='#3a3a3a'; linea(px(k),py(10),px(k),py(-10)); linea(px(-10),py(k),px(10),py(k)); }
+   g.strokeStyle='#eee'; linea(px(-10),O,px(10),O); linea(O,py(-10),O,py(10));
+   g.fillStyle='#ddd'; g.font='12px Arial';
+   for(let k=-10;k<=10;k++){ if(!k) continue; linea(px(k),O-4,px(k),O+4); linea(O-4,py(k),O+4,py(k));
+     if(k%2) continue; const t=String(k); const w=g.measureText(t).width; g.fillText(t, px(k)-w/2, O+17); g.fillText(t, O-8-w, py(k)+4); }
+   pts.forEach(p=>{ g.fillStyle='#4fc3f7'; g.beginPath(); g.arc(px(p[0]),py(p[1]),5,0,7); g.fill(); });
+ }
+ pintar();
+ c.addEventListener('click', e=>{ const b=c.getBoundingClientRect(); const x=(e.clientX-b.left-O)/U, y=(O-(e.clientY-b.top))/U;
+   crudos.push([Math.round(x*100)/100, Math.round(y*100)/100]); pts.push([Math.round(x), Math.round(y)]); pintar(); });
+ window.valores = ()=>({puntos: pts, crudos});
+</script>"""
+
+# ---- 2.5.1: ordenar ARRASTRANDO (sin flechas), con arrastrar y soltar del navegador (HTML5 draggable).
+PAGINAS["ordenar_arrastrar"] = """<body data-prueba="ordenar_arrastrar">
+<style>
+ .it{display:flex;align-items:center;border:1.5px solid #cfd6e4;border-radius:10px;padding:12px 16px;margin:10px 0;width:520px;
+     font-size:19px;background:#f7f9fc;cursor:grab;user-select:none}
+ .it .h{color:#b5bccb;margin-right:16px;font-size:13px}
+ .it.sobre{border-color:#2a6df4}
+</style>
+<div class="q" data-r="pregunta">
+ <div style="font-size:20px;font-family:Georgia,serif;margin-bottom:8px">Arrastra los planetas para ordenarlos del más cercano al Sol (arriba) al más lejano (abajo):</div>
+ <div id="l"></div>
+</div>
+<script>
+ let items=["Marte","Mercurio","Júpiter","Tierra","Venus"]; let arrastrando=null, arrastres=0;
+ function pintar(){ const l=document.getElementById('l'); l.innerHTML='';
+   items.forEach((t,i)=>{ const d=document.createElement('div'); d.className='it'; d.draggable=true;
+     d.innerHTML='<span class="h">&#9679;&#9679;</span><span>'+t+'</span>';
+     d.addEventListener('dragstart',e=>{ arrastrando=i; arrastres++; e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',t); });
+     d.addEventListener('dragover',e=>{ e.preventDefault(); d.classList.add('sobre'); });
+     d.addEventListener('dragleave',()=>d.classList.remove('sobre'));
+     d.addEventListener('drop',e=>{ e.preventDefault(); if(arrastrando===null) return;
+        const b=d.getBoundingClientRect(); let j=i+(e.clientY>b.top+b.height/2?1:0);
+        const [x]=items.splice(arrastrando,1); if(arrastrando<j) j--; items.splice(j,0,x); arrastrando=null; pintar(); });
+     d.addEventListener('dragend',()=>{ arrastrando=null; });
+     l.appendChild(d); }); }
+ pintar();
+ window.valores=()=>({orden: items, arrastres});
+</script>"""
+
+# ---- 2.5.1: ordenar arrastrando con el mouse (como dnd-kit o las tarjetas de un quiz): la tarjeta sigue al mouse y
+# las demas se recorren mientras se arrastra.
+PAGINAS["ordenar_puntero"] = """<body data-prueba="ordenar_puntero">
+<style>
+ .it{border:1.5px solid #d9d4ef;border-radius:10px;padding:12px 16px;margin:10px 0;width:560px;font-size:19px;
+     background:#fbfaff;user-select:none;cursor:grab;box-sizing:border-box}
+ .it.vuela{position:fixed;z-index:10;box-shadow:0 8px 20px #0003;margin:0;pointer-events:none}
+ .hueco{border:1.5px dashed #b9b0e6;border-radius:10px;margin:10px 0;width:560px;box-sizing:border-box}
+</style>
+<div class="q" data-r="pregunta">
+ <div style="font-size:20px;font-family:Georgia,serif;margin-bottom:8px">Ordena los pasos del método científico, del primero (arriba) al último (abajo):</div>
+ <div id="l"></div>
+</div>
+<script>
+ let items=["Experimentación","Observación","Conclusión","Hipótesis","Análisis de resultados"]; let drag=null, arrastres=0;
+ const l=document.getElementById('l');
+ function pintar(){ l.innerHTML=''; items.forEach(t=>{ const d=document.createElement('div'); d.className='it'; d.textContent=t; l.appendChild(d); }); }
+ pintar();
+ l.addEventListener('mousedown', e=>{ const el=e.target.closest('.it'); if(!el) return; e.preventDefault();
+   const b=el.getBoundingClientRect(); drag={el, x0:e.clientX, y0:e.clientY, dx:e.clientX-b.left, dy:e.clientY-b.top, h:b.height, va:false}; });
+ document.addEventListener('mousemove', e=>{ if(!drag) return;
+   if(!drag.va){ if(Math.hypot(e.clientX-drag.x0, e.clientY-drag.y0)<5) return;
+     drag.va=true; arrastres++; const hueco=document.createElement('div'); hueco.className='hueco'; hueco.style.height=drag.h+'px';
+     l.insertBefore(hueco, drag.el); drag.hueco=hueco; drag.el.classList.add('vuela'); document.body.appendChild(drag.el); }
+   drag.el.style.left=(e.clientX-drag.dx)+'px'; drag.el.style.top=(e.clientY-drag.dy)+'px';
+   const otros=[...l.querySelectorAll('.it')]; const antes=otros.find(o=>{ const b=o.getBoundingClientRect(); return e.clientY<b.top+b.height/2; });
+   if(antes) l.insertBefore(drag.hueco, antes); else l.appendChild(drag.hueco); });
+ document.addEventListener('mouseup', ()=>{ if(!drag) return;
+   if(drag.va){ const orden=[...l.children].map(c=>c===drag.hueco?drag.el.textContent:c.textContent); items=orden; drag.el.remove(); pintar(); }
+   drag=null; });
+ window.valores=()=>({orden: items, arrastres});
+</script>"""
+
+# ---- 2.5.1: arrastrar etiquetas a su lugar (como H5P, Wordwall o Educaplay): al soltar una, las del banco se recorren.
+PAGINAS["etiquetas"] = """<body data-prueba="etiquetas">
+<style>
+ .banco{display:flex;gap:14px;margin:16px 0 22px;min-height:48px}
+ .et{border:1.5px solid #e0a83a;background:#fff4dc;border-radius:8px;padding:10px 18px;font-size:18px;cursor:grab;user-select:none}
+ .et.vuela{position:fixed;z-index:10;box-shadow:0 6px 16px #0003;pointer-events:none}
+ .cols{display:flex;gap:18px}
+ .col{border:1.5px solid #ccc;border-radius:12px;width:250px;padding:12px;background:#fafafa}
+ .col .d{font-size:16px;min-height:44px}
+ .zona{margin-top:10px;height:62px;border:2px dashed #aab;border-radius:8px;display:flex;align-items:center;justify-content:center;
+       color:#888;font-size:15px}
+</style>
+<div class="q" data-r="pregunta">
+ <div style="font-size:20px;font-family:Georgia,serif">Arrastra cada órgano a la función que le corresponde:</div>
+ <div class="banco" id="banco"></div>
+ <div class="cols" id="cols"></div>
+</div>
+<script>
+ const ORG=["Riñones","Corazón","Pulmones"];
+ const FUN=["Bombea la sangre a todo el cuerpo","Intercambian oxígeno y dióxido de carbono","Filtran la sangre y forman la orina"];
+ const puesto={}; let drag=null, arrastres=0;
+ function pintar(){
+   const banco=document.getElementById('banco'); banco.innerHTML='';
+   ORG.filter(o=>!Object.values(puesto).includes(o)).forEach(o=>{ const d=document.createElement('div'); d.className='et'; d.textContent=o; banco.appendChild(d); });
+   const cols=document.getElementById('cols'); cols.innerHTML='';
+   FUN.forEach(f=>{ const c=document.createElement('div'); c.className='col';
+     c.innerHTML='<div class="d">'+f+'</div><div class="zona" data-f="'+f+'">'+(puesto[f]?'<div class="et">'+puesto[f]+'</div>':'Suelta aquí')+'</div>';
+     cols.appendChild(c); });
+ }
+ pintar();
+ document.addEventListener('mousedown', e=>{ const el=e.target.closest('#banco .et'); if(!el) return; e.preventDefault();
+   const b=el.getBoundingClientRect(); drag={el, x0:e.clientX, y0:e.clientY, dx:e.clientX-b.left, dy:e.clientY-b.top, va:false}; });
+ document.addEventListener('mousemove', e=>{ if(!drag) return;
+   if(!drag.va){ if(Math.hypot(e.clientX-drag.x0, e.clientY-drag.y0)<4) return; drag.va=true; arrastres++; drag.el.classList.add('vuela'); }
+   drag.el.style.left=(e.clientX-drag.dx)+'px'; drag.el.style.top=(e.clientY-drag.dy)+'px'; });
+ document.addEventListener('mouseup', e=>{ if(!drag) return;
+   if(drag.va){ const z=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x.classList && x.classList.contains('zona'));
+     if(z && !puesto[z.dataset.f]) puesto[z.dataset.f]=drag.el.textContent; }
+   drag=null; pintar(); });
+ window.valores=()=>Object.assign({arrastres}, puesto);
+</script>"""
+
+
 # ---------------------------------------------------------------- servidor de las paginas
 
 class _Estado:
@@ -447,6 +618,64 @@ def _contestar_grafica(t):
         {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
 
 
+def _contestar_grafica_parabola(t):
+    # (como a veces la IA de verdad: pica la herramienta y quiere trazar arrastrando; NO LIMIT solo pica los puntos)
+    herr = _ids(t, "Parabola")
+    return {"tipo": "graficar", "respuesta": "vertice (1, -4) y el punto (3, 0)", "acciones": [
+        {"hacer": "clic", "en": herr[0][0] if herr else {"x": 30, "y": 120}, "texto": "Parábola"},
+        {"hacer": "clic", "en": {"gx": 1, "gy": -4}},
+        {"hacer": "arrastrar", "desde": {"gx": 1, "gy": -4}, "hasta": {"gx": 3, "gy": 0}},
+        {"hacer": "clic", "en": {"gx": 3, "gy": 0}}]}
+
+
+def _contestar_grafica_oscura(t):
+    return {"tipo": "graficar", "respuesta": "(-3, 4) y (2, -1)", "acciones": [
+        {"hacer": "clic", "en": {"gx": -3, "gy": 4}}, {"hacer": "clic", "en": {"gx": 2, "gy": -1}}]}
+
+
+def _contestar_ordenar_arrastrar(t):
+    return {"tipo": "ordenar", "respuesta": "Mercurio, Venus, Tierra, Marte, Júpiter",
+            "acciones": [{"hacer": "ordenar", "orden": ["Mercurio", "Venus", "Tierra", "Marte", "Júpiter"]}]}
+
+
+def _contestar_ordenar_puntero(t):
+    return {"tipo": "ordenar", "respuesta": "Observación, Hipótesis, Experimentación, Análisis, Conclusión",
+            "acciones": [{"hacer": "ordenar", "orden": ["Observación", "Hipótesis", "Experimentación",
+                                                        "Análisis de resultados", "Conclusión"]}]}
+
+
+def _id_parecido(t, texto):
+    """El id de la caja cuyo texto mas se parece (el OCR lee 'Coraz6n' o '| Rifiones': la IA de verdad ve la imagen)."""
+    import difflib
+    mejor = (0.0, None)
+    for i, x, y, tx in _lineas(t):
+        if not i.isdigit():
+            continue
+        v = difflib.SequenceMatcher(None, _norm(texto), _norm(tx).strip(" |.:")).ratio()
+        if v > mejor[0]:
+            mejor = (v, (int(i), x, y))
+    return [mejor[1]] if mejor[0] >= 0.6 else []
+
+
+def _contestar_etiquetas(t):
+    """Cada organo se arrastra hasta el 'Suelta aqui' de la columna de su funcion (el que queda abajo de ella)."""
+    zonas = _ids(t, "Suelta")
+    acciones = []
+    for organo, funcion in (("Corazón", "Bombea la sangre"), ("Pulmones", "Intercambian"), ("Riñones", "Filtran la sangre")):
+        desde, f = _id_parecido(t, organo), _ids(t, funcion)
+        if not desde or not f or not zonas:
+            continue
+        z = min(zonas, key=lambda k: abs(k[1] - f[0][1]) + (0 if k[2] > f[0][2] else 9999))
+        acciones.append({"hacer": "arrastrar", "desde": desde[0][0], "hasta": {"x": z[1], "y": z[2]}})
+    return {"tipo": "arrastrar", "respuesta": "Corazón: bombea | Pulmones: intercambian | Riñones: filtran",
+            "acciones": acciones}
+
+
+def _cerca(crudos, esperados, tol=0.25):
+    return len(crudos) == len(esperados) and all(abs(a[0] - b[0]) <= tol and abs(a[1] - b[1]) <= tol
+                                                 for a, b in zip(crudos, esperados))
+
+
 def _ok_aleks(v):
     return v.get("A") == "39" and v.get("b") == "41.1" and v.get("c") == "34.6"
 
@@ -472,6 +701,19 @@ PRUEBAS = [
      lambda v: v.get("texto") == "imprenta de tipos móviles"),
     ("grafica", _contestar_grafica, "graficar", None, ("pregunta", 40, 10),
      lambda v: v.get("puntos") == [[0, 2], [-1, 0]]),
+    ("grafica_parabola", _contestar_grafica_parabola, "graficar", None, ("pregunta", 40, 10),
+     lambda v: v.get("puntos") == [[1, -4], [3, 0]] and _cerca(v.get("crudos") or [], [[1, -4], [3, 0]])
+     and not v.get("herramienta") and not v.get("trazos")),
+    ("grafica_oscura", _contestar_grafica_oscura, "graficar", None, ("pregunta", 40, 10),
+     lambda v: v.get("puntos") == [[-3, 4], [2, -1]] and _cerca(v.get("crudos") or [], [[-3, 4], [2, -1]])),
+    ("ordenar_arrastrar", _contestar_ordenar_arrastrar, "ordenar", None, ("pregunta", 40, 12),
+     lambda v: v.get("orden") == ["Mercurio", "Venus", "Tierra", "Marte", "Júpiter"]),
+    ("ordenar_puntero", _contestar_ordenar_puntero, "ordenar", None, ("pregunta", 40, 12),
+     lambda v: v.get("orden") == ["Observación", "Hipótesis", "Experimentación", "Análisis de resultados", "Conclusión"]),
+    ("etiquetas", _contestar_etiquetas, "arrastrar", None, ("pregunta", 40, 12),
+     lambda v: v.get("Bombea la sangre a todo el cuerpo") == "Corazón"
+     and v.get("Intercambian oxígeno y dióxido de carbono") == "Pulmones"
+     and v.get("Filtran la sangre y forman la orina") == "Riñones"),
 ]
 
 
