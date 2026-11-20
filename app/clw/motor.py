@@ -756,34 +756,37 @@ def _numeros_por_ventana(img, zoom, ocr, marcas, paso, horizontal, umbral=170):
         return []
     px = g.load()
     _quitar_lineas(px, W, H, umbral, zoom)
-    tinta = [[px[x, y] < umbral for x in range(W)] for y in range(H)]
-    visto = [[False] * W for _ in range(H)]
+    # (todo en bytearrays planos y no en listas de listas: casi no se crean objetos)
+    tinta = bytearray(g.point(lambda v: 1 if v < umbral else 0).tobytes())
     grupos = {}
-    for y in range(H):
-        for x in range(W):
-            if not tinta[y][x] or visto[y][x]:
-                continue
-            pila, xs, ys = [(x, y)], [], []
-            visto[y][x] = True
-            while pila:
-                cx, cy = pila.pop()
-                xs.append(cx)
-                ys.append(cy)
-                for nx in (cx - 1, cx, cx + 1):
+    for i0 in range(W * H):
+        if not tinta[i0]:
+            continue
+        tinta[i0] = 0
+        pila = [i0]
+        x0 = x1 = i0 % W
+        y0 = y1 = i0 // W
+        n = 0
+        while pila:
+            i = pila.pop()
+            n += 1
+            cx, cy = i % W, i // W
+            x0, x1, y0, y1 = min(x0, cx), max(x1, cx), min(y0, cy), max(y1, cy)
+            for nx in (cx - 1, cx, cx + 1):
+                if 0 <= nx < W:
                     for ny in (cy - 1, cy, cy + 1):
-                        if 0 <= nx < W and 0 <= ny < H and tinta[ny][nx] and not visto[ny][nx]:
-                            visto[ny][nx] = True
-                            pila.append((nx, ny))
-            x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)
-            if (x1 - x0) > 30 * zoom or (y1 - y0) > 26 * zoom:
-                continue                               # algo grande que no es un numero
-            centro = (x0 + x1) / 2 if horizontal else (y0 + y1) / 2
-            m = min(marcas, key=lambda t: abs(t - centro))
-            if abs(m - centro) > 0.55 * paso:
-                continue
-            gr = grupos.setdefault(m, [x0, y0, x1, y1, 0])
-            gr[0], gr[1], gr[2], gr[3] = min(gr[0], x0), min(gr[1], y0), max(gr[2], x1), max(gr[3], y1)
-            gr[4] += len(xs)
+                        if 0 <= ny < H and tinta[ny * W + nx]:
+                            tinta[ny * W + nx] = 0
+                            pila.append(ny * W + nx)
+        if (x1 - x0) > 30 * zoom or (y1 - y0) > 26 * zoom:
+            continue                                   # algo grande que no es un numero
+        centro = (x0 + x1) / 2 if horizontal else (y0 + y1) / 2
+        m = min(marcas, key=lambda t: abs(t - centro))
+        if abs(m - centro) > 0.55 * paso:
+            continue
+        gr = grupos.setdefault(m, [x0, y0, x1, y1, 0])
+        gr[0], gr[1], gr[2], gr[3] = min(gr[0], x0), min(gr[1], y0), max(gr[2], x1), max(gr[3], y1)
+        gr[4] += n
     # lo que quedo de cada rayita: debe parecer un numero (alto de letra, con tinta)
     buenos = [(m, gr) for m, gr in sorted(grupos.items()) if gr[3] - gr[1] >= 4 * zoom and gr[4] >= 6 * zoom]
     if not buenos:

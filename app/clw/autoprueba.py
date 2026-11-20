@@ -1078,6 +1078,10 @@ def main(salida):
             _ventana_y_e2e(salida)
     except Exception as e:
         RESULTADOS.setdefault("ventana", {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]})
+    # lo que quedo de Tk (imagenes, variables) se recoge AQUI, en el hilo de Tk: si lo recoge el recolector de
+    # basura en el hilo del bot, Tcl truena (0x80000003) y se cierra la app
+    import gc
+    gc.collect()
     _escribir(salida)                # (lo que va hasta ahorita, por si algo de lo que sigue se cuelga)
     if os.environ.get("CLW_SIN_NAVEGADOR") != "1":
         # preguntas como las de ALEKS, Kahoot, juegos y quizzes, en Chrome / Edge de verdad

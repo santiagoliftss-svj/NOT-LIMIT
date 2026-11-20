@@ -138,6 +138,7 @@ class Ventana:
         self.bot.hwnd_propio = self._hwnd
         self._pintar()
         self.root.after(30, self._tick)
+        self.root.after(20000, self._recoger_basura)
         def al_terminar():                 # con la IA incluida: cuantas preguntas le quedan (y registra la compu)
             codigo = self.config.get("licencia")
             if codigo and licencia.servidor() and licencia.estado(self.config).activa:
@@ -437,6 +438,18 @@ class Ventana:
                 self._poner_alerta(ev[1])
             elif ev[2] == "ok":
                 self._poner_alerta(None)
+
+    def _recoger_basura(self):
+        """La basura con cosas de Tk (imagenes, variables) se recoge aqui, en el hilo de Tk. Si la recogiera el hilo
+        que contesta (que crea muchos objetos al leer la pantalla), Tcl tronaria y la app se cerraria."""
+        if self._cerrado:
+            return
+        try:
+            import gc
+            gc.collect()
+        except Exception:
+            pass
+        self.root.after(20000, self._recoger_basura)
 
     def _tick(self):
         if self._cerrado:
