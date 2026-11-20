@@ -79,6 +79,13 @@ export async function rapida(normal) {
   return hex;
 }
 
+export function horaMx(ms = Date.now()) {
+  // AAAA-MM-DDTHH:MM en la hora de Mexico
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit",
+    day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
 export function fechaMx(ms = Date.now()) {
   // AAAA-MM-DD en la hora de Mexico
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit" })
@@ -119,7 +126,7 @@ export function limitePropio(v, hoy) {
   return null;
 }
 
-export function estadoDe(num, huella, lista, hoy) {
+export function estadoDe(num, huella, lista, hoy, ahora = horaMx()) {
   const plan = String((lista.planes || {})[String(num)] || PLAN_NORMAL).toLowerCase();
   const p = NOMBRES[plan] ? plan : PLAN_NORMAL;
   const duenos = (lista.duenos || []).map(Number);
@@ -141,6 +148,11 @@ export function estadoDe(num, huella, lista, hoy) {
   }
   if (String(base.vence) < hoy) {
     return { ...base, activa: false, motivo: "vencido", mensaje: `Tu plan venció el ${base.vence}. Renuévalo para seguir.` };
+  }
+  // vencen_hora: {"2": "2026-11-20T13:55"} -> se acaba a esa hora exacta (hora de Mexico): pruebas de unos minutos
+  const hora = String((lista.vencen_hora || {})[String(num)] || "");
+  if (hora && hora <= ahora) {
+    return { ...base, activa: false, motivo: "vencido", mensaje: "Se acabó tu prueba. Paga tu plan para seguir." };
   }
   return { ...base, activa: true, motivo: "ok" };
 }
