@@ -423,6 +423,86 @@ PAGINAS["etiquetas"] = """<body data-prueba="etiquetas">
 </script>"""
 
 
+# ---- 2.5.2: ALEKS "demostrar la ley de los cosenos" (la que no se podia contestar): circulos con formulas (letras
+# cursivas y exponentes, el OCR las lee a medias) y casillas CHIQUITAS de una letra (9 x 16, como en ALEKS; las de la
+# Parte 2 amarillas) entre la formula, dentro de una tabla.
+PAGINAS["aleks_cosenos"] = """<body data-prueba="aleks_cosenos">
+<style>
+ .q{left:30px;top:16px;width:900px;font-family:Arial,Helvetica,sans-serif;color:#111}
+ .m{font-family:"Times New Roman",Times,Georgia,serif;font-size:1.18rem}
+ .m var{font-style:italic} .m sup{font-size:.72em;vertical-align:super;line-height:0}
+ .mi{width:9px;height:16px;border:1px solid #3a4fe0;border-radius:0;text-align:center;font-family:"Times New Roman",Times,serif;
+     font-style:italic;font-size:13px;color:#000;background:#fff;outline:none;padding:0;margin:0 2px;box-sizing:border-box;vertical-align:middle}
+ .mi.am{background:#fff4c2}
+ .mi:focus{outline:1px solid #3a4fe0}
+ table{border-collapse:collapse;width:820px;border:1px solid #222} td{border:1px solid #222;vertical-align:top}
+ .dg{width:34%;padding:12px 10px;text-align:center} .pc{padding:10px 18px 12px 18px}
+ .op{display:inline-flex;align-items:center;cursor:pointer;user-select:none;padding:3px 6px}
+ .op input{appearance:none;-webkit-appearance:none;width:15px;height:15px;border:1.5px solid #666;border-radius:50%;margin:0 6px 0 0;
+     position:relative;cursor:pointer;background:#fff;flex-shrink:0}
+ .op input:checked::after{content:"";width:7px;height:7px;background:#222;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+ .ops{display:grid;grid-template-columns:1fr 1fr;row-gap:8px;column-gap:24px;padding-left:12px}
+ .t{font-size:15px;margin-bottom:8px} .f{padding-left:20px;display:flex;align-items:center;flex-wrap:wrap}
+ .intro p{margin:0;font-size:15px;line-height:1.55}
+</style>
+<div class="q" data-r="pregunta">
+ <div class="intro" style="margin-bottom:10px">
+  <p>Las longitudes laterales de <span class="m">&#9651;<var>ABC</var></span> son <span class="m"><var>a</var></span>, <span class="m"><var>b</var></span> y <span class="m"><var>c</var></span>. La altura del triángulo es <span class="m"><var>h</var></span>, y <span class="m"><var>BD</var> = <var>x</var></span>.</p>
+  <p>Completar los siguientes pasos para demostrar la ley de los cosenos. Se permite utilizar las letras <span class="m"><var>a</var></span>, <span class="m"><var>b</var></span>, <span class="m"><var>c</var></span>, <span class="m"><var>x</var></span> y <span class="m"><var>h</var></span>.</p>
+ </div>
+ <table><tbody>
+  <tr><td rowspan="4" class="dg">
+   <svg viewBox="0 0 250 270" width="220" height="238">
+    <line x1="10" y1="190" x2="190" y2="10" stroke="#111" stroke-width="1.5"/>
+    <line x1="4" y1="184" x2="16" y2="196" stroke="#111" stroke-width="1.5"/><line x1="184" y1="4" x2="196" y2="16" stroke="#111" stroke-width="1.5"/>
+    <text x="96" y="95" font-family="Times New Roman, serif" font-style="italic" font-size="16">a</text>
+    <polygon points="32,212 212,32 144,204" fill="none" stroke="#0c6b82" stroke-width="2"/>
+    <line x1="92" y1="152" x2="144" y2="204" stroke="#0c6b82" stroke-width="1.7" stroke-dasharray="5,4"/>
+    <polyline points="103,141 114,152 103,163" fill="none" stroke="#0c6b82" stroke-width="1.4"/>
+    <text x="210" y="24" font-family="Times New Roman, serif" font-style="italic" font-size="16">B</text>
+    <text x="15" y="216" font-family="Times New Roman, serif" font-style="italic" font-size="16">C</text>
+    <text x="148" y="218" font-family="Times New Roman, serif" font-style="italic" font-size="16">A</text>
+    <text x="74" y="148" font-family="Times New Roman, serif" font-style="italic" font-size="16">D</text>
+    <text x="135" y="124" font-family="Times New Roman, serif" font-style="italic" font-size="15">x</text>
+    <text x="122" y="173" font-family="Times New Roman, serif" font-style="italic" font-size="15">h</text>
+    <text x="82" y="223" font-family="Times New Roman, serif" font-style="italic" font-size="16">b</text>
+    <text x="186" y="130" font-family="Times New Roman, serif" font-style="italic" font-size="16">c</text>
+   </svg></td>
+   <td class="pc"><div class="t"><b>Parte 1:</b> Utilizar el teorema de Pitágoras para calcular <span class="m"><var>b</var><sup>2</sup></span>.</div>
+    <div class="ops">
+     <label class="op"><input type="radio" name="p1" value="0"><span class="m"><var>b</var><sup>2</sup> = <var>x</var><sup>2</sup> + <var>h</var><sup>2</sup></span></label>
+     <label class="op"><input type="radio" name="p1" value="1"><span class="m"><var>b</var><sup>2</sup> = <var>a</var><sup>2</sup> &minus; <var>c</var><sup>2</sup></span></label>
+     <label class="op"><input type="radio" name="p1" value="2"><span class="m"><var>b</var><sup>2</sup> = <var>a</var><sup>2</sup> &minus; <var>x</var><sup>2</sup></span></label>
+     <label class="op"><input type="radio" name="p1" value="3"><span class="m"><var>b</var><sup>2</sup> = (<var>a</var> &minus; <var>x</var>)<sup>2</sup> + <var>h</var><sup>2</sup></span></label>
+    </div></td></tr>
+  <tr><td class="pc"><div class="t"><b>Parte 2:</b> Utilizar la respuesta obtenida en la Parte 1 para llenar los espacios vacíos.</div>
+    <div class="m f"><span><var>b</var><sup>2</sup> &nbsp;=&nbsp; <var>x</var><sup>2</sup> &nbsp;+&nbsp; <var>h</var><sup>2</sup> &nbsp;+&nbsp;</span>
+     <span style="display:inline-flex;align-items:baseline"><input type="text" maxlength="1" id="p2-1" class="mi am"><sup>2</sup></span>
+     <span>&nbsp;&minus;&nbsp; 2 &middot;</span><input type="text" maxlength="1" id="p2-2" class="mi am"><span>&middot;</span><input type="text" maxlength="1" id="p2-3" class="mi am">
+    </div></td></tr>
+  <tr><td class="pc"><div class="t"><b>Parte 3:</b> Utilizar el teorema de Pitágoras para calcular <span class="m"><var>c</var><sup>2</sup></span>.</div>
+    <div class="ops">
+     <label class="op"><input type="radio" name="p3" value="0"><span class="m"><var>c</var><sup>2</sup> = (<var>a</var> &minus; <var>x</var>)<sup>2</sup> + <var>h</var><sup>2</sup></span></label>
+     <label class="op"><input type="radio" name="p3" value="1"><span class="m"><var>c</var><sup>2</sup> = <var>a</var><sup>2</sup> &minus; <var>b</var><sup>2</sup></span></label>
+     <label class="op"><input type="radio" name="p3" value="2"><span class="m"><var>c</var><sup>2</sup> = <var>x</var><sup>2</sup> + <var>h</var><sup>2</sup></span></label>
+     <label class="op"><input type="radio" name="p3" value="3"><span class="m"><var>c</var><sup>2</sup> = <var>a</var><sup>2</sup> &minus; <var>x</var><sup>2</sup></span></label>
+    </div></td></tr>
+  <tr><td class="pc"><div class="t"><b>Parte 4:</b> Utilizar las respuestas obtenidas en las Partes 2 y 3 para llenar los espacios vacíos.</div>
+    <div class="m f"><span><var>b</var><sup>2</sup> &nbsp;=&nbsp;</span>
+     <span style="display:inline-flex;align-items:baseline"><input type="text" maxlength="1" id="p4-1" class="mi"><sup>2</sup></span><span>&nbsp;+&nbsp;</span>
+     <span style="display:inline-flex;align-items:baseline"><input type="text" maxlength="1" id="p4-2" class="mi"><sup>2</sup></span>
+     <span>&nbsp;&minus;&nbsp; 2 &middot;</span><input type="text" maxlength="1" id="p4-3" class="mi"><span>&middot;</span><input type="text" maxlength="1" id="p4-4" class="mi">
+    </div></td></tr>
+ </tbody></table>
+</div>
+<script>
+ document.querySelectorAll('.mi').forEach(i=>i.addEventListener('input',function(){ this.value=this.value.toLowerCase().replace(/[^abcxh]/g,''); }));
+ window.valores=()=>{ const v={}; document.querySelectorAll('.mi').forEach(i=>v[i.id]=i.value);
+   const r1=document.querySelector('input[name=p1]:checked'), r3=document.querySelector('input[name=p3]:checked');
+   v.p1=r1?r1.value:null; v.p3=r3?r3.value:null; return v; };
+</script>"""
+
+
 # ---------------------------------------------------------------- servidor de las paginas
 
 class _Estado:
@@ -678,6 +758,36 @@ def _cerca(crudos, esperados, tol=0.25):
                                                  for a, b in zip(crudos, esperados))
 
 
+def _opciones_de(t, desde, hasta):
+    """Las cajas de las opciones (circulos) entre dos titulos ("Parte 1" y "Parte 2"), en el orden en que se leen
+    (renglon por renglon, de izquierda a derecha). Sin los exponentes sueltos ("2")."""
+    lin = _lineas(t)
+    y0 = next((y for i, x, y, tx in lin if i.isdigit() and desde in _norm(tx)), None)
+    y1 = next((y for i, x, y, tx in lin if i.isdigit() and hasta in _norm(tx)), 10 ** 6)
+    if y0 is None:
+        return []
+    ops = [(int(i), x, y) for i, x, y, tx in lin
+           if i.isdigit() and y0 + 12 < y < y1 - 12 and len(tx.strip()) >= 4]
+    return sorted(ops, key=lambda k: (round(k[2] / 30), k[1]))
+
+
+def _contestar_aleks_cosenos(t):
+    """Como la IA de verdad: Parte 1 -> b^2 = (a - x)^2 + h^2 (abajo a la derecha); Parte 2 -> a, a, x;
+    Parte 3 -> c^2 = x^2 + h^2 (abajo a la izquierda); Parte 4 -> a, c, a, x (las que se vean)."""
+    acciones = []
+    p1, p3 = _opciones_de(t, "parte 1", "parte 2"), _opciones_de(t, "parte 3", "parte 4")
+    if len(p1) == 4:
+        acciones.append({"hacer": "clic", "en": p1[3][0], "texto": "b² = (a − x)² + h²"})
+    c = _campos(t, max_w=30, max_h=40)
+    letras = ["a", "a", "x", "a", "c", "a", "x"]
+    for k, v in zip(c, letras):
+        acciones.append({"hacer": "escribir", "en": k[0], "texto": v})
+    if len(p3) == 4:
+        acciones.append({"hacer": "clic", "en": p3[2][0], "texto": "c² = x² + h²"})
+    return {"tipo": "completar", "respuesta": "1) b²=(a−x)²+h² | 2) a, a, x | 3) c²=x²+h² | 4) a, c, a, x",
+            "acciones": acciones, "diag": [k[0] for k in c] + [k[0] for k in p1 + p3]}
+
+
 def _ok_aleks(v):
     return v.get("A") == "39" and v.get("b") == "41.1" and v.get("c") == "34.6"
 
@@ -701,6 +811,9 @@ PRUEBAS = [
      lambda v: v.get("marcadas") == [0, 2, 3]),
     ("completar", _contestar_completar, "completar", None, ("pregunta", 40, 12),
      lambda v: v.get("texto") == "imprenta de tipos móviles"),
+    ("aleks_cosenos", _contestar_aleks_cosenos, "completar", None, ("pregunta", 40, 12),
+     lambda v: v.get("p1") == "3" and v.get("p3") == "2" and [v.get(k) for k in ("p2-1", "p2-2", "p2-3")] == ["a", "a", "x"]
+     and all(v.get(k) in ("", w) for k, w in (("p4-1", "a"), ("p4-2", "c"), ("p4-3", "a"), ("p4-4", "x")))),
     ("grafica", _contestar_grafica, "graficar", None, ("pregunta", 40, 10),
      lambda v: v.get("puntos") == [[0, 2], [-1, 0]]),
     ("grafica_parabola", _contestar_grafica_parabola, "graficar", None, ("pregunta", 40, 10),

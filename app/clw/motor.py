@@ -314,7 +314,8 @@ def _rects_de_mascara(mascara, zoom, relajado, solo_anchos=False, max_tinta=0.5)
         lista.append((ini, ant))
         bandas[ext] = [b for b in lista if b[1] - b[0] <= 4 * zoom]
 
-    min_h = int((14 if relajado else 18) * zoom)
+    min_h = int(14 * zoom)          # (las cajitas de ALEKS entre una formula miden 9 x 16; las demas, 18 o mas)
+    min_h_ancha = int((14 if relajado else 18) * zoom)
     max_h = int(320 * zoom)
     min_w = int(8 * zoom)
     rects = []
@@ -345,11 +346,18 @@ def _rects_de_mascara(mascara, zoom, relajado, solo_anchos=False, max_tinta=0.5)
                 radio = max(x0 - izq, der - x1, 0)
                 if (b0 - t1 - 2 * radio) < 0.55 * (b0 - t1) or tinta_col(izq, t1 + 1 + radio, b0 - radio) < 0.9:
                     continue   # lados curvos: es una letra (o, 0, D), no una caja
-                if ancho < 28 * zoom and (solo_anchos or h < 1.3 * ancho or h < 17 * zoom):
+                if ancho >= 28 * zoom and h < min_h_ancha:
+                    continue   # una franja bajita y ancha: no es un campo
+                if ancho < 28 * zoom and (solo_anchos or h < 1.3 * ancho or h < 14 * zoom):
                     continue   # cuadrito chico: casilla o letra, no un campo para escribir
-                    # (las cajitas angostas y altas SI son campos: las casillas vacias de ALEKS miden 10 x 22)
+                    # (las cajitas angostas y altas SI son campos: las casillas vacias de ALEKS miden 10 x 22, y las
+                    # que van dentro de una formula 9 x 16)
                 if ancho < 28 * zoom and not _hueca(filas, W, izq, der, t1, b0):
                     continue   # cajita angosta con trazos adentro: es una letra (8, B, D), no una casilla vacia
+                if ancho < 28 * zoom and h < 18 * zoom and (ancho_banda < ancho - 2 or tinta_col(izq, t0, b1 + 1) < 0.95
+                                      or tinta_col(der, t0, b1 + 1) < 0.95
+                                      or max(tinta_col(izq - 2, t1 + 1, b0), tinta_col(der + 2, t1 + 1, b0)) > 0.5):
+                    continue   # cajita de formula: esquinas rectas y una orilla delgada (no el hueco de un 0)
                 tinta = total = 0
                 for y in range(t1 + 2, b0 - 1):
                     seg = filas[y * W + izq + 3: y * W + der - 2]

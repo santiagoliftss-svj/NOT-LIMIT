@@ -896,12 +896,17 @@ def refinar_campo(img, x, y, zoom=1.0):
             candidatos = candidatos + motor.quitar_orillas(motor.subrayados(recorte, zoom), candidatos, zoom)
         except Exception:
             pass
-        for r in candidatos:
-            c = (r[0] + zona[0], r[1] + zona[1], r[2] + zona[0], r[3] + zona[1])
+        todos = [(r[0] + zona[0], r[1] + zona[1], r[2] + zona[0], r[3] + zona[1]) for r in candidatos]
+        for c in todos:
             d = motor._distancia(x, y, c)
             if d > 30 * zoom:
                 continue
-            clave = (d, (c[2] - c[0]) * (c[3] - c[1]))
+            adentro = sum(1 for o in todos if o != c and o[0] >= c[0] and o[1] >= c[1] and o[2] <= c[2] and o[3] <= c[3])
+            if adentro:
+                continue                 # tiene otras cajas adentro: es la celda de una tabla, no un campo
+            # de cerca (a menos de 12 px) gana la mas chica: la IA pudo picar un poquito fuera de una cajita y
+            # adentro de algo mas grande
+            clave = (d > 12 * zoom, d if d > 12 * zoom else 0, (c[2] - c[0]) * (c[3] - c[1]))
             if mejor is None or clave < mejor[0]:
                 mejor = (clave, c)
         if mejor is not None:
@@ -910,10 +915,56 @@ def refinar_campo(img, x, y, zoom=1.0):
     return None
 
 
+_SUPER = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹−–·×", "0123456789--*x")
+
+
+def _es_formula(t):
+    """True si el texto es una formula (b² = (a − x)² + h², x^2 + 1): el OCR las lee muy mal (exponentes, cursivas)."""
+    t = str(t)
+    return bool(re.search(r"[=²³^√·×÷]", t)) and len(re.findall(r"[A-Za-z]", t)) <= 0.6 * max(1, len(t.replace(" ", "")))
+
+
+def _esqueleto(t):
+    """Una formula sin lo que el OCR no lee bien: sin espacios, exponentes como numeros, minusculas y sin el circulo
+    de la opcion al principio ("O", "0", "(_)")."""
+    t = str(t).translate(_SUPER).lower().replace("^", "")
+    t = re.sub(r"\s+", "", t)
+    return re.sub(r"^[o0○◯|_()\[\]]+(?=[a-z])", "", t)
+
+
+def _con_su_renglon(i, cajas):
+    """El texto de la caja i junto con lo que sigue pegado a su derecha en el mismo renglon (el OCR parte una formula
+    en pedacitos: "Oc", "x", "+h")."""
+    c = cajas[i]
+    alto = max(8.0, c["caja"][3] - c["caja"][1])
+    textos, der = [c["texto"]], c["caja"][2]
+    for o in sorted(cajas, key=lambda o: o["caja"][0]):
+        if o is c or o["caja"][0] < der - 2 or o["cx"] <= c["cx"] or abs(o["cy"] - c["cy"]) > 0.7 * alto:
+            continue
+        if o["caja"][0] - der > 1.6 * alto:
+            break
+        textos.append(o["texto"])
+        der = o["caja"][2]
+    return " ".join(textos)
+
+
+def _parecido_formula(texto, i, cajas):
+    import difflib
+    a, b = _esqueleto(texto), _esqueleto(_con_su_renglon(i, cajas))
+    if not a or not b:
+        return 0.0
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
+
 def _texto_cuadra(texto, i, cajas):
     """True si el texto de la opcion que dice la IA es el de la caja i: se parecen, o es la caja que mas se le parece
     y lo unico distinto son numeros que el OCR no alcanzo a leer (por ejemplo se le fue el "3" de "x = 3")."""
     leido = cajas[i]["texto"]
+    if _es_formula(texto):
+        # una formula: el OCR la lee a medias. Cuadra si se parece y ninguna otra caja se parece claramente mas
+        mio = _parecido_formula(texto, i, cajas)
+        mejor = max((_parecido_formula(texto, j, cajas) for j in range(len(cajas))), default=0.0)
+        return mio >= 0.45 and mio >= mejor - 0.08
     if motor.parecido(texto, leido) >= 0.45:
         return True
 
@@ -931,6 +982,14 @@ def _texto_cuadra(texto, i, cajas):
 def _corregir_id(i, texto, cajas):
     """Si la IA puso un id cuyo texto no es el de su respuesta (error por uno), busca la caja correcta."""
     if i is None or not texto or not cajas:
+        return i
+    if _es_formula(texto):
+        puntos = [(_parecido_formula(texto, j, cajas), j) for j in range(len(cajas))]
+        actual = puntos[i][0]
+        mejor = max(p for p, _ in puntos)
+        if mejor >= 0.7 and mejor - actual >= 0.2:
+            empatados = [j for p, j in puntos if p >= mejor - 0.03]
+            return min(empatados, key=lambda j: math.hypot(cajas[j]["cx"] - cajas[i]["cx"], cajas[j]["cy"] - cajas[i]["cy"]))
         return i
     actual = motor.parecido(texto, cajas[i]["texto"])
     if actual >= 0.6:
@@ -1233,6 +1292,13 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
             ib = _control_en(x, y, controles)
             if ib is not None and controles[ib]["tipo"] in ("boton", "casilla", "circulo"):
                 rechazar(a, f"ahi la pagina tiene un {controles[ib]['tipo']}, no un campo")
+                continue
+            otra = next((p for p in plan.pasos if p["hacer"] == "escribir" and p.get("caja")
+                         and motor._dentro(x, y, p["caja"])), None)
+            if otra is not None:
+                # dos respuestas a la misma casilla: la IA (o el lugar que se le encontro) se equivoco de casilla.
+                # Escribir las dos encima seria contestar a lo loco
+                rechazar(a, f"esa casilla ya lleva '{otra['texto']}'")
                 continue
             plan.pasos.append({"hacer": "escribir", "p": (x, y), "texto": texto, "caja": caja,
                                "seguro_campo": k is not None, "verificar_campo": verificar,

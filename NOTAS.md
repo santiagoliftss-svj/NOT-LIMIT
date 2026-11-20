@@ -4,6 +4,13 @@ Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más informaci
 
 La primera vez te enseña cómo se usa (3 pasos) y aceptas los Términos. Toca **INYECTAR**, pega tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y listo: la IA ya viene incluida. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.
 
+**Nuevo en 2.5.2 (ALEKS con fórmulas y cajitas)**
+
+- Ve las cajitas chiquitas de una letra que ALEKS pone dentro de una fórmula (las de "demostrar la ley de los cosenos"), también con la pantalla al 125% o 150%.
+- Ya no confunde la celda de la tabla con una casilla: antes escribía todas las letras en el mismo lugar.
+- Si dos respuestas caen en la misma casilla, no escribe encima: avisa.
+- Las opciones que son fórmulas (b² = (a − x)² + h²) se reconocen aunque el OCR las lea a medias; antes se rechazaban.
+
 **Nuevo en 2.5.1 (gráficas y arrastrar)**
 
 - Gráficas: lee el plano en muchos más estilos (números chiquitos de 1 en 1 como ALEKS, cuadrícula punteada como MyLab, ejes grises o de color, tema oscuro, escalas de 5 o 10, planos chicos o con zoom de Windows).

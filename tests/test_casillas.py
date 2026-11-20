@@ -355,3 +355,79 @@ def prueba_texto_claro_en_consola_no_es_campo():
     from clw import motor
     im = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "datos", "consola_oscura.png")).convert("RGB")
     assert motor.rectangulos(im, 1.0) == [], motor.rectangulos(im, 1.0)
+
+
+def _celda_con_cajitas(zoom=1.25):
+    """Como ALEKS (ley de los cosenos): la celda de una tabla con su titulo y una formula con 3 cajitas de una letra
+    (9 x 16 css: 11 x 20 a 125%), amarillas con orilla azul, con exponentes pegados."""
+    from PIL import Image, ImageDraw, ImageFont
+    z = lambda v: int(round(v * zoom))
+    im = Image.new("RGB", (z(560), z(150)), "white")
+    d = ImageDraw.Draw(im)
+    try:
+        f = ImageFont.truetype("DejaVuSans.ttf", z(13))
+        fm = ImageFont.truetype("DejaVuSerif-Italic.ttf", z(15))
+    except OSError:
+        f = fm = ImageFont.load_default()
+    d.rectangle((z(10), z(10), z(540), z(140)), outline=(30, 30, 30))                 # la celda de la tabla
+    d.text((z(24), z(22)), "Parte 2: Utilizar la respuesta obtenida en la Parte 1 para llenar los", font=f, fill="black")
+    d.text((z(24), z(42)), "espacios vacios.", font=f, fill="black")
+    y = z(84)
+    d.text((z(40), y), "b  =  x  + h  +", font=fm, fill="black")
+    for xx in (z(52), z(82), z(110)):
+        d.text((xx, y - z(8)), "2", font=f, fill="black")                             # exponentes
+    cajas = []
+    for x0, txt in ((z(160), "2 - 2 ·"), (z(222), "·"), (z(240), "")):
+        c = (x0, y - z(2), x0 + z(9) - 1, y - z(2) + z(16) - 1)
+        d.rectangle(c, fill=(255, 244, 194), outline=(58, 79, 224))
+        if txt:
+            d.text((c[2] + z(4), y), txt, font=fm, fill="black")
+        cajas.append(c)
+    return im, cajas
+
+
+def prueba_cajitas_de_una_letra_dentro_de_una_formula():
+    """Las cajitas de ALEKS entre una formula (11 x 20 a 125%) SI son campos; la celda de la tabla NO, aunque la IA
+    pique un poquito fuera de la cajita."""
+    from clw import motor, cerebro
+    for zoom in (1.0, 1.25, 1.5):
+        im, cajas = _celda_con_cajitas(zoom)
+        rs = motor.rectangulos(im, zoom)
+        for c in cajas:
+            assert any(abs(r[0] - c[0]) <= 2 and abs(r[1] - c[1]) <= 2 and abs(r[2] - c[2]) <= 2 for r in rs), (zoom, c, rs)
+        for c in cajas:
+            x, y = c[2] + 3 * zoom, c[1] - 2 * zoom                     # la IA pico un poco arriba a la derecha
+            fino = cerebro.refinar_campo(im, x, y, zoom)
+            assert fino and abs(fino[0] - (c[0] + c[2]) / 2) <= 2, (zoom, c, fino)
+
+
+def prueba_dos_respuestas_a_la_misma_casilla_no_se_escriben_encima():
+    from PIL import Image
+    from clw import cerebro
+    im, cajas = _celda_con_cajitas(1.0)
+    campos = [{"caja": c, "cx": (c[0] + c[2]) / 2, "cy": (c[1] + c[3]) / 2} for c in cajas]
+    datos = {"tipo": "completar", "acciones": [{"hacer": "escribir", "en": "C0", "texto": "a"},
+                                               {"hacer": "escribir", "en": "C0", "texto": "a"},
+                                               {"hacer": "escribir", "en": "C2", "texto": "x"}]}
+    plan = cerebro.planear(datos, [], campos, 1.0, im, 1.0)
+    assert [p["texto"] for p in plan.pasos] == ["a", "x"], plan.pasos
+    assert plan.rechazadas and "ya lleva" in plan.rechazadas[0][1], plan.rechazadas
+
+
+def prueba_opciones_que_son_formulas_aunque_el_ocr_las_lea_mal():
+    """Lo que leyo el OCR en ALEKS de verdad: 'Ob =(a-X +h' es b² = (a − x)² + h²; una formula partida en pedacitos
+    ('Oc', 'x', '+h') tambien cuadra; y si la IA se equivoca de id por uno, se corrige a la que si es."""
+    from clw import cerebro
+
+    def caja(x0, y0, x1, y1, t):
+        return {"caja": (x0, y0, x1, y1), "cx": (x0 + x1) / 2, "cy": (y0 + y1) / 2, "texto": t}
+    p1 = [caja(375, 128, 486, 150, "Ob =x +h"), caja(615, 128, 700, 150, "Ob =a -"), caja(709, 128, 719, 150, "c"),
+          caja(375, 175, 450, 197, "Ob = a"), caja(456, 175, 478, 197, "-x"), caja(615, 172, 768, 197, "Ob =(a-X +h")]
+    assert cerebro._texto_cuadra("b² = (a − x)² + h²", 5, p1)
+    assert not cerebro._texto_cuadra("b² = (a − x)² + h²", 3, p1)
+    assert cerebro._corregir_id(3, "b² = (a − x)² + h²", p1) == 5
+    p3 = [caja(375, 430, 397, 452, "Oc"), caja(405, 430, 430, 452, "x"), caja(455, 430, 484, 452, "+h"),
+          caja(375, 388, 525, 410, "Oc =(a-x) +h"), caja(615, 430, 720, 452, "Oc =a -x")]
+    assert cerebro._texto_cuadra("c^2 = x^2 + h^2", 0, p3)
+    # (lo que no es formula sigue igual de estricto)
+    assert not cerebro._es_formula("Sus raíces o ceros son x = 1 y x = 3.")
