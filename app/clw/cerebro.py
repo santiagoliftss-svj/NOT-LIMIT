@@ -965,6 +965,8 @@ def _texto_cuadra(texto, i, cajas):
         # (si ninguna se lee bien, se le cree a la IA, que si ve la imagen)
         mio = _parecido_formula(texto, i, cajas)
         mejor = max((_parecido_formula(texto, j, cajas) for j in range(len(cajas))), default=0.0)
+        if mejor >= 0.95:
+            return mio >= mejor - 0.03       # otra caja dice EXACTO lo mismo (x = 13 vs x = 1): esa es
         return mio >= 0.25 and (mio >= mejor - 0.15 or mejor < 0.7)
     if motor.parecido(texto, leido) >= 0.45:
         return True
