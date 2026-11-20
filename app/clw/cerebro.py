@@ -2007,6 +2007,10 @@ class Ejecutor:
             self._revisar_cancelar()
             foto, puntos = self._leer_orden(orden)
             if puntos is None:
+                # (el OCR a veces no lee un renglon a la primera: el mouse encima, algo que se esta dibujando)
+                time.sleep(0.5)
+                foto, puntos = self._leer_orden(orden)
+            if puntos is None:
                 self.fallas.append((paso, "no encontre todos los elementos para ordenar"))
                 return foto
             actuales = sorted(range(len(puntos)), key=lambda k: puntos[k][1])     # de arriba a abajo
