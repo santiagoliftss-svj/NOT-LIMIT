@@ -76,7 +76,7 @@ Acciones. "en", "desde" y "hasta" pueden ser: el id de una caja de texto (numero
 - {"hacer":"clic","en":5,"texto":"texto de la opcion"}   marcar una opcion, casilla, circulo, celda o zona de una imagen.
 - {"hacer":"escribir","en":"C0","texto":"..."}   escribir en un campo.
 - {"hacer":"elegir","en":7,"opcion":"texto exacto de la opcion"}   abrir un menu desplegable y elegir una opcion.
-- {"hacer":"arrastrar","desde":3,"hasta":{"x":420,"y":310}}   arrastrar un elemento y soltarlo en su lugar.
+- {"hacer":"arrastrar","desde":3,"hasta":{"x":420,"y":310},"texto":"texto del elemento"}   arrastrar un elemento y soltarlo en su lugar.
 - {"hacer":"ordenar","orden":["primero","segundo","tercero"]}   preguntas de ordenar: el orden final (de arriba a abajo o de izquierda a derecha) con el texto de cada elemento como se ve.
 - {"hacer":"ordenar","orden":[...],"flechas":{"arriba":{"x":..,"y":..},"abajo":{"x":..,"y":..}}}   si cada elemento tiene botones de flechas (subir y bajar): el centro del boton de SUBIR y el de BAJAR de cualquier renglon que los tenga. NO LIMIT pica las flechas hasta que quede en orden.
 
@@ -112,7 +112,7 @@ Por tipo:
 - PASOS GUIADOS: contesta solo los pasos que se ven ahorita.
 - GRAFICOS ESTADISTICOS: para leerlos usa los valores de los ejes; para construirlos, arrastra la orilla de arriba de cada barra hasta su valor con "hasta":{"x": x de la barra, "gy": valor}, o da clic en cada punto con {"gx","gy"}.
 - ORDENAR: usa "ordenar" con el orden final, revisado con cuidado (fechas, numeros, pasos), con el texto de cada elemento tal cual se ve. Si los elementos tienen botones de flechas para subir y bajar, pon "flechas" con el centro de esos botones (NO LIMIT pica las flechas). Si no tienen flechas, NO LIMIT los arrastra a su lugar uno por uno: solo da el orden.
-- ARRASTRAR Y SOLTAR (etiquetas o tarjetas que se sueltan en cajas, huecos de un texto, categorias, una tabla, un esquema, un mapa o una imagen): un "arrastrar" por elemento, "desde" el id de su texto (o su centro) "hasta" el centro EXACTO del lugar donde va (la caja vacia, el hueco, la columna de su categoria o el punto del esquema). Si varios van a la misma categoria, sueltalos en la misma caja. Si la pregunta tiene menus, casillas o campos para lo mismo, usa esos en vez de arrastrar.
+- ARRASTRAR Y SOLTAR (etiquetas o tarjetas que se sueltan en cajas, huecos de un texto, categorias, una tabla, un esquema, un mapa o una imagen): un "arrastrar" por elemento, "desde" el id de su texto (o su centro), con su texto en "texto", "hasta" el centro EXACTO del lugar donde va (la caja vacia, el hueco, la columna de su categoria o el punto del esquema). Si varios van a la misma categoria, sueltalos en la misma caja. Si la pregunta tiene menus, casillas o campos para lo mismo, usa esos en vez de arrastrar.
 - MATRIZ (tabla con circulos o casillas): un clic por renglon en la columna correcta con {"fila": id, "columna": id}.
 - SIMULACION: contesta con lo que se ve y con la teoria; no muevas controles a lo loco.
 - AUDIO O VIDEO: no puedes escuchar ni ver el video completo; si la respuesta no se puede saber con lo que se ve, "acciones": [] y "no_se_puede": "es de audio o video".
@@ -1272,9 +1272,16 @@ def planear(datos, cajas, campos, s, region_img, zoom=1.0, controles=(), ocr=Non
             # vuelven a buscar en la pantalla antes de arrastrar)
             es_texto = lambda o, r: r[2] if (r[2] is not None and not isinstance(o, dict)) else None  # noqa: E731
             i1, i2 = es_texto(a.get("desde"), r1), es_texto(a.get("hasta"), r2)
-            plan.pasos.append({"hacer": "arrastrar", "p": (r1[0], r1[1]), "p2": (r2[0], r2[1]),
-                               "desc": cajas[r1[2]]["texto"] if r1[2] is not None else "elemento",
-                               "texto_desde": cajas[i1]["texto"] if i1 is not None else None,
+            texto = str(a.get("texto") or "").strip()
+            p1 = (r1[0], r1[1])
+            if texto and i1 is not None and len(motor._norm(cajas[i1]["texto"])) > len(motor._norm(texto)) + 3:
+                # el OCR junto varias etiquetas en una caja ("Riñones Corazón Pulmones"): se agarra la que es
+                sub = palabras_que_dicen(cajas[i1], texto)
+                if sub and sub[2] >= 0.75:
+                    p1 = (sub[0], sub[1])
+            plan.pasos.append({"hacer": "arrastrar", "p": p1, "p2": (r2[0], r2[1]),
+                               "desc": texto or (cajas[r1[2]]["texto"] if r1[2] is not None else "elemento"),
+                               "texto_desde": texto or (cajas[i1]["texto"] if i1 is not None else None),
                                "texto_hasta": cajas[i2]["texto"] if i2 is not None else None})
 
         elif hacer == "ordenar":
@@ -1368,6 +1375,23 @@ def _parecido_renglon(texto, t):
                motor.parecido(a, b), motor.parecido(a, b[:len(a) + 4]))
 
 
+def palabras_que_dicen(c, texto):
+    """Dentro de una caja de texto (que el OCR pudo juntar con otras cosas del mismo renglon), las palabras seguidas
+    que mas se parecen a 'texto': (cx, cy, parecido) o None."""
+    pal = [p for p in (c.get("palabras") or []) if motor.LETRAS.search(p[0])]     # (sin comas ni rayitas sueltas)
+    n = max(1, len(str(texto).split()))
+    mejor = None
+    for i in range(len(pal)):
+        for j in range(i + 1, min(len(pal), i + n + 1) + 1):
+            trozo = pal[i:j]
+            v = motor.parecido(texto, " ".join(p[0] for p in trozo))
+            if mejor is None or v > mejor[2]:
+                x0, y0 = min(p[1] for p in trozo), min(p[2] for p in trozo)
+                x1, y1 = max(p[1] + p[3] for p in trozo), max(p[2] + p[4] for p in trozo)
+                mejor = ((x0 + x1) / 2, (y0 + y1) / 2, v)
+    return mejor
+
+
 def orden_de_escritura(pasos):
     """Las casillas seguidas se llenan de la ultima a la primera (de abajo hacia arriba y de derecha a izquierda): al
     escribir en una casilla que crece, lo que esta a su derecha se recorre; asi ninguna de las que faltan se mueve."""
@@ -1390,7 +1414,19 @@ def orden_de_escritura(pasos):
             vaciar()
             out.append(p)
     vaciar()
-    return out
+    # arrastres seguidos: se agarra primero el que esta mas abajo y a la derecha. Al quitar una etiqueta de su banco
+    # solo se recorren las que estaban despues de ella; asi las que faltan se quedan donde estaban.
+    final, arr = [], []
+    for p in out + [None]:
+        if p is not None and p.get("hacer") == "arrastrar" and p.get("p"):
+            arr.append(p)
+            continue
+        if arr:
+            final.extend(sorted(arr, key=lambda q: (-round(q["p"][1] / 16.0), -q["p"][0])))
+            arr = []
+        if p is not None:
+            final.append(p)
+    return final
 
 
 class Ejecutor:
@@ -1825,15 +1861,20 @@ class Ejecutor:
             cajas = motor.detectar_cajas(foto, foto.width / 2, foto.height / 2, self.zoom, self.ocr)
         except Exception:
             return None
-        puntos = [(_parecido_renglon(texto, c["texto"]), c) for c in cajas]
+        puntos = []
+        for c in cajas:
+            puntos.append((_parecido_renglon(texto, c["texto"]), (c["cx"], c["cy"])))
+            if len(motor._norm(c["texto"])) > len(motor._norm(texto)) + 3:
+                sub = palabras_que_dicen(c, texto)          # (varias etiquetas juntas en una caja)
+                if sub:
+                    puntos.append((sub[2], (sub[0], sub[1])))
         if not puntos:
             return None
         mejor = max(v for v, _ in puntos)
         if mejor < 0.6:
             return None
-        c = min((c for v, c in puntos if v >= mejor - 0.05),
-                key=lambda c: math.hypot(c["cx"] - cerca[0], c["cy"] - cerca[1]))
-        return c["cx"], c["cy"]
+        return min((pt for v, pt in puntos if v >= mejor - 0.05),
+                   key=lambda pt: math.hypot(pt[0] - cerca[0], pt[1] - cerca[1]))
 
     def _arrastrar(self, paso, antes):
         p, p2 = paso["p"], paso["p2"]

@@ -140,7 +140,8 @@ def _unir(grupo):
     x1 = max(p["x"] + p["w"] for p in grupo)
     y1 = max(p["y"] + p["h"] for p in grupo)
     return {"texto": " ".join(p["t"] for p in grupo), "caja": (x0, y0, x1, y1),
-            "cx": (x0 + x1) / 2, "cy": (y0 + y1) / 2}
+            "cx": (x0 + x1) / 2, "cy": (y0 + y1) / 2,
+            "palabras": [(p["t"], p["x"], p["y"], p["w"], p["h"]) for p in grupo]}
 
 
 def _se_enciman(a, b):

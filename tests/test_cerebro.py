@@ -1134,3 +1134,22 @@ def prueba_en_graficas_solo_se_pican_puntos_dentro_del_plano():
     plan = cerebro.planear({"tipo": "graficar", "acciones": [{"hacer": "clic", "en": {"x": 630, "y": 32}}]},
                            cajas, [], 1.0, img, 1.0, plano={"x": None, "y": None})
     assert not plan.pasos and plan.rechazadas, plan.pasos
+
+
+def prueba_arrastrar_etiquetas_que_el_ocr_junto_en_una_caja():
+    """En Windows el OCR junta las etiquetas del banco en una caja ("Riñones , Corazón , Pulmones"): con el texto que
+    da la IA se agarra la etiqueta de verdad, y los arrastres van del ultimo al primero (al quitar una del banco las
+    que faltan no se recorren)."""
+    img = Image.new("RGB", (900, 400), "white")
+    junta = caja(60, 110, 380, 136, "Riñones , Corazón , Pulmones")
+    junta["palabras"] = [("Riñones", 60, 110, 80, 26), (",", 142, 110, 6, 26), ("Corazón", 180, 110, 84, 26),
+                         (",", 266, 110, 6, 26), ("Pulmones", 290, 110, 90, 26)]
+    cajas = [junta, caja(100, 250, 220, 270, "Suelta aquí"), caja(400, 250, 520, 270, "Suelta aquí")]
+    datos = {"tipo": "arrastrar", "acciones": [
+        {"hacer": "arrastrar", "desde": 0, "texto": "Corazón", "hasta": 1},
+        {"hacer": "arrastrar", "desde": 0, "texto": "Pulmones", "hasta": 2}]}
+    plan = cerebro.planear(datos, cajas, [], 1.0, img)
+    assert [p["p"] for p in plan.pasos] == [(222.0, 123.0), (335.0, 123.0)], plan.pasos
+    assert [p["texto_desde"] for p in plan.pasos] == ["Corazón", "Pulmones"]
+    # se arrastra primero la de la derecha (Pulmones) y luego Corazón
+    assert [p["desc"] for p in cerebro.orden_de_escritura(plan.pasos)] == ["Pulmones", "Corazón"]

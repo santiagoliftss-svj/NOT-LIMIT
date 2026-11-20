@@ -662,11 +662,13 @@ def _contestar_etiquetas(t):
     zonas = _ids(t, "Suelta")
     acciones = []
     for organo, funcion in (("Corazón", "Bombea la sangre"), ("Pulmones", "Intercambian"), ("Riñones", "Filtran la sangre")):
-        desde, f = _id_parecido(t, organo), _ids(t, funcion)
+        # (si el OCR junto las tres etiquetas en una caja, como en Windows, se da esa caja con el texto de la etiqueta)
+        desde = _id_parecido(t, organo) or _ids(t, organo[:5]) or _ids(t, organo[-5:])
+        f = _ids(t, funcion)
         if not desde or not f or not zonas:
             continue
         z = min(zonas, key=lambda k: abs(k[1] - f[0][1]) + (0 if k[2] > f[0][2] else 9999))
-        acciones.append({"hacer": "arrastrar", "desde": desde[0][0], "hasta": {"x": z[1], "y": z[2]}})
+        acciones.append({"hacer": "arrastrar", "desde": desde[0][0], "texto": organo, "hasta": {"x": z[1], "y": z[2]}})
     return {"tipo": "arrastrar", "respuesta": "Corazón: bombea | Pulmones: intercambian | Riñones: filtran",
             "acciones": acciones}
 

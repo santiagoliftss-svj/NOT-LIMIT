@@ -55,9 +55,10 @@ def foto_ventana(numero):
         os.remove(ruta)
 
 
-def option_clic(x, y):
-    """Option + clic de verdad en (x, y) puntos (como si lo hiciera el usuario)."""
-    time.sleep(0.4)
+def option_clic(x, y, espera=0.4):
+    """Option + clic de verdad en (x, y) puntos (como si lo hiciera el usuario). espera: lo que se deja a la ventana
+    nueva para que se dibuje (en las Mac lentas de GitHub una ventana pesada, como el plano, tarda mas)."""
+    time.sleep(espera)
     p = Q.CGPointMake(x, y)
     for tipo, banderas in ((Q.kCGEventMouseMoved, 0), (Q.kCGEventLeftMouseDown, Q.kCGEventFlagMaskAlternate),
                            (Q.kCGEventLeftMouseUp, Q.kCGEventFlagMaskAlternate)):
@@ -770,7 +771,7 @@ def ventana_y_e2e(salida, RESULTADOS, IA, buscar, ESPERADO, fases=None, id_de=No
                     {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
             IA.elegir = fases(contestar, "graficar", None, 760, 600)
             ox, oy = _origen_contenido(w)
-            threading.Thread(target=option_clic, args=(ox + 200, oy + 28), daemon=True).start()
+            threading.Thread(target=option_clic, args=(ox + 200, oy + 28, 1.5), daemon=True).start()
 
             def listo():
                 return len(vista.puntos) >= 2
