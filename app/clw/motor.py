@@ -516,29 +516,42 @@ def _agrupar(cols, zoom):
     return centros
 
 
-def _rayitas(buf, W, H, linea, zoom):
-    """Rayitas (marcas) que cruzan el eje: trazos cortos y continuos hacia afuera de la linea."""
+def _por_columna(img, x0, y0, x1, y1):
+    """Promedio (0..255) de cada columna de un pedazo de una imagen L (en C, con PIL: rapido aunque sea grande)."""
+    if x1 - x0 < 1 or y1 - y0 < 1:
+        return b""
+    return img.crop((x0, y0, x1, y1)).resize((x1 - x0, 1), Image.BOX).tobytes()
+
+
+def _rayitas(osc, W, H, linea, zoom):
+    """Rayitas (marcas) que cruzan el eje: trazos cortos y continuos hacia afuera de la linea.
+    osc: imagen L con 255 donde hay tinta oscura."""
     desde, hasta, a, b = linea
     largo = max(3, int(3 * zoom))
-    cols = []
-    for c in range(desde, hasta):
-        arriba = a - largo >= 0 and all(buf[(a - 1 - t) * W + c] for t in range(largo))
-        abajo = b + largo < H and all(buf[(b + 1 + t) * W + c] for t in range(largo))
-        if arriba or abajo:
-            cols.append(c)
+    arriba = _por_columna(osc, desde, a - largo, hasta, a) if a - largo >= 0 else b""
+    abajo = _por_columna(osc, desde, b + 1, hasta, b + 1 + largo) if b + largo < H else b""
+    cols = [desde + k for k in range(hasta - desde)
+            if (arriba and arriba[k] >= 250) or (abajo and abajo[k] >= 250)]
     return _agrupar(cols, zoom)
 
 
-def _cuadricula(gbuf, W, H, linea, zoom):
-    """Si el eje no tiene rayitas (como en Desmos): donde lo cruzan las lineas de la cuadricula."""
+def _cuadricula(rej, W, H, linea, zoom):
+    """Si el eje no tiene rayitas (como en Desmos): donde lo cruzan las lineas de la cuadricula.
+    rej: imagen L con 255 donde el gris es < 236 (cualquier linea, aunque sea clarita)."""
     desde, hasta, a, b = linea
     alto = int(40 * zoom)
-    filas = list(range(max(0, a - alto), max(0, a - 2))) + list(range(min(H, b + 3), min(H, b + alto)))
-    if len(filas) < 10:
+    tramos = [(max(0, a - alto), max(0, a - 2)), (min(H, b + 3), min(H, b + alto))]
+    filas = sum(max(0, t1 - t0) for t0, t1 in tramos)
+    if filas < 10:
         return []
-    minimo = 0.7 * len(filas)
-    cols = [c for c in range(desde, hasta) if sum(1 for y in filas if gbuf[y * W + c] < 236) >= minimo]
-    return _agrupar(cols, zoom)
+    cuenta = [0.0] * (hasta - desde)
+    for t0, t1 in tramos:
+        if t1 - t0 < 1:
+            continue
+        prom = _por_columna(rej, desde, t0, hasta, t1)
+        for k, v in enumerate(prom):
+            cuenta[k] += v / 255.0 * (t1 - t0)
+    return _agrupar([desde + k for k, n in enumerate(cuenta) if n >= 0.7 * filas], zoom)
 
 
 def _borrar_rejilla(px, W, H, rejilla, zoom):
@@ -836,13 +849,16 @@ def _recta_robusta(pares, paso, signo=0):
     return a, (sp - a * sv) / n
 
 
-def _ejes_candidatos(buf, gbuf, W, H, zoom):
-    """Lineas que pueden ser un eje (con rayitas o cruzadas por la cuadricula), las mejores primero."""
+def _ejes_candidatos(osc, rej, W, H, zoom):
+    """Lineas que pueden ser un eje (con rayitas o cruzadas por la cuadricula), las mejores primero.
+    osc: imagen L con 255 donde hay tinta oscura; rej: 255 donde hay cualquier linea (aunque sea clarita)."""
     out = []
-    for linea in _lineas_largas(buf, W, H, zoom):
-        for marcas in (_rayitas(buf, W, H, linea, zoom), None):
+    lineas = _lineas_largas(osc.point(lambda v: 1 if v else 0).tobytes(), W, H, zoom)
+    lineas = sorted(lineas, key=lambda l: -(l[1] - l[0]))[:40]      # (los ejes son de las mas largas)
+    for linea in lineas:
+        for marcas in (_rayitas(osc, W, H, linea, zoom), None):
             if marcas is None:
-                marcas = _cuadricula(gbuf, W, H, linea, zoom)
+                marcas = _cuadricula(rej, W, H, linea, zoom)
             if len(marcas) < 5:
                 continue
             pasos = sorted(b - a for a, b in zip(marcas, marcas[1:]))
@@ -854,6 +870,21 @@ def _ejes_candidatos(buf, gbuf, W, H, zoom):
             break
     out.sort(key=lambda c: -len(c[1]))
     return out[:3]
+
+
+class _OCRContado:
+    """El OCR con un tope de lecturas: cuando se acaba, ya no lee (devuelve vacio)."""
+
+    def __init__(self, ocr, tope):
+        self.ocr, self.quedan, self.usadas = ocr, tope, 0
+        self.disponible = getattr(ocr, "disponible", True)
+
+    def datos(self, *a, **k):
+        if self.quedan <= 0:
+            return {"text": []}
+        self.quedan -= 1
+        self.usadas += 1
+        return self.ocr.datos(*a, **k)
 
 
 def _bandas(linea, horizontal, zoom, W, H):
@@ -872,6 +903,32 @@ def _redondo(por_rayita):
     return next((n for n in _REDONDOS if abs(por_rayita - n) <= 0.08 * n), None)
 
 
+def _algo_escrito(trozo, zoom, marcas, paso, horizontal):
+    """True si junto a por lo menos 2 rayitas hay algo escrito (tinta oscura que no es una linea de lado a lado).
+    Es rapido (sin OCR): asi las lineas que no son ejes no gastan tiempo leyendo."""
+    g = ImageOps.autocontrast(ImageOps.grayscale(trozo), cutoff=1).point(lambda v: 255 if v < 140 else 0)
+    W, H = g.size
+    if W < 4 or H < 4:
+        return False
+    # (sin las lineas que cruzan toda la banda: el otro eje o la cuadricula)
+    lineas = _por_columna(g, 0, 0, W, H) if horizontal else _por_columna(g.transpose(Image.Transpose.TRANSPOSE), 0, 0, H, W)
+    lleno = {k for k, v in enumerate(lineas) if v >= 150}
+    con = 0
+    for m in marcas:
+        a, b = int(m - 0.45 * paso), int(m + 0.45 * paso) + 1
+        a, b = max(0, a), min(W if horizontal else H, b)
+        if b - a < 2:
+            continue
+        caja = (a, 0, b, H) if horizontal else (0, a, W, b)
+        tinta = g.crop(caja).histogram()[255]
+        tinta -= sum(1 for k in range(a, b) if k in lleno) * (H if horizontal else W)
+        if tinta >= 6 * zoom * zoom:
+            con += 1
+            if con >= 2:
+                return True
+    return False
+
+
 def _leer_eje(img, linea, marcas, paso, horizontal, zoom, ocr, rejilla, W, H):
     """Lee los numeros de un eje de tres formas (de la mas rapida a la mas lenta) hasta que cuadren.
     Devuelve ((a, b) o None, por_rayita, todos los pares (valor, rayita) leidos)."""
@@ -884,6 +941,8 @@ def _leer_eje(img, linea, marcas, paso, horizontal, zoom, ocr, rejilla, W, H):
         rel = [m - base for m in marcas]
         rej = ([c - banda[0] for c in rejilla[0]], [f - banda[1] for f in rejilla[1]])
         trozo = img.crop(banda)
+        if not _algo_escrito(trozo, zoom, rel, paso, horizontal):
+            continue                     # junto a las rayitas no hay nada escrito: ni se gasta OCR
 
         def por_ventana():
             return [(v, m + base) for v, m in _numeros_por_ventana(trozo, zoom, ocr, rel, paso, horizontal)]
@@ -957,17 +1016,19 @@ def ejes_del_plano(img, zoom=1.0, ocr=None):
         # tema oscuro: se voltea (ejes y numeros claros sobre fondo oscuro -> oscuros sobre claro)
         gris = ImageOps.invert(gris)
         img = ImageOps.invert(img.convert("RGB"))
+    ocr = _OCRContado(ocr, 10)           # (tope de lecturas: en una pantalla sin plano no se gasta tiempo)
     usados = {}
     pares_de = {}
+    probadas = []
     for umbral in (120, 175):            # ejes negros; luego grises o de color
         if out["x"] and out["y"]:
             break
-        oscuro = gris.point(lambda v, u=umbral: 1 if v < u else 0)
-        vistas = {"x": (oscuro.tobytes(), gris.tobytes(), W, H),
-                  "y": (oscuro.transpose(Image.Transpose.TRANSPOSE).tobytes(),
-                        gris.transpose(Image.Transpose.TRANSPOSE).tobytes(), H, W)}
-        candidatos = {eje: _ejes_candidatos(buf, gbuf, w, h, zoom) if not out[eje] else []
-                      for eje, (buf, gbuf, w, h) in vistas.items()}
+        oscuro = gris.point(lambda v, u=umbral: 255 if v < u else 0)
+        rej = gris.point(lambda v: 255 if v < 236 else 0)
+        vistas = {"x": (oscuro, rej, W, H),
+                  "y": (oscuro.transpose(Image.Transpose.TRANSPOSE), rej.transpose(Image.Transpose.TRANSPOSE), H, W)}
+        candidatos = {eje: _ejes_candidatos(o, r, w, h, zoom) if not out[eje] else []
+                      for eje, (o, r, w, h) in vistas.items()}
         rejilla = (candidatos["x"][0][1] if candidatos["x"] else [],      # columnas de la cuadricula
                    candidatos["y"][0][1] if candidatos["y"] else [])      # renglones de la cuadricula
         for eje in ("x", "y"):
@@ -975,6 +1036,10 @@ def ejes_del_plano(img, zoom=1.0, ocr=None):
                 continue
             horizontal = eje == "x"
             for linea, marcas, paso in candidatos[eje]:
+                if any(e == eje and abs(l[2] - linea[2]) <= 3 and min(l[1], linea[1]) - max(l[0], linea[0]) > 0
+                       for e, l in probadas):
+                    continue             # (esa linea ya se leyo con el otro umbral)
+                probadas.append((eje, linea))
                 out["lineas"].setdefault(eje, (linea, marcas, paso))
                 r, n, todos = _leer_eje(img, linea, marcas, paso, horizontal, zoom, ocr, rejilla, W, H)
                 pares_de.setdefault(eje, (linea, marcas, paso, todos))

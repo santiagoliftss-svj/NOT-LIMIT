@@ -1153,3 +1153,39 @@ def prueba_arrastrar_etiquetas_que_el_ocr_junto_en_una_caja():
     assert [p["texto_desde"] for p in plan.pasos] == ["Corazón", "Pulmones"]
     # se arrastra primero la de la derecha (Pulmones) y luego Corazón
     assert [p["desc"] for p in cerebro.orden_de_escritura(plan.pasos)] == ["Pulmones", "Corazón"]
+
+
+def prueba_buscar_el_plano_en_una_pantalla_sin_plano_es_rapido():
+    """En cada pregunta se busca si hay plano: en una pantalla sin plano (escritorio oscuro con una ventana blanca
+    llena de texto y lineas) no debe tardar ni gastar OCR de mas."""
+    import time
+    from clw.ocr import OCR
+    ocr = OCR()
+    if not ocr.disponible:
+        return
+    from PIL import ImageFont
+    img = Image.new("RGB", (1920, 1080), (12, 12, 14))
+    d = ImageDraw.Draw(img)
+    d.rectangle([60, 60, 1500, 900], fill="white", outline=(180, 180, 180))
+    f = ImageFont.load_default(size=16)
+    for k in range(30):
+        y = 90 + k * 26
+        d.text((90, y), f"{k + 1}. Renglon de texto de una pregunta con numeros 12 34 56 y palabras", fill=(30, 30, 30), font=f)
+        if k % 3 == 0:
+            d.line([80, y + 22, 1480, y + 22], fill=(150, 150, 150))
+    contadas = []
+    original = motor._OCRContado.__init__
+
+    def init(self, o, tope):
+        original(self, o, tope)
+        contadas.append(self)
+    motor._OCRContado.__init__ = init
+    try:
+        t = time.time()
+        pl = motor.ejes_del_plano(img, 1.0, ocr)
+        dt = time.time() - t
+    finally:
+        motor._OCRContado.__init__ = original
+    assert not pl["x"] and not pl["y"], pl
+    assert contadas and contadas[0].usadas <= 10, contadas[0].usadas
+    assert dt < 8, dt
