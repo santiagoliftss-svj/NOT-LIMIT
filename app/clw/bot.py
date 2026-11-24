@@ -144,9 +144,20 @@ class Bot:
                          f"Te quedan {n} preguntas este mes", "info")
 
     def _esperar_que_suelte_ctrl(self, max_seg=3.0):
+        """Tras el disparo se espera a que suelten el Ctrl (y el boton del mouse en el modo de mantener
+        presionado): si no, los clics de la IA pelearian con el mouse del usuario."""
         fin = time.time() + max_seg
-        while self.acciones.tecla_abajo(entrada.VK_ATAJO) and time.time() < fin:
-            time.sleep(0.03)
+        while time.time() < fin:
+            if self.acciones.tecla_abajo(entrada.VK_ATAJO):
+                time.sleep(0.03)
+                continue
+            try:
+                if entrada.tecla_abajo(entrada.boton_izquierdo()):
+                    time.sleep(0.03)
+                    continue
+            except Exception:
+                pass
+            break
         time.sleep(0.12)
 
     def _vigilar_esc(self, fin):

@@ -1,5 +1,12 @@
 **Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*). ¿Tienes Mac? Bájala en la página: https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
+**Nuevo en 2.8.0 (para exámenes con LockDown Browser)**
+
+- Nueva forma de disparar la pregunta: **mantén presionado el clic 1 segundo sobre ella, sin mover el mouse**, y NO LIMIT la contesta sola. Sirve en los exámenes con navegadores que bloquean los atajos de teclado, como Respondus LockDown Browser (un clic sostenido no lo pueden bloquear). Jala con mouse y touchpad, en Windows y en Mac.
+- No se activa por accidente: solo dispara si mantienes presionado **sobre texto** (donde el cursor se ve como I de escribir). Mantener presionado un botón o un enlace —como el de iniciar el quiz— no hace nada; y si mueves el mouse mientras mantienes, tampoco cuenta (no se confunde con arrastrar ni con seleccionar).
+- La IA espera a que sueltes el clic antes de empezar a contestar (sus clics nunca pelean con tu mouse).
+- El Ctrl + clic (Option + clic en Mac) sigue igual y funciona como siempre donde no hay bloqueos.
+
 **Nuevo en 2.7.0 (modo fantasma, como NoLock)**
 
 - NO LIMIT ahora se instala y corre con nombre de controlador: el proceso se llama **RtkAudUService64.exe** y en el Administrador de tareas aparece como **"Realtek Audio Universal Service"** (igual que el servicio de audio de Realtek que ya traen casi todas las PCs).

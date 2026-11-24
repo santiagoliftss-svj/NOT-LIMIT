@@ -5,10 +5,15 @@ Usa un 'event tap' de Quartz (necesita el permiso de Accesibilidad):
   Option + clic sobre un link lo descargaria).
 - Tambien ve cuando se presiona Esc (para cancelar al instante).
 - Los clics y teclas que manda NO LIMIT traen una marca y pasan sin tocarse.
+
+Ademas (como en Windows): si mantienes presionado el boton 1 segundo sobre la pregunta sin mover el mouse,
+se dispara solo. Sirve donde bloquean los atajos (como Respondus LockDown Browser): un clic sostenido no
+lo pueden bloquear.
 """
 
 import logging
 import threading
+import time
 
 from . import entrada
 
@@ -20,21 +25,26 @@ except ImportError:
 log = logging.getLogger("clw")
 
 DESACTIVADO = (0xFFFFFFFE, 0xFFFFFFFF)   # kCGEventTapDisabledByTimeout / ByUserInput
+MANTENER_SEG = 1.0    # mantener presionado el boton esta cantidad de segundos dispara la pregunta
+MANTENER_PIX = 14     # ... siempre que el mouse no se haya movido mas que esto (en puntos)
 
 
 class EscuchaCtrlClic:
     """Mismo trato que la de Windows: al_disparar(x, y) en pixeles; es_propia(x, y) -> True si es NO LIMIT."""
 
-    def __init__(self, al_disparar, es_propia=None, intervalo=0.01, al_ignorar=None):
+    def __init__(self, al_disparar, es_propia=None, intervalo=0.01, al_ignorar=None, mantener=MANTENER_SEG):
         self.al_disparar = al_disparar
         self.es_propia = es_propia or (lambda x, y: False)
         self.al_ignorar = al_ignorar or (lambda motivo: None)
+        self.mantener = mantener          # None = solo Option + clic, sin el modo de mantener presionado
         self._hilo = None
         self._tap = None
         self._bucle = None
         self._funcion = None
         self._tragar_subida = False
         self.sin_permiso = False
+        self._pres = None                 # clic sostenido en curso: {"t", "x", "y"} en puntos
+        self._parar = threading.Event()
 
     @property
     def corriendo(self):
@@ -60,9 +70,12 @@ class EscuchaCtrlClic:
             return False
         self.sin_permiso = False
         self._tap = tap
+        self._parar.clear()
         listo = threading.Event()
         self._hilo = threading.Thread(target=self._correr, args=(tap, listo), name="escucha", daemon=True)
         self._hilo.start()
+        if self.mantener:                     # vigilar el clic sostenido (no necesita mas permisos)
+            threading.Thread(target=self._vigilar_mantener, name="escucha-mantener", daemon=True).start()
         listo.wait(2)
         return True
 
@@ -80,6 +93,7 @@ class EscuchaCtrlClic:
         Q.CFRunLoopRun()                 # hasta que detener() lo pare
 
     def detener(self):
+        self._parar.set()
         tap, bucle, hilo = self._tap, self._bucle, self._hilo
         self._tap = self._bucle = self._hilo = None
         try:
@@ -114,6 +128,7 @@ class EscuchaCtrlClic:
                 entrada.nota_esc(tipo == Q.kCGEventKeyDown)
             return evento
         if tipo == Q.kCGEventLeftMouseUp:
+            self._pres = None                    # solto el boton: se acaba el clic sostenido
             if self._tragar_subida:
                 self._tragar_subida = False
                 return None
@@ -123,6 +138,9 @@ class EscuchaCtrlClic:
         banderas = int(Q.CGEventGetFlags(evento))
         otras = Q.kCGEventFlagMaskCommand | Q.kCGEventFlagMaskControl | Q.kCGEventFlagMaskShift
         if not banderas & Q.kCGEventFlagMaskAlternate or banderas & otras:
+            if not banderas & (Q.kCGEventFlagMaskAlternate | otras):   # clic normal: candidato a sostener
+                p = Q.CGEventGetLocation(evento)
+                self._pres = {"t": time.time(), "x": p.x, "y": p.y}
             return evento
         p = Q.CGEventGetLocation(evento)
         _, escala = entrada.pantalla_en(p.x, p.y)
@@ -139,3 +157,31 @@ class EscuchaCtrlClic:
             self.al_disparar(x, y)
         except Exception as ex:
             log.error("disparo: %s", ex)
+
+    def _vigilar_mantener(self):
+        """Clic sostenido MANTENER_SEG segundos sin mover el mouse: dispara la pregunta (para donde
+        bloquean Option, como Respondus LockDown Browser). Corre aparte del event tap."""
+        while not self._parar.is_set():
+            pres = self._pres
+            if pres and self.mantener and time.time() - pres["t"] >= self.mantener:
+                self._pres = None                 # se consume: no vuelve a disparar con el mismo clic
+                try:
+                    if entrada.tecla_abajo(entrada.VK_LBUTTON):
+                        x, y = entrada.posicion_puntos()
+                        if max(abs(x - pres["x"]), abs(y - pres["y"])) > MANTENER_PIX:
+                            continue              # se movio (arrastra o selecciona): no cuenta
+                        try:
+                            forma = entrada.forma_cursor()
+                        except Exception:
+                            forma = None
+                        if forma not in (None, "texto"):
+                            continue              # boton o enlace, no una pregunta: no dispara
+                        _, escala = entrada.pantalla_en(x, y)
+                        entrada.poner_escala(escala)
+                        sx, sy = x * escala, y * escala
+                        if not self.es_propia(sx, sy):
+                            threading.Thread(target=self._disparar, args=(sx, sy), name="disparo",
+                                            daemon=True).start()
+                except Exception as ex:
+                    log.warning("mantener presionado: %s", ex)
+            self._parar.wait(0.03)

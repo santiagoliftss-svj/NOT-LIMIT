@@ -119,6 +119,25 @@ def bajar_prioridad_hilo():
     pass
 
 
+def forma_cursor():
+    """'texto', 'mano', 'flecha', 'otra' o None. Sirve para que el clic sostenido solo dispare sobre texto
+    (las preguntas), no sobre botones o enlaces. Mejor esfuerzo: si algo falla, None (no se sabe)."""
+    try:
+        from AppKit import NSCursor
+        c = NSCursor.currentSystemCursor()
+        if c is None:
+            return None
+        if c is NSCursor.IBeamCursor():
+            return "texto"
+        if c is NSCursor.pointingHandCursor():
+            return "mano"
+        if c is NSCursor.arrowCursor():
+            return "flecha"
+        return "otra"
+    except Exception:
+        return None
+
+
 def juego_en_pantalla_completa():
     return False
 

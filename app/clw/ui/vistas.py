@@ -20,7 +20,7 @@ from .estilo import ALTO, ANCHO, BLANCO, ERROR, NEGRO, SUAVE, TENUE, TEXTO, Lien
 
 ESTADOS = {
     "apagado": ("Apagado", f"Toca Inyectar y se va {plataforma.A_DONDE}"),
-    "activo": ("Activo", f"{plataforma.ATAJO} sobre cualquier pregunta"),
+    "activo": ("Activo", f"{plataforma.ATAJO} o mantener presionado, sobre la pregunta"),
     "leyendo": ("Leyendo la pantalla…", "Esc cancela"),
     "pensando": ("Pensando la respuesta…", "Esc cancela"),
     "escribiendo": ("Contestando…", "No toques el mouse ni el teclado. Esc cancela"),
@@ -55,7 +55,9 @@ TERMINOS = "2026-11"                # cambia cuando cambian los Terminos o la Pr
 PASOS_TUTORIAL = (
     ("Activa con tu código", "Pégalo una vez (NL-…). Se queda guardado en esta computadora."),
     ("Elige tu IA", "Toca la IA en la pantalla principal. Según tu plan: Gemini, Claude o ChatGPT."),
-    (f"{plataforma.ATAJO} en la pregunta", "NO LIMIT la lee, la contesta y revisa que quede bien. Esc cancela."),
+    (f"{plataforma.ATAJO} en la pregunta", "O mantén presionado el clic 1 segundo sin moverlo (sirve donde "
+                                              "bloquean los atajos, como LockDown Browser). NO LIMIT la lee, "
+                                              "la contesta y revisa que quede bien. Esc cancela."),
 )
 
 LICENCIA_UI = Proveedor("licencia", "NO LIMIT", "NL-", version.PAGINA + "#pago", "¿No tienes código? Cómpralo aquí")

@@ -39,7 +39,7 @@ log = logging.getLogger("clw")
 EVENTO_MOSTRAR = "CLWGANG_mostrar"   # si abren NO LIMIT otra vez, esa copia avisa por aqui y se cierra
 T_IDA, T_VUELTA = 0.36, 0.32         # vuelo hacia el reloj y de regreso
 AVISO_BANDEJA = ("Sigue activo junto al reloj (si no ves el icono, está en la flechita ^). "
-                 f"{plataforma.ATAJO} sobre cualquier pregunta.")
+                 f"{plataforma.ATAJO} sobre cualquier pregunta (o mantén presionado el clic 1 segundo).")
 CADA_REVISION = 6 * 3600             # cada cuanto se busca una version nueva
 
 
