@@ -410,6 +410,7 @@ class VentanaMac(Ventana):
         self._calentar_desde = time.time() + 1.0
         self._evento = None
         self._actividad = None
+        self._panel = None                 # el panelcito flotante es de Windows; en Mac avisa la bandeja
         self.bandeja = self._crear_bandeja() if con_bandeja else None
 
         if mostrar:
@@ -424,6 +425,11 @@ class VentanaMac(Ventana):
         self.root.after(4000, self._revisar_version)
 
     # ---------------------------------------------------------------- lo que cambia en Mac
+    def _panel_evento(self, texto):
+        """El panelcito flotante con la respuesta todavia es de Windows: en Mac avisa el icono de la
+        bandeja (como siempre)."""
+        pass
+
     def hwnd(self):
         try:
             return int(self.ventana.windowNumber())

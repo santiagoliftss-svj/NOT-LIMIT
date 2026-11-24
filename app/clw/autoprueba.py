@@ -423,9 +423,10 @@ def _ventana_y_e2e(salida):
 
     def paso_escondida():
         try:
-            det = {"activo": bot.activo, "visible": v.visible, "estado_tk": root.state(), "bandeja": v.en_bandeja()}
+            det = {"activo": bot.activo, "visible": v.visible, "estado_tk": root.state(),
+                   "bandeja": v.en_bandeja()}          # ya no hay icono junto al reloj (delat en LockDown Browser)
             RESULTADOS["bandeja"] = {"ok": bool(bot.activo and not v.visible and det["estado_tk"] == "withdrawn"
-                                                and det["bandeja"]), "detalle": det}
+                                                and not det["bandeja"]), "detalle": det}
         except Exception as e:
             RESULTADOS["bandeja"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
         medir_cpu("escondida_y_activa", 3.0, e2e_opcion)
@@ -447,7 +448,7 @@ def _ventana_y_e2e(salida):
             top.update()
             _IAFalsa.elegir = lambda t: json.dumps({"tipo": "opcion", "ids": [int(_buscar(t, "París") or 0)]})
             ox, oy = lbl.winfo_rootx(), lbl.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(ox + qx, oy + qy), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(ox + qx, oy + qy), daemon=True).start()
             inicio = time.time()
 
             def revisar():
@@ -496,7 +497,7 @@ def _ventana_y_e2e(salida):
             _IAFalsa.elegir = elegir
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
             diag["entry_pantalla"] = (ent.winfo_rootx(), ent.winfo_rooty(), ent.winfo_width(), ent.winfo_height())
-            threading.Thread(target=_ctrl_clic, args=(lx + 120, ly + 55), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 120, ly + 55), daemon=True).start()
             inicio = time.time()
 
             def revisar():
@@ -540,7 +541,7 @@ def _ventana_y_e2e(salida):
                 return json.dumps({"tipo": "abierta", "respuestas": [{"campo": obj, "texto": ESPERADO}]})
             _IAFalsa.elegir = elegir
             # el Ctrl + clic va sobre la caja nativa (si se pica la ventana de Tk, esa se pone encima)
-            threading.Thread(target=_ctrl_clic, args=(lx + 500, ly + 132), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 500, ly + 132), daemon=True).start()
             inicio = time.time()
 
             def revisar():
@@ -608,7 +609,7 @@ def _ventana_y_e2e(salida):
                 {"hacer": "clic", "en": _id(t, "Rojo"), "texto": "Rojo"},
                 {"hacer": "clic", "en": _id(t, "Azul"), "texto": "Azul"}]}, "opcion_multiple")
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 45), daemon=True).start()
 
             def valores():
                 return {k: var.get() for k, var in vars_.items()}
@@ -635,7 +636,7 @@ def _ventana_y_e2e(salida):
             _IAFalsa.elegir = _fases(lambda t: {"tipo": "desplegable", "respuesta": "Mitocondria", "acciones": [
                 {"hacer": "elegir", "en": _id(t, "Elige"), "opcion": "Mitocondria"}]}, "desplegable")
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 45), daemon=True).start()
             esperar("menu", lambda: cb.get() == "Mitocondria", lambda: {"ok": cb.get() == "Mitocondria",
                                                                         "valor": cb.get()}, e2e_arrastrar, top,
                     minimo=2.0)
@@ -674,7 +675,7 @@ def _ventana_y_e2e(salida):
             _IAFalsa.elegir = _fases(lambda t: {"tipo": "arrastrar", "acciones": [
                 {"hacer": "arrastrar", "desde": _id(t, "Coraz"), "hasta": _id(t, "Aqu")}]}, "arrastrar")
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 45), daemon=True).start()
 
             def centro():
                 x0, y0, x1, y1 = cv.bbox("pieza")
@@ -710,7 +711,7 @@ def _ventana_y_e2e(salida):
             _IAFalsa.elegir = _fases(contestar, "abierta")
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
             inicio = len(v.ui.actividad)
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 45), daemon=True).start()
 
             def listo():
                 return any("Cervantes" in str(a) for a in list(v.ui.actividad)[:2])
@@ -744,7 +745,7 @@ def _ventana_y_e2e(salida):
                     {"hacer": "escribir", "en": c if c else {"x": 0, "y": 0}, "texto": "Roma"}]}
             _IAFalsa.elegir = _fases(contestar, "abierta")
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 50), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 50), daemon=True).start()
 
             def listo():
                 return ent.get().strip() == "Roma"
@@ -783,7 +784,7 @@ def _ventana_y_e2e(salida):
                     {"hacer": "escribir", "en": {"x": 600, "y": 320}, "texto": "zzz"}]}   # fondo: NO escribe
             _IAFalsa.elegir = _fases(contestar, "numerica")
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 45), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 45), daemon=True).start()
 
             def listo():
                 return ent.get().strip() == "8"
@@ -835,7 +836,7 @@ def _ventana_y_e2e(salida):
                     {"hacer": "clic", "en": {"gx": 0, "gy": 2}}, {"hacer": "clic", "en": {"gx": -1, "gy": 0}}]}
             _IAFalsa.elegir = _fases(contestar, "graficar", alto=600)
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
-            threading.Thread(target=_ctrl_clic, args=(lx + 200, ly + 26), daemon=True).start()
+            threading.Thread(target=_mantener_clic, args=(lx + 200, ly + 26), daemon=True).start()
 
             def listo():
                 return len(puntos) >= 2
