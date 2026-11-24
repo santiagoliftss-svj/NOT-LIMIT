@@ -138,33 +138,31 @@ def prueba_llave_en_el_llavero():
 
 # ---------------------------------------------------------------- Option + clic
 
-def prueba_option_clic_dispara_y_no_le_llega_a_la_pagina():
+def prueba_clic_sostenido_registra_y_todo_pasa_a_la_pagina():
     q = _con_quartz()
     disparos = []
     e = MS.EscuchaCtrlClic(lambda x, y: disparos.append((x, y)), es_propia=lambda x, y: x < 100)
     e._disparar = lambda x, y: disparos.append((x, y))       # (sin hilo en la prueba)
-    abajo = Evento(q.kCGEventLeftMouseDown, 400, 300, q.kCGEventFlagMaskAlternate)
-    assert e._decidir(abajo.tipo, abajo) is None, "el clic no le llega a la pagina"
+    # clic normal: se registra para el sostenido y SI le llega a la pagina
+    ev = Evento(q.kCGEventLeftMouseDown, 400, 300)
+    assert e._decidir(ev.tipo, ev) is ev
+    assert e._pres is not None, "el clic normal queda registrado para el sostenido"
     arriba = Evento(q.kCGEventLeftMouseUp, 400, 300)
-    assert e._decidir(arriba.tipo, arriba) is None, "ni cuando se suelta"
-    assert disparos == [(800.0, 600.0)], disparos           # pixeles Retina (2x)
-    assert ME.escala_actual() == 2.0
-    # el siguiente clic normal si pasa
-    for ev in (Evento(q.kCGEventLeftMouseDown, 400, 300), Evento(q.kCGEventLeftMouseUp, 400, 300)):
-        assert e._decidir(ev.tipo, ev) is ev
-    # Option + Cmd, Option + Shift, Ctrl + clic (= clic derecho en Mac): no
-    for b in (q.kCGEventFlagMaskAlternate | q.kCGEventFlagMaskCommand,
-              q.kCGEventFlagMaskAlternate | q.kCGEventFlagMaskShift, q.kCGEventFlagMaskControl):
+    assert e._decidir(arriba.tipo, arriba) is arriba
+    assert e._pres is None, "al soltar se acaba el sostenido"
+    # con teclas (Option, Cmd, Ctrl, Shift): no se registran, pero tambien pasan
+    for b in (q.kCGEventFlagMaskAlternate, q.kCGEventFlagMaskAlternate | q.kCGEventFlagMaskCommand,
+              q.kCGEventFlagMaskControl | q.kCGEventFlagMaskShift):
         ev = Evento(q.kCGEventLeftMouseDown, 400, 300, b)
         assert e._decidir(ev.tipo, ev) is ev
-    # sobre la ventana de NO LIMIT: clic normal
-    ev = Evento(q.kCGEventLeftMouseDown, 20, 300, q.kCGEventFlagMaskAlternate)
-    assert e._decidir(ev.tipo, ev) is ev
+        e._decidir(q.kCGEventLeftMouseUp, Evento(q.kCGEventLeftMouseUp, 400, 300))
+    assert e._pres is None
     # los clics que manda NO LIMIT pasan sin tocarse
-    ev = Evento(q.kCGEventLeftMouseDown, 400, 300, q.kCGEventFlagMaskAlternate, marca=ME.MARCA)
+    ev = Evento(q.kCGEventLeftMouseDown, 400, 300, marca=ME.MARCA)
     assert e._decidir(ev.tipo, ev) is ev
-    assert len(disparos) == 1
+    assert disparos == []
     # si macOS apaga la escucha, se vuelve a prender
+    abajo = Evento(q.kCGEventLeftMouseDown, 400, 300)
     e._tap = object()
     assert e._decidir(0xFFFFFFFE, abajo) is abajo and q.reactivada == [True]
 

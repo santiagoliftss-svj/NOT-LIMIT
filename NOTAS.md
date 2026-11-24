@@ -1,5 +1,13 @@
 **Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*). ¿Tienes Mac? Bájala en la página: https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
+**Nuevo en 2.9.0 (para que sí sirva en LockDown Browser)**
+
+- Fuera el Ctrl + clic: ahora **solo se usa el clic sostenido** (mantener presionado 1 segundo sobre la pregunta, sin mover el mouse). Los atajos con teclas los bloquean los navegadores de examen; un clic sostenido no.
+- **Panel flotante con la respuesta** (como NoLock): cuando el examen corre en Respondus LockDown Browser, NO LIMIT no pica nada — **te muestra la respuesta en un panelcito flotante** que no roba el foco (el examen nunca registra que saliste de la prueba) ni sale en capturas, grabaciones ni pantalla compartida. Tú la picas. En Canvas, ALEKS y MyLab normales sigue contestando solo.
+- Descubrimos por qué no servía en LockDown Browser: **ese navegador corre como administrador** y Windows no deja que una app normal le mande clics. Ahora, al detectarlo, NO LIMIT cambia solo a modo panel; tocando el panel cambias entre "solo mostrar la respuesta" y "contestar solo".
+- Evasión de detección en la red: el tráfico hacia la IA ahora sale con la **huella TLS exacta de Chrome** (antes salía con la de Python, fácil de distinguir).
+- Todo lo demás igual: mismo clic sostenido, mismos tiempos, mismas IAs, sigue escondido como servicio de audio.
+
 **Nuevo en 2.8.0 (para exámenes con LockDown Browser)**
 
 - Nueva forma de disparar la pregunta: **mantén presionado el clic 1 segundo sobre ella, sin mover el mouse**, y NO LIMIT la contesta sola. Sirve en los exámenes con navegadores que bloquean los atajos de teclado, como Respondus LockDown Browser (un clic sostenido no lo pueden bloquear). Jala con mouse y touchpad, en Windows y en Mac.

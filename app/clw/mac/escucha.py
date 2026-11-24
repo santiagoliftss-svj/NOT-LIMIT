@@ -1,14 +1,11 @@
-"""Detecta Option + clic en cualquier parte de la pantalla (Mac).
+"""Detecta el clic sostenido en cualquier parte de la pantalla (Mac).
 
 Usa un 'event tap' de Quartz (necesita el permiso de Accesibilidad):
-- Option + clic izquierdo dispara el trabajo y ese clic NO le llega a la pagina (en Safari o Chrome un
-  Option + clic sobre un link lo descargaria).
+- Si mantienes presionado el boton 1 segundo sobre la pregunta, sin mover el mouse, se dispara solo.
+  Sirve donde bloquean los atajos con teclas (como Respondus LockDown Browser): un clic sostenido no lo
+  pueden bloquear. El Option + clic ya no se usa.
 - Tambien ve cuando se presiona Esc (para cancelar al instante).
 - Los clics y teclas que manda NO LIMIT traen una marca y pasan sin tocarse.
-
-Ademas (como en Windows): si mantienes presionado el boton 1 segundo sobre la pregunta sin mover el mouse,
-se dispara solo. Sirve donde bloquean los atajos (como Respondus LockDown Browser): un clic sostenido no
-lo pueden bloquear.
 """
 
 import logging
@@ -41,7 +38,6 @@ class EscuchaCtrlClic:
         self._tap = None
         self._bucle = None
         self._funcion = None
-        self._tragar_subida = False
         self.sin_permiso = False
         self._pres = None                 # clic sostenido en curso: {"t", "x", "y"} en puntos
         self._parar = threading.Event()
@@ -129,28 +125,15 @@ class EscuchaCtrlClic:
             return evento
         if tipo == Q.kCGEventLeftMouseUp:
             self._pres = None                    # solto el boton: se acaba el clic sostenido
-            if self._tragar_subida:
-                self._tragar_subida = False
-                return None
             return evento
         if tipo != Q.kCGEventLeftMouseDown:
             return evento
         banderas = int(Q.CGEventGetFlags(evento))
         otras = Q.kCGEventFlagMaskCommand | Q.kCGEventFlagMaskControl | Q.kCGEventFlagMaskShift
-        if not banderas & Q.kCGEventFlagMaskAlternate or banderas & otras:
-            if not banderas & (Q.kCGEventFlagMaskAlternate | otras):   # clic normal: candidato a sostener
-                p = Q.CGEventGetLocation(evento)
-                self._pres = {"t": time.time(), "x": p.x, "y": p.y}
-            return evento
-        p = Q.CGEventGetLocation(evento)
-        _, escala = entrada.pantalla_en(p.x, p.y)
-        entrada.poner_escala(escala)
-        x, y = p.x * escala, p.y * escala
-        if self.es_propia(x, y):
-            return evento                # Option + clic sobre NO LIMIT: clic normal
-        self._tragar_subida = True
-        threading.Thread(target=self._disparar, args=(x, y), name="disparo", daemon=True).start()
-        return None                      # la pagina no recibe ese clic
+        if not banderas & (Q.kCGEventFlagMaskAlternate | otras):   # clic normal: candidato a sostener
+            p = Q.CGEventGetLocation(evento)
+            self._pres = {"t": time.time(), "x": p.x, "y": p.y}
+        return evento
 
     def _disparar(self, x, y):
         try:
@@ -170,12 +153,6 @@ class EscuchaCtrlClic:
                         x, y = entrada.posicion_puntos()
                         if max(abs(x - pres["x"]), abs(y - pres["y"])) > MANTENER_PIX:
                             continue              # se movio (arrastra o selecciona): no cuenta
-                        try:
-                            forma = entrada.forma_cursor()
-                        except Exception:
-                            forma = None
-                        if forma not in (None, "texto"):
-                            continue              # boton o enlace, no una pregunta: no dispara
                         _, escala = entrada.pantalla_en(x, y)
                         entrada.poner_escala(escala)
                         sx, sy = x * escala, y * escala

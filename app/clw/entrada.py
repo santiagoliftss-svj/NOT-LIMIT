@@ -87,6 +87,38 @@ def ventana_al_frente():
         return None
 
 
+def proceso_al_frente():
+    """Nombre del .exe de la ventana al frente, en minusculas ('' si no se sabe). Sirve para reconocer
+    examenes que corren en Respondus LockDown Browser: ahi no se pueden mandar clics (corre como
+    administrador y Windows se los bloquea a las apps normales) y la respuesta solo se muestra."""
+    try:
+        h = U32.GetForegroundWindow()
+        if not h:
+            return ""
+        pid = ctypes.c_ulong()
+        U32.GetWindowThreadProcessId(ctypes.c_void_p(h), ctypes.byref(pid))
+        k32 = ctypes.windll.kernel32
+        k32.OpenProcess.restype = ctypes.c_void_p
+        ph = k32.OpenProcess(0x1000, False, pid)             # PROCESS_QUERY_LIMITED_INFORMATION
+        if not ph:
+            return ""
+        try:
+            buf = ctypes.create_unicode_buffer(512)
+            tam = ctypes.c_ulong(512)
+            if k32.QueryFullProcessImageNameW(ctypes.c_void_p(ph), 0, buf, ctypes.byref(tam)):
+                return buf.value.rsplit("\\", 1)[-1].rsplit("/", 1)[-1].lower()
+        finally:
+            k32.CloseHandle(ctypes.c_void_p(ph))
+    except Exception:
+        pass
+    return ""
+
+
+def examen_en_lockdown():
+    """True si al frente esta el Respondus LockDown Browser (o su version de la escuela)."""
+    return "lockdown" in proceso_al_frente()
+
+
 def ventana_raiz_en(x, y):
     try:
         h = U32.WindowFromPoint(_POINT(int(x), int(y)))
@@ -137,8 +169,11 @@ def clase_ventana(hwnd):
 
 
 def juego_en_pantalla_completa():
-    """True si al frente hay una app en pantalla completa que no es navegador (casi siempre un juego)."""
+    """True si al frente hay una app en pantalla completa que no es navegador (casi siempre un juego).
+    El LockDown Browser no cuenta: es el examen, no un juego (y su ventana no tiene clase de navegador)."""
     try:
+        if examen_en_lockdown():
+            return False
         h = U32.GetForegroundWindow()
         if not h:
             return False

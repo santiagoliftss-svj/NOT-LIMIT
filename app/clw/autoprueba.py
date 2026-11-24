@@ -1,7 +1,7 @@
 """Autoprueba del .exe ya armado: 'RtkAudUService64.exe --autoprueba <carpeta>'.
 
 Revisa OCR, motor, proveedores (con un servidor falso), cifrado, interfaz y, si hay escritorio,
-una prueba de punta a punta: Ctrl + clic de verdad, captura, IA falsa, clic y escritura en ventanas de prueba.
+una prueba de punta a punta: clic sostenido de verdad, captura, IA falsa, clic y escritura en ventanas de prueba.
 Guarda resultado.json y capturas PNG. Sale con 0 si todo lo obligatorio salio bien.
 """
 
@@ -849,7 +849,7 @@ def _ventana_y_e2e(salida):
             pruebas["grafica"] = {"ok": False, "error": repr(e), "traza": traceback.format_exc()[-1500:]}
             root.after(100, juego_pantalla_completa)
 
-    # -------- un "juego" en pantalla completa: Ctrl + clic ahi NO debe hacer nada
+    # -------- un "juego" en pantalla completa: el clic sostenido ahi NO debe hacer nada
     juego = {}
 
     def juego_pantalla_completa():
@@ -872,7 +872,7 @@ def _ventana_y_e2e(salida):
                 time.sleep(0.6)
                 juego["al_frente"] = entrada.clase_ventana(entrada.ventana_al_frente())
                 juego["detecta_juego"] = entrada.juego_en_pantalla_completa()
-                _ctrl_clic(260, 100)
+                _mantener_clic(260, 100)
             threading.Thread(target=clic, daemon=True).start()
 
             def revisar():
@@ -880,48 +880,45 @@ def _ventana_y_e2e(salida):
                 juego["pedidos_ia"] = _IAFalsa.pedidos - pedidos
                 juego["ok_pantalla_completa"] = juego["ignorados"] >= 1 and juego["pedidos_ia"] == 0
                 top.destroy()
-                root.after(300, ctrl_sostenido)
-            root.after(2800, revisar)
+                root.after(300, clic_corto)
+            root.after(4200, revisar)
         except Exception as e:
             juego["error"] = repr(e)
-            root.after(100, ctrl_sostenido)
+            root.after(100, clic_corto)
 
-    # -------- Ctrl apretado mucho rato (como en juegos para agacharse) + clic: tampoco hace nada
-    def ctrl_sostenido():
+    # -------- un clic normal (menos de un segundo, sin sostener): tampoco debe disparar nada
+    def clic_corto():
         try:
-            antes, pedidos = bot.ignorados.get("ctrl_sostenido", 0), _IAFalsa.pedidos
+            pedidos = _IAFalsa.pedidos
             top = tk.Toplevel(root)
-            top.title("Prueba ctrl")
+            top.title("Prueba clic corto")
             top.geometry("700x240+0+0")
             top.configure(bg="white")
             tk.Label(top, text="3. ¿Cuánto es 5 x 5?", font=("Arial", 22), bg="white", fg="#222").place(x=40, y=60)
             top.attributes("-topmost", True)
             top.update()
+            top.focus_force()
             lx, ly = top.winfo_rootx(), top.winfo_rooty()
 
             def hilo():
-                entrada._enviar([(entrada.VK_CONTROL, 0, 0)])
-                time.sleep(3.3)
+                time.sleep(0.4)
                 entrada.U32.SetCursorPos(int(lx + 150), int(ly + 80))
-                time.sleep(0.1)
-                entrada.U32.mouse_event(0x0002, 0, 0, 0, 0)
-                time.sleep(0.08)
-                entrada.U32.mouse_event(0x0004, 0, 0, 0, 0)
-                time.sleep(0.1)
-                entrada._enviar([(entrada.VK_CONTROL, 0, 2)])
+                time.sleep(0.15)
+                entrada.U32.mouse_event(0x0002, 0, 0, 0, 0)   # abajo
+                time.sleep(0.45)                               # menos de un segundo: no dispara
+                entrada.U32.mouse_event(0x0004, 0, 0, 0, 0)   # arriba
             threading.Thread(target=hilo, daemon=True).start()
 
             def revisar():
-                juego["ignorados_ctrl"] = bot.ignorados.get("ctrl_sostenido", 0) - antes
-                juego["pedidos_ia_ctrl"] = _IAFalsa.pedidos - pedidos
-                juego["ok_ctrl_sostenido"] = juego["ignorados_ctrl"] >= 1 and juego["pedidos_ia_ctrl"] == 0
+                juego["pedidos_ia_corto"] = _IAFalsa.pedidos - pedidos
+                juego["ok_clic_corto"] = juego["pedidos_ia_corto"] == 0
                 top.destroy()
-                RESULTADOS["juego"] = {"ok": bool(juego.get("ok_pantalla_completa") and juego.get("ok_ctrl_sostenido")),
+                RESULTADOS["juego"] = {"ok": bool(juego.get("ok_pantalla_completa") and juego.get("ok_clic_corto")),
                                        "detalle": juego}
                 root.after(300, reabrir)
-            root.after(5200, revisar)
+            root.after(3000, revisar)
         except Exception as e:
-            juego["error_ctrl"] = repr(e)
+            juego["error_corto"] = repr(e)
             RESULTADOS["juego"] = {"ok": False, "detalle": juego}
             root.after(100, reabrir)
 
@@ -1015,19 +1012,16 @@ def _cerrar_nativo(hwnd):
     u32.PostMessageW(hwnd, 0x0010, None, None)
 
 
-def _ctrl_clic(x, y):
-    """Ctrl + clic de verdad (como si lo hiciera el usuario)."""
+def _mantener_clic(x, y):
+    """Clic sostenido de verdad (como si lo hiciera el usuario: presiona, aguanta mas de 1 s y suelta)."""
     from . import entrada
     time.sleep(0.4)
     entrada.U32.SetCursorPos(int(x), int(y))
     time.sleep(0.15)
-    entrada._enviar([(entrada.VK_CONTROL, 0, 0)])
-    time.sleep(0.08)
-    entrada.U32.mouse_event(0x0002, 0, 0, 0, 0)
-    time.sleep(0.08)
-    entrada.U32.mouse_event(0x0004, 0, 0, 0, 0)
-    time.sleep(0.08)
-    entrada._enviar([(entrada.VK_CONTROL, 0, 2)])
+    entrada.U32.mouse_event(0x0002, 0, 0, 0, 0)   # izquierdo abajo
+    time.sleep(1.3)                               # mas de un segundo, sin mover el mouse
+    entrada.U32.mouse_event(0x0004, 0, 0, 0, 0)   # arriba
+    time.sleep(0.2)
 
 
 def _diagnostico(salida):

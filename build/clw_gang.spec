@@ -10,7 +10,7 @@ a = Analysis(
     pathex=[APP],
     datas=[(os.path.join(APP, "assets"), "assets")],
     hiddenimports=["PIL.ImageTk", "PIL._tkinter_finder", "pystray._win32", "pystray._util.win32", "clw.uia", "clw.servidor_local",
-                   "clw.prueba_navegador"],
+                   "clw.prueba_navegador", "curl_cffi", "curl_cffi.requests"],
     excludes=["numpy", "matplotlib", "pytest", "IPython", "pystray._gtk", "pystray._appindicator",
               "pystray._xorg", "pystray._darwin", "gi", "Xlib", "AppKit", "Foundation"],
     noarchive=False,

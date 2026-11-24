@@ -152,6 +152,21 @@ class BandejaFalsa:
         self.cerrada = True
 
 
+class PanelFalso:
+    def __init__(self):
+        self.textos, self.escondido, self.cerrado = [], False, False
+
+    def mostrar(self, texto):
+        self.textos.append(texto)
+        self.escondido = False
+
+    def esconder(self):
+        self.escondido = True
+
+    def cerrar(self):
+        self.cerrado = True
+
+
 class BotFalso:
     def __init__(self, con_clave=True):
         self.eventos = queue.Queue()
@@ -203,7 +218,8 @@ def _ventana(con_bandeja=True, con_clave=True):
     v._calentar_desde = reloj.t + 1.0
     v._evento = None
     v._hwnd = None
-    v.bandeja = BandejaFalsa() if con_bandeja else None
+    v.bandeja = None                       # ya no hay icono junto al reloj (LockDown Browser lo vigila)
+    v._panel = PanelFalso()
     v._enfocada = lambda: True
     # cuenta los cuadros que de verdad llegan a la pantalla
     v.cuadros = 0
@@ -230,32 +246,33 @@ def _correr(v, reloj, seg):
     return vueltas
 
 
-def prueba_inyectar_se_va_volando_junto_al_reloj():
+def prueba_inyectar_se_esconde_sin_rastro():
     v, bot, reloj = _ventana()
     _correr(v, reloj, 0.5)
     v.ui.inyectar()
     _correr(v, reloj, 0.6)
-    assert bot.activo and v.visible, "primero se ve la animacion"
+    assert bot.activo and v.visible, "primero se ve la animacion del boton"
     _correr(v, reloj, 1.0)
     assert not v.visible and v.root.estado == "withdrawn" and v.root.alfa == 1.0
-    # se fue volando hacia la esquina del reloj y regreso a su lugar ya escondida
-    reloj_xy = v._junto_al_reloj()             # (en Windows sale de la barra de tareas de verdad)
-    assert reloj_xy in v.root.recorrido and reloj_xy != (700, 200), (reloj_xy, v.root.recorrido[-3:])
+    # ni icono junto al reloj ni vuelo hacia alla: se esconde y ya
+    assert v.bandeja is None
+    assert not v.root.recorrido, "nada de volar hacia el reloj"
     assert v.root.pos == (700, 200)
-    assert v.bandeja.estados[-1] == (True, None)
-    assert len(v.bandeja.avisos) == 1 and "reloj" in v.bandeja.avisos[0]
+    bot.eventos.put(("actividad", "No vi ninguna pregunta ahí", "info"))
+    _correr(v, reloj, 0.3)
+    assert v._panel.textos[-1] == "No vi ninguna pregunta ahí"
     # escondida: no dibuja nada y casi no despierta
     antes = v.cuadros
     vueltas = _correr(v, reloj, 5.0)
     assert v.cuadros == antes and vueltas <= 21, vueltas
     assert v.root.siguiente == 250
-    # el aviso del reloj sale una sola vez en la vida
+    # se vuelve a abrir normal, sin fundido ni animacion
     v.mostrar()
     _correr(v, reloj, 0.5)
     assert v.visible and v.root.pos == (700, 200) and v.root.alfa == 1.0
     v.esconder()
     _correr(v, reloj, 0.6)
-    assert not v.visible and len(v.bandeja.avisos) == 1
+    assert not v.visible
 
 
 def prueba_mientras_contesta_no_aparece_nada():
@@ -266,27 +283,25 @@ def prueba_mientras_contesta_no_aparece_nada():
     bot.eventos.put(("actividad", "Tu cuenta de Claude no tiene saldo.", "error"))
     bot.eventos.put(("actividad", "No vi ninguna pregunta ahí", "info"))
     _correr(v, reloj, 0.5)
-    assert len(v.bandeja.avisos) == 1, "ni una notificacion mientras contesta"
-    assert v.bandeja.estados[-1] == (True, "Tu cuenta de Claude no tiene saldo."), "solo lo marca el icono del reloj"
+    assert v._panel.textos[-1] == "No vi ninguna pregunta ahí", "la respuesta se ve en el panel flotante"
     bot.eventos.put(("actividad", "Marcó: Canberra", "ok"))
     _correr(v, reloj, 0.3)
-    assert v.bandeja.estados[-1] == (True, None)
-    # si falta la clave tampoco se abre sola: solo marca el icono
+    assert v._panel.textos[-1] == "Marcó: Canberra"
+    # si falta la clave tampoco se abre sola
     bot.eventos.put(("falta_clave", "claude"))
     _correr(v, reloj, 0.5)
     assert not v.visible and v.root.estado == "withdrawn"
-    assert v.bandeja.estados[-1] == (True, "Revisa tu clave")
     v.mostrar()
-    assert v.visible and v.ui.pantalla == "clave" and v.bandeja.estados[-1] == (True, None)
+    assert v.visible and v.ui.pantalla == "clave"
 
 
-def prueba_abrir_desde_el_reloj_con_fundido():
+def prueba_abrir_de_nuevo_sin_fundido():
     v, bot, reloj = _ventana()
     v.ui.inyectar()
     _correr(v, reloj, 2.0)
-    v.cola.put(v.mostrar)                  # "Abrir NO LIMIT" (llega de otro hilo por la cola)
+    v.cola.put(v.mostrar)                  # se vuelve a abrir (doble clic a NO LIMIT)
     v._tick()
-    assert v.visible and v.root.estado == "normal" and v.root.alfa < 0.5 and v.root.topmost
+    assert v.visible and v.root.estado == "normal" and v.root.alfa == 1.0 and v.root.topmost
     _correr(v, reloj, 0.5)
     assert v.root.alfa == 1.0 and v.root.pos == (700, 200)
     # ya visible y activa: muestra DETENER y no se vuelve a esconder sola
@@ -301,17 +316,17 @@ def prueba_la_x_esconde_si_esta_activo_y_cierra_si_no():
     v._al_cerrar()
     _correr(v, reloj, 0.5)
     assert not v._cerrado and not v.visible and bot.activo
-    # Detener desde el menu del reloj
-    v.cola.put(v._alternar)
+    v.cola.put(v._alternar)                # Detener (lo mismo que hacia el menu del reloj)
     _correr(v, reloj, 0.5)
-    assert not bot.activo and bot.log[-1] == "detener" and v.bandeja.estados[-1] == (False, None)
+    assert not bot.activo and bot.log[-1] == "detener"
+    assert v._panel.escondido              # al apagar se esconde el panel
     v.mostrar()
     _correr(v, reloj, 0.5)
     v._al_cerrar()
-    assert v._cerrado and v.root.destruida and v.bandeja.cerrada
+    assert v._cerrado and v.root.destruida and v._panel.cerrado
 
 
-def prueba_activar_desde_el_reloj_sin_clave_abre_la_ventana():
+def prueba_activar_sin_clave_abre_la_ventana():
     v, bot, reloj = _ventana(con_clave=False)
     v.esconder()
     _correr(v, reloj, 0.5)
@@ -321,26 +336,31 @@ def prueba_activar_desde_el_reloj_sin_clave_abre_la_ventana():
     assert v.visible and v.ui.pantalla == "clave" and not bot.activo
 
 
-def prueba_salir_desde_el_reloj():
+def prueba_salir():
     v, bot, reloj = _ventana()
     v.ui.inyectar()
     _correr(v, reloj, 2.0)
     v.cola.put(v.salir)
     v._tick()
-    assert v._cerrado and not bot.activo and v.bandeja.cerrada and v.root.destruida
+    assert v._cerrado and not bot.activo and v._panel.cerrado and v.root.destruida
 
 
-def prueba_sin_icono_del_reloj_solo_minimiza():
-    v, bot, reloj = _ventana(con_bandeja=False)
+def prueba_sin_bandeja_siempre_se_esconde():
+    v, bot, reloj = _ventana()
+    assert v.bandeja is None
     v.ui.inyectar()
     _correr(v, reloj, 2.0)
-    assert v.root.estado == "iconic" and bot.activo
-    # minimizada tampoco dibuja
+    assert v.root.estado == "withdrawn" and bot.activo
+    # escondida tampoco dibuja
     antes = v.cuadros
     _correr(v, reloj, 2.0)
     assert v.cuadros == antes
-    # la X sin icono del reloj cierra todo (si no, no habria como volver)
+    # la X con la app activa esconde; deteniendo y con la X ya cierra todo
     v.mostrar()
+    v._al_cerrar()
+    assert not v._cerrado and not v.visible
+    v.cola.put(v._alternar)
+    _correr(v, reloj, 0.5)
     v._al_cerrar()
     assert v._cerrado and not bot.activo
 

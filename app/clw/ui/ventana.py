@@ -1,8 +1,8 @@
 """La ventana de Windows (Tk). Muestra lo que dibuja la Interfaz y le pasa el mouse y el teclado.
 
-Cuando NO LIMIT queda activo, la ventana se va volando junto al reloj (icono en la bandeja): asi no dibuja nada
-ni estorba. Desde ese icono se vuelve a abrir, se detiene o se cierra. Mientras contesta no aparece nada en
-pantalla: si algo falla, el icono del reloj lo marca y el detalle queda en la app.
+Cuando NO LIMIT queda activo, la ventana se esconde sin rastro: ni icono junto al reloj ni animacion
+(LockDown Browser vigila la bandeja). La respuesta se ve en el panelcito flotante, que no roba el foco
+ni sale en capturas. Para volver a abrir la ventana se le da doble clic a NO LIMIT como al principio.
 
 Desde que se toca INYECTAR (como NoLock) la ventana pasa desapercibida: solo se ve en el monitor, pero no
 sale en capturas de pantalla, grabaciones ni al compartir pantalla (ver _excluir_de_capturas).
@@ -39,7 +39,7 @@ log = logging.getLogger("clw")
 EVENTO_MOSTRAR = "CLWGANG_mostrar"   # si abren NO LIMIT otra vez, esa copia avisa por aqui y se cierra
 T_IDA, T_VUELTA = 0.36, 0.32         # vuelo hacia el reloj y de regreso
 AVISO_BANDEJA = ("Sigue activo junto al reloj (si no ves el icono, está en la flechita ^). "
-                 f"{plataforma.ATAJO} sobre cualquier pregunta (o mantén presionado el clic 1 segundo).")
+                 "Mantén presionado el clic 1 segundo sobre cualquier pregunta.")
 CADA_REVISION = 6 * 3600             # cada cuanto se busca una version nueva
 
 
@@ -122,12 +122,14 @@ class Ventana:
         self._origen = None                # donde estaba la ventana antes de irse al reloj
         self._activo_bandeja = None
         self._alerta = None                # texto del ultimo problema mientras estaba escondida
+        self._panel = None                 # panelcito flotante con la respuesta (se crea al usarse)
         self._instalador = None            # actualizacion ya bajada
         self._actualizando = False
         self._calentando = True            # armar Ajustes y la clave en ratos libres (el primer clic no espera)
         self._calentar_desde = time.time() + 1.0
         self._evento = _crear_evento()
-        self.bandeja = self._crear_bandeja() if con_bandeja else None
+        self.bandeja = None                  # sin icono junto al reloj: ni icono ni animacion que delaten
+                                            # (LockDown Browser vigila la bandeja); se controla desde el panel
 
         self.root.update_idletasks()
         self._barra_oscura()
@@ -279,25 +281,20 @@ class Ventana:
 
     # ---------------------------------------------------------------- mostrar / esconder
     def esconder(self):
-        """Se va volando junto al reloj (si no hay icono en la bandeja, solo se minimiza)."""
+        """Se esconde sin dejar rastro: nada de volar junto al reloj ni icono en la bandeja (LockDown
+        Browser vigila esas cosas). La respuesta se ve en el panelcito flotante."""
         if self._cerrado or not self.visible:
             return
         self.visible = False
         self.ui.visible = False
         self.ui.salir()
-        if not self.en_bandeja():
-            try:
-                self.root.iconify()
-            except TclError:
-                pass
-            return
-        self._origen = self._posicion()
-        self._fundido = {"t0": time.time(), "dur": T_IDA, "a0": 1.0, "a1": 0.0, "de": self._origen,
-                         "a": self._junto_al_reloj(), "curva": _acelera, "fin": self._retirar}
-        if not self.config.get("aviso_bandeja"):
-            self.config["aviso_bandeja"] = True
-            self.bandeja.avisar(AVISO_BANDEJA)
-        log.info("ventana escondida junto al reloj")
+        self._fundido = None
+        self._alfa(1.0)
+        try:
+            self.root.withdraw()
+        except TclError:
+            pass
+        log.info("ventana escondida")
 
     def _retirar(self):
         try:
@@ -313,22 +310,18 @@ class Ventana:
             return
         self._fundido = None
         if self._estado_tk() != "normal":
-            destino = self._origen or self._posicion()
-            salida = self._junto_al_reloj() if (self._origen and self.en_bandeja()) else None
-            self._alfa(0.0)
-            if salida:
-                self._mover_a(*salida)
+            self._alfa(1.0)
             try:
                 self.root.deiconify()
-                self._excluir_de_capturas()      # al volver del reloj sigue desapercibida
+                self._excluir_de_capturas()      # al volver sigue desapercibida
             except TclError:
                 return
-            self._fundido = {"t0": time.time(), "dur": T_VUELTA, "a0": 0.0, "a1": 1.0, "de": salida,
-                             "a": destino if salida else None, "curva": _frena, "fin": None}
         else:
             self._alfa(1.0)
         self.visible = True
         self.ui.visible = True
+        if self._panel is not None:
+            self._panel.esconder()          # la ventana abierta ya enseña todo
         self._poner_alerta(None)
         try:
             self.root.lift()
@@ -363,8 +356,8 @@ class Ventana:
         return 16
 
     def _al_cerrar(self):
-        """La X: si esta activo se queda trabajando junto al reloj; si no, se cierra."""
-        if self.bot.activo and self.en_bandeja():
+        """La X: si esta activo se queda trabajando escondida (se ve en el panel); si no, se cierra."""
+        if self.bot.activo:
             self.esconder()
         else:
             self.salir()
@@ -382,6 +375,8 @@ class Ventana:
             self._actualizando = actualizar.instalar(self._instalador, relanzar=False)
         if self.bandeja is not None:
             self.bandeja.cerrar()
+        if self._panel is not None:
+            self._panel.cerrar()
         try:
             self.root.destroy()
         except TclError:
@@ -459,16 +454,33 @@ class Ventana:
         self.root.tk.call(str(self.foto), "copy", str(chica), "-to", x0, y0, "-compositingrule", "set")
 
     def _evento_aparte(self, ev):
-        """Escondida no aparece nada: los problemas solo marcan el icono del reloj."""
+        """Escondida no aparece nada en pantalla... salvo el panelcito flotante con la respuesta."""
         if self.visible:
             return
-        if ev[0] == "falta_clave":
+        if ev[0] == "estado":
+            if ev[1] == "activo":
+                self._panel_evento("Activo. Mantén presionado el clic 1 s sobre la pregunta. "
+                                   "Toca aquí para cambiar de modo.")
+            elif ev[1] == "apagado" and self._panel is not None:
+                self._panel.esconder()
+        elif ev[0] == "falta_clave":
             self._poner_alerta("Revisa tu clave")
         elif ev[0] == "actividad" and len(ev) > 2:
+            if self.bot.activo:
+                self._panel_evento(ev[1])
             if ev[2] == "error":
                 self._poner_alerta(ev[1])
             elif ev[2] == "ok":
                 self._poner_alerta(None)
+
+    def _panel_evento(self, texto):
+        """La respuesta (o lo que pasa) en el panelcito flotante junto a la bandeja: no roba el foco ni
+        sale en capturas, asi el examen nunca registra que saliste de el."""
+        if not self.bot.activo:
+            return
+        if self._panel is None:
+            self._panel = Panel(self.root, al_tocar=lambda: self.bot.alternar_modo())
+        self._panel.mostrar(texto)
 
     def _recoger_basura(self):
         """La basura con cosas de Tk (imagenes, variables) se recoge aqui, en el hilo de Tk. Si la recogiera el hilo
@@ -632,3 +644,74 @@ def _sin_error(fn, *args):
         fn(*args)
     except Exception:
         pass
+
+
+class Panel:
+    """Panelcito flotante con la respuesta (como NoLock). No roba el foco (WS_EX_NOACTIVATE: aunque se le
+    de clic, el navegador del examen sigue siendo la ventana activa y no registra que saliste de la prueba) y
+    no sale en capturas, grabaciones ni pantalla compartida (WDA_EXCLUDEFROMCAPTURE). Tocarlo cambia entre
+    'mostrar la respuesta' y 'contestar solo'."""
+
+    def __init__(self, raiz, al_tocar):
+        self.top = tk.Toplevel(raiz)
+        self.top.overrideredirect(True)
+        self.top.attributes("-topmost", True)
+        self.top.configure(bg="#0A0A0A")
+        self.lbl = tk.Label(self.top, text="", bg="#0A0A0A", fg="#FFFFFF", wraplength=280,
+                           justify="left", padx=14, pady=9, font=("Segoe UI", 10))
+        self.lbl.pack()
+        self.lbl.bind("<ButtonRelease-1>", lambda e: al_tocar())
+        self.top.withdraw()
+        self.visible = False
+
+    def _esquinas(self):
+        try:
+            r = _RECT()
+            if ctypes.windll.user32.SystemParametersInfoW(0x30, 0, ctypes.byref(r), 0):   # SPI_GETWORKAREA
+                return r.right, r.bottom
+        except Exception:
+            pass
+        return self.top.winfo_screenwidth(), self.top.winfo_screenheight()
+
+    def _estilos(self):
+        """Invisible en capturas y sin robar el foco nunca."""
+        if entrada.U32 is None:
+            return
+        try:
+            hwnd = entrada.U32.GetAncestor(self.top.winfo_id(), 2)
+            entrada.U32.SetWindowDisplayAffinity(ctypes.c_void_p(hwnd), 0x11)             # WDA_EXCLUDEFROMCAPTURE
+            entrada.U32.GetWindowLongW.restype = ctypes.c_long
+            estilo = entrada.U32.GetWindowLongW(ctypes.c_void_p(hwnd), -20) & 0xFFFFFFFF  # GWL_EXSTYLE
+            entrada.U32.SetWindowLongW(ctypes.c_void_p(hwnd), -20,
+                                       ctypes.c_long(estilo | 0x08000000 | 0x80))       # NOACTIVATE | TOOLWINDOW
+        except Exception:
+            pass
+
+    def mostrar(self, texto):
+        try:
+            self.lbl.configure(text=texto)
+            self.top.update_idletasks()
+            derecha, abajo = self._esquinas()
+            w, h = self.top.winfo_reqwidth(), self.top.winfo_reqheight()
+            self.top.geometry(f"+{max(0, derecha - w - 14)}+{max(0, abajo - h - 14)}")
+            if not self.visible:
+                self.top.deiconify()
+                self.visible = True
+                self._estilos()
+        except TclError:
+            pass
+
+    def esconder(self):
+        if self.visible:
+            try:
+                self.top.withdraw()
+            except TclError:
+                pass
+            self.visible = False
+
+    def cerrar(self):
+        try:
+            self.top.destroy()
+        except TclError:
+            pass
+        self.visible = False

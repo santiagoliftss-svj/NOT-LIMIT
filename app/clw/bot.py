@@ -144,13 +144,10 @@ class Bot:
                          f"Te quedan {n} preguntas este mes", "info")
 
     def _esperar_que_suelte_ctrl(self, max_seg=3.0):
-        """Tras el disparo se espera a que suelten el Ctrl (y el boton del mouse en el modo de mantener
-        presionado): si no, los clics de la IA pelearian con el mouse del usuario."""
+        """Tras el disparo se espera a que suelten el boton del mouse: si no, los clics de la IA pelearian
+        con el mouse del usuario."""
         fin = time.time() + max_seg
         while time.time() < fin:
-            if self.acciones.tecla_abajo(entrada.VK_ATAJO):
-                time.sleep(0.03)
-                continue
             try:
                 if entrada.tecla_abajo(entrada.boton_izquierdo()):
                     time.sleep(0.03)
@@ -159,6 +156,23 @@ class Bot:
                 pass
             break
         time.sleep(0.12)
+
+    # ------------------------------------------------ modo de respuesta (panel o clic)
+    def modo_panel(self):
+        """True si la respuesta solo se muestra en el panel flotante (no se pica nada). En LockDown Browser
+        es obligatorio: corre como administrador y Windows no deja mandarle clics a una app normal."""
+        if getattr(self, "_forzar_panel", None) is not None:
+            return self._forzar_panel
+        try:
+            return bool(entrada.examen_en_lockdown())
+        except Exception:
+            return False
+
+    def alternar_modo(self):
+        """Cambia entre 'contestar solo' y 'mostrar la respuesta en el panel' (se toca el panel)."""
+        self._forzar_panel = not self.modo_panel()
+        self._emitir("actividad", "Modo: solo mostrar la respuesta en el panel" if self.modo_panel()
+                     else "Modo: contesta solo", "info")
 
     def _vigilar_esc(self, fin):
         """Mientras lee y piensa: si presionan Esc se cancela al instante (no da clic ni escribe nada)."""
@@ -316,6 +330,12 @@ class Bot:
             cerebro.guardar_revision(os.path.join(rutas.carpeta_datos(), "revision"), img, region, cajas, campos,
                                      plan.pasos)
         self._cancelado()
+
+        if self.modo_panel():
+            # LockDown Browser (o modo elegido): nada de clics; la respuesta se muestra en el panel flotante
+            respuesta = _corto(plan.respuesta, 160)
+            self._emitir("actividad", f"Respuesta: {respuesta}" if respuesta else "No pude con esta", "ok")
+            return plan, None
 
         ej = cerebro.Ejecutor(self.acciones, left, top, region, cancelar=self._cancelar.is_set,
                               foto=lambda: self._foto(left, top, region),

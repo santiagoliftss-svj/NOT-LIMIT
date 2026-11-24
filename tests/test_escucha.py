@@ -118,6 +118,8 @@ def prueba_mantener_presionado_moviendo_el_mouse_no_dispara():
 
 
 def prueba_mantener_presionado_sobre_un_boton_no_dispara():
+    """(El filtro de cursor de texto ya no se usa: sobra fiabilidad en LockDown Browser; quedo el test
+    del clic corto en la autoprueba.)"""
     disparos = []
     es, ent, antes = _escucha(disparos)
     try:
@@ -125,28 +127,29 @@ def prueba_mantener_presionado_sobre_un_boton_no_dispara():
         time.sleep(0.05)
         ent.forma = "flecha"                        # el cursor sobre un boton (no texto)
         ent.teclas[VK_LBUTTON] = True
-        time.sleep(1.4)                             # mantener presionado un boton: nada
+        time.sleep(1.4)                             # mantener presionado un boton: dispare igual
         ent.teclas[VK_LBUTTON] = False
         time.sleep(0.3)
-        assert disparos == [], disparos
+        assert disparos == [(100, 200)], disparos   # el disparo ya no depende del cursor
     finally:
         _terminar(es, antes)
 
 
-def prueba_ctrl_clic_sigue_funcionando():
+def prueba_ctrl_ya_no_dispara_solo_el_clic_sostenido():
+    """El Ctrl + clic se quito por completo (LockDown Browser lo bloquea): presionar Ctrl y dar clic
+    rapido ya no dispara nada; solo el clic sostenido de 1 segundo."""
     disparos = []
     es, ent, antes = _escucha(disparos)
     try:
         es.iniciar()
         time.sleep(0.05)
         ent.teclas[VK_CONTROL] = True
-        time.sleep(0.05)
-        ent.teclas[VK_LBUTTON] = True                # Ctrl + clic: dispara al instante
-        t0 = time.time()
-        while time.time() - t0 < 1.0 and not disparos:
-            time.sleep(0.01)
+        time.sleep(0.03)
+        ent.teclas[VK_LBUTTON] = True                # clic rapido con Ctrl: ya no cuenta
+        time.sleep(0.3)
         ent.teclas[VK_LBUTTON] = False
         ent.teclas[VK_CONTROL] = False
-        assert disparos == [(100, 200)], disparos
+        time.sleep(0.2)
+        assert disparos == [], disparos
     finally:
         _terminar(es, antes)

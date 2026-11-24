@@ -135,6 +135,12 @@ def _traducir(proveedor, estado, cuerpo):
 
 # ---------------------------------------------------------------- HTTP
 
+try:  # evasión de detección (como NoLock): si está curl_cffi, el tráfico de la IA sale con la huella
+    from curl_cffi import requests as _CURL   # TLS, cabeceras y orden exactos de Chrome: en la red no se
+except Exception:                             # distingue de un navegador de verdad. Si no está, urllib.
+    _CURL = None
+
+
 def _contexto_ssl():
     ctx = ssl.create_default_context()
     try:  # usa tambien los certificados de Windows
@@ -153,8 +159,20 @@ _CTX = _contexto_ssl()
 
 
 def _http(metodo, url, cabeceras, cuerpo=None, timeout=60, respuesta=None):
-    """(estado, texto). Si 'respuesta' es un dict, ahi deja las cabeceras de la respuesta."""
+    """(estado, texto). Si 'respuesta' es un dict, ahi deja las cabeceras de la respuesta.
+    Con curl_cffi instalada, sale con la huella de Chrome (evasión de detección); si algo falla, urllib."""
     datos = json.dumps(cuerpo).encode("utf-8") if cuerpo is not None else None
+    if _CURL is not None:
+        try:
+            cab = dict(cabeceras)
+            if datos is not None:
+                cab.setdefault("content-type", "application/json")
+            r = _CURL.request(metodo, url, headers=cab, data=datos, timeout=timeout, impersonate="chrome")
+            if respuesta is not None:
+                respuesta.update({str(k).lower(): v for k, v in (r.headers or {}).items()})
+            return r.status_code, r.text
+        except Exception:
+            pass                                    # se prueba con urllib, como siempre
     req = urllib.request.Request(url, data=datos, method=metodo, headers=dict(cabeceras))
     if datos is not None:
         req.add_header("content-type", "application/json")
