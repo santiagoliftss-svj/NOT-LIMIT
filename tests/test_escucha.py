@@ -1,12 +1,29 @@
-"""La escucha de Windows: Ctrl + clic y lo nuevo de mantener presionado 1 segundo (para LockDown Browser)."""
+"""La escucha de Windows: Ctrl + clic y lo nuevo de mantener presionado 1 segundo (para LockDown Browser).
 
+En Mac la clase se cambia por la de Quartz (Option + clic) al importar el modulo; para probar la logica de
+Windows (que es la que comparte el clic sostenido) se ejecuta el archivo de nuevo, como si fuera Windows.
+"""
+
+import importlib.util
 import os
 import sys
 import time
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app"))
+_APP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app")
+sys.path.insert(0, _APP)
 
-from clw import escucha as E  # noqa: E402
+_real = sys.platform
+_viejo = sys.modules.pop("clw.escucha", None)
+try:
+    sys.platform = "win32"
+    _spec = importlib.util.spec_from_file_location("clw.escucha", os.path.join(_APP, "clw", "escucha.py"))
+    E = importlib.util.module_from_spec(_spec)
+    sys.modules["clw.escucha"] = E
+    _spec.loader.exec_module(E)
+finally:
+    sys.platform = _real
+    if _viejo is not None:
+        sys.modules["clw.escucha"] = _viejo
 
 VK_LBUTTON, VK_CONTROL = 0x01, 0x11
 
