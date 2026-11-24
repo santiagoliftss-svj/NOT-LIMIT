@@ -480,8 +480,12 @@ class Ventana:
         if not self.bot.activo:
             return
         if self._panel is None:
-            self._panel = Panel(self.root, al_tocar=lambda: self.bot.alternar_modo())
+            self._panel = Panel(self.root, al_tocar=lambda: self.bot.alternar_modo(),
+                                al_ocultar=lambda: self._panel.esconder())
         self._panel.mostrar(texto)
+        if texto.startswith("Modo:"):
+            # el aviso del modo no se queda fijo en pantalla: a los 4 segundos se quita solo
+            self.root.after(4000, lambda: self._panel and self._panel.esconder())
 
     def _recoger_basura(self):
         """La basura con cosas de Tk (imagenes, variables) se recoge aqui, en el hilo de Tk. Si la recogiera el hilo
@@ -661,7 +665,7 @@ class Panel:
     no sale en capturas, grabaciones ni pantalla compartida (WDA_EXCLUDEFROMCAPTURE). Tocarlo cambia entre
     'mostrar la respuesta' y 'contestar solo'."""
 
-    def __init__(self, raiz, al_tocar):
+    def __init__(self, raiz, al_tocar, al_ocultar=None):
         self.top = tk.Toplevel(raiz)
         self.top.overrideredirect(True)
         self.top.attributes("-topmost", True)
@@ -670,6 +674,7 @@ class Panel:
                            justify="left", padx=14, pady=9, font=("Segoe UI", 10))
         self.lbl.pack()
         self.lbl.bind("<ButtonRelease-1>", lambda e: al_tocar())
+        self.lbl.bind("<Button-3>", lambda e: al_ocultar and al_ocultar())     # clic derecho: se quita
         self.top.withdraw()
         self.visible = False
 
