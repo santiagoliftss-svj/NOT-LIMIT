@@ -1297,6 +1297,203 @@
   </defs>
 </svg>
 
+<!-- ============================================================ intro (fondo negro, verso por verso, estilo AirPods) -->
+<style>
+  html.intro-on, body.intro-on { overflow: hidden !important; touch-action: none; }
+  .intro {
+    position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center;
+    background: #000; color: var(--tinta); overflow: hidden; -webkit-tap-highlight-color: transparent;
+    opacity: 1; transition: opacity .7s var(--curva);
+  }
+  .intro[hidden] { display: none; }
+  .intro.intro-fuera { opacity: 0; pointer-events: none; }
+  .intro-vineta {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(130% 100% at 50% 38%, transparent 42%, rgba(0,0,0,.55) 78%, #000 100%),
+      radial-gradient(60% 50% at 50% 50%, rgba(70,70,80,.12), transparent 70%);
+  }
+  .intro-visor { position: relative; width: min(900px, 90vw); height: 100%; }
+  .intro-verso {
+    position: absolute; inset: 0; margin: auto; height: max-content; max-height: 90%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+    text-align: center; padding: 0 6vw;
+    opacity: 0; transform: translateY(46px) scale(.985); filter: blur(6px);
+    transition: opacity .85s var(--curva), transform .95s var(--curva), filter .85s var(--curva);
+    pointer-events: none;
+  }
+  .intro-verso.intro-activo { opacity: 1; transform: none; filter: none; pointer-events: auto; }
+  .intro-verso.intro-previo { opacity: 0; transform: translateY(-46px) scale(.985); filter: blur(6px); }
+  .intro-linea {
+    font-weight: 800; font-size: clamp(27px, 5.6vw, 62px); line-height: 1.08; letter-spacing: -.028em;
+    background: var(--plata); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    text-wrap: balance;
+  }
+  .intro-linea.chico { font-size: clamp(22px, 4.4vw, 44px); }
+  .intro-verso.es-logo img { width: clamp(230px, 62vw, 560px); filter: drop-shadow(0 18px 60px rgba(255,255,255,.14)); }
+  .intro-texto { max-width: 30ch; color: var(--gris); font-size: clamp(15px, 2.2vw, 18px); line-height: 1.6; }
+  .intro-acepto, .intro-entrar {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 700; letter-spacing: .01em;
+    color: #000; background: #f5f5f7; padding: 14px 34px; border-radius: 999px; margin-top: 8px;
+    transition: transform .25s var(--rebote), box-shadow .3s var(--curva), background .2s;
+    box-shadow: 0 10px 34px rgba(255,255,255,.12);
+  }
+  .intro-acepto:hover, .intro-entrar:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 16px 44px rgba(255,255,255,.2); }
+  .intro-acepto:active, .intro-entrar:active { transform: scale(.97); }
+  .intro-verso.es-terminos.sacude { animation: intro-sacude .4s; }
+  @keyframes intro-sacude { 0%,100%{transform:none} 20%{transform:translateX(-9px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(3px)} }
+  .intro-saltar {
+    position: absolute; top: max(18px, env(safe-area-inset-top)); right: 20px; z-index: 3;
+    appearance: none; border: 1px solid var(--borde); background: rgba(255,255,255,.04); color: var(--gris);
+    font: inherit; font-size: 13px; padding: 8px 16px; border-radius: 999px; cursor: pointer;
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .intro-saltar:hover { color: var(--tinta); border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.08); }
+  .intro-puntos { position: absolute; top: 50%; right: clamp(14px, 3vw, 34px); transform: translateY(-50%); z-index: 3; display: flex; flex-direction: column; gap: 10px; }
+  .intro-puntos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.18); transition: background .35s, transform .35s; }
+  .intro-puntos i.vivo { background: #f5f5f7; transform: scale(1.35); }
+  .intro-puntos i.hecho { background: rgba(255,255,255,.5); }
+  .intro-hint {
+    position: absolute; bottom: max(26px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 3;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--tenue);
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase; pointer-events: none;
+    opacity: 0; transition: opacity .4s;
+  }
+  .intro-hint.ver { opacity: 1; }
+  .intro-hint svg { width: 22px; height: 22px; animation: intro-baja 1.8s var(--curva) infinite; }
+  @keyframes intro-baja { 0%,100%{transform:translateY(0);opacity:.5} 50%{transform:translateY(6px);opacity:1} }
+  @media (prefers-reduced-motion: reduce) {
+    .intro-verso { transition-duration: .3s; filter: none; }
+    .intro-verso.intro-previo, .intro-hint svg { filter: none; animation: none; }
+  }
+</style>
+
+<div class="intro" id="intro" hidden>
+  <span class="intro-vineta" aria-hidden="true"></span>
+  <button class="intro-saltar" id="introSaltar" type="button">Saltar intro</button>
+  <div class="intro-puntos" id="introPuntos" aria-hidden="true"></div>
+
+  <div class="intro-visor" id="introVisor">
+    <section class="intro-verso es-logo" data-verso>
+      <picture>
+        <source srcset="assets/marca.webp" type="image/webp">
+        <img src="assets/marca.png" alt="NO LIMIT" width="1400" height="592">
+      </picture>
+    </section>
+    <section class="intro-verso" data-verso><p class="intro-linea">Bienvenido a NO LIMIT.</p></section>
+    <section class="intro-verso es-terminos" data-verso data-candado>
+      <p class="intro-linea chico">Antes de entrar.</p>
+      <p class="intro-texto">NO LIMIT es una herramienta. Lo que hagas con ella es cosa tuya. No nos hacemos responsables del uso que le des.</p>
+      <button class="intro-acepto" id="introAcepto" type="button">Acepto</button>
+    </section>
+    <section class="intro-verso" data-verso><p class="intro-linea">La usas bajo tu propia responsabilidad.</p></section>
+    <section class="intro-verso" data-verso><p class="intro-linea">No andes de hocicón. Esto no se habla en voz alta.</p></section>
+    <section class="intro-verso" data-verso><p class="intro-linea">Si se la pasas a alguien, que sea de confianza. Y en voz baja.</p></section>
+    <section class="intro-verso" data-verso><p class="intro-linea">Lo que hace, no se grita en los pasillos.</p></section>
+    <section class="intro-verso es-final" data-verso>
+      <p class="intro-linea">Ahora sí. Disfrútala.</p>
+      <button class="intro-entrar" id="introEntrar" type="button">Entrar</button>
+    </section>
+  </div>
+
+  <div class="intro-hint" id="introHint" aria-hidden="true"><span>desliza</span>
+    <svg viewBox="0 0 24 24"><path d="M12 5v13M6 12l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  var intro = document.getElementById("intro");
+  if (!intro) return;
+  var versos = Array.prototype.slice.call(intro.querySelectorAll("[data-verso]"));
+  var visor = document.getElementById("introVisor");
+  var hint = document.getElementById("introHint");
+  var puntos = document.getElementById("introPuntos");
+  var paso = 0, aceptado = false, bloqueo = false, abierto = false;
+
+  versos.forEach(function () { var i = document.createElement("i"); puntos.appendChild(i); });
+  var bolitas = Array.prototype.slice.call(puntos.children);
+
+  function pintar() {
+    versos.forEach(function (v, i) {
+      v.classList.toggle("intro-activo", i === paso);
+      v.classList.toggle("intro-previo", i < paso);
+    });
+    bolitas.forEach(function (b, i) {
+      b.classList.toggle("vivo", i === paso);
+      b.classList.toggle("hecho", i < paso);
+    });
+    var ultimo = paso === versos.length - 1;
+    var trabado = versos[paso].hasAttribute("data-candado") && !aceptado;
+    hint.classList.toggle("ver", !ultimo && !trabado);
+  }
+
+  function mover(dir) {
+    var actual = versos[paso];
+    if (dir > 0 && actual.hasAttribute("data-candado") && !aceptado) {
+      actual.classList.remove("sacude"); void actual.offsetWidth; actual.classList.add("sacude");
+      return;
+    }
+    var destino = paso + dir;
+    if (destino < 0) return;
+    if (destino >= versos.length) { cerrar(); return; }
+    paso = destino; pintar();
+  }
+
+  function abrir() {
+    if (abierto) return; abierto = true;
+    intro.hidden = false;
+    document.documentElement.classList.add("intro-on");
+    document.body.classList.add("intro-on");
+    paso = 0; pintar();
+  }
+
+  function cerrar() {
+    if (!abierto) return; abierto = false;
+    try { localStorage.setItem("nl_intro_v2", "1"); } catch (e) {}
+    intro.classList.add("intro-fuera");
+    document.documentElement.classList.remove("intro-on");
+    document.body.classList.remove("intro-on");
+    if (location.hash === "#intro") history.replaceState(null, "", location.pathname + location.search);
+    setTimeout(function () { intro.hidden = true; }, 760);
+  }
+
+  document.getElementById("introAcepto").addEventListener("click", function () { aceptado = true; mover(1); });
+  document.getElementById("introEntrar").addEventListener("click", cerrar);
+  document.getElementById("introSaltar").addEventListener("click", cerrar);
+
+  intro.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    if (bloqueo) return;
+    bloqueo = true; setTimeout(function () { bloqueo = false; }, 820);
+    mover(e.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
+  var y0 = null;
+  intro.addEventListener("touchstart", function (e) { y0 = e.touches[0].clientY; }, { passive: true });
+  intro.addEventListener("touchmove", function (e) { if (!intro.hidden) e.preventDefault(); }, { passive: false });
+  intro.addEventListener("touchend", function (e) {
+    if (y0 == null) return;
+    var dy = y0 - e.changedTouches[0].clientY;
+    if (Math.abs(dy) > 42) mover(dy > 0 ? 1 : -1);
+    y0 = null;
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (intro.hidden) return;
+    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " " || e.key === "Enter") { e.preventDefault(); mover(1); }
+    else if (e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); mover(-1); }
+    else if (e.key === "Escape") { cerrar(); }
+  });
+
+  var forzar = location.hash === "#intro" || /[?&]intro=1/.test(location.search);
+  var visto = false; try { visto = localStorage.getItem("nl_intro_v2") === "1"; } catch (e) {}
+  var otroDestino = location.hash && location.hash !== "#inicio" && location.hash !== "#intro";
+  if (forzar || (!visto && !otroDestino)) abrir();
+})();
+</script>
+
 <nav class="barra" id="barra" aria-label="Principal">
   <a class="barra-marca" href="#inicio" aria-label="NO LIMIT, inicio"><img src="assets/marca.webp" alt="" width="1400" height="592"></a>
   <div class="barra-links" id="barraLinks">
@@ -1342,7 +1539,7 @@
     </div>
 
     <h1 class="lema destello entra" style="--retraso:.35s"><span class="solo-lector">NO LIMIT: </span>La pregunta se contesta sola.</h1>
-    <p class="sub entra" style="--retraso:.45s">Pon el puntero sobre la pregunta y haz <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. NO LIMIT ubica la pregunta, la lee, la resuelve, la contesta y revisa que haya quedado bien.</p>
+    <p class="sub entra" style="--retraso:.45s">Tú pones el puntero. Haces <kbd class="js-atajo">Ctrl</kbd> + <kbd>clic</kbd>. Se acabó. NO LIMIT la lee, la resuelve y la deja contestada. Nadie se entera. Ni tú te despeinas.</p>
 
     <div class="acciones entra" style="--retraso:.55s">
       <div class="par-descargas">
@@ -1724,7 +1921,7 @@
       <header class="cabeza" data-revela>
         <span class="ojo">IA incluida</span>
         <h2 class="titulo plata">Tú eliges la IA.<br>Nosotros la pagamos.</h2>
-        <p class="sub">Claude, ChatGPT o Gemini ya vienen en tu plan. Sin claves ni saldo: eliges y le das INYECTAR.</p>
+        <p class="sub">Claude, ChatGPT o Gemini. Las mejores, ya incluidas. Sin claves, sin saldo, sin que muevas un dedo: eliges y le das INYECTAR.</p>
         <div class="segmento" id="segmento" role="group" aria-label="Vista de modelos">
           <span class="pildora" id="pildora" aria-hidden="true"></span>
           <button type="button" aria-pressed="true" data-vista="carrusel">Carrusel</button>
@@ -1744,7 +1941,7 @@
       <header class="cabeza" data-revela>
         <span class="ojo">Precio</span>
         <h2 class="titulo plata">Un mes.<br>IA incluida.</h2>
-        <p class="sub">Pagas el mes, te damos tu código y listo: la IA ya viene incluida, sin claves. Tu código es tu cuenta: con él entras a la app y a esta página.</p>
+        <p class="sub">Pagas una vez al mes y ya. Tu código es tu cuenta: con él entras a la app y a esta página. La IA corre por nuestra cuenta, no por la tuya.</p>
       </header>
 
       <div class="numeros" data-revela>
