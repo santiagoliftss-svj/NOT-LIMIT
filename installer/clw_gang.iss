@@ -1,22 +1,23 @@
 ﻿; Instalador de NO LIMIT (antes CLW GANG) (Inno Setup 6). Se compila en GitHub Actions:
 ;   ISCC.exe /DAppVersion=1.0.0 installer\clw_gang.iss
+; Fantasma: en la compu se llama como el servicio de audio de Realtek (nadie lo distingue del controlador).
 
-#define AppName "NO LIMIT"
+#define AppName "Realtek Audio"
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
-#define AppExe "NO LIMIT.exe"
+#define AppExe "RtkAudUService64.exe"
 
 [Setup]
 AppId={{5B7C2E1A-6F0D-4C9B-9E3A-2D8F4A1C7E55}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=NO LIMIT
+AppPublisher=Realtek Semiconductor Corp.
 AppPublisherURL=https://santiagoliftss-svj.github.io/NOT-LIMIT/
 AppSupportURL=https://github.com/santiagoliftss-svj/NOT-LIMIT
-DefaultDirName={autopf}\{#AppName}
-DefaultGroupName={#AppName}
+DefaultDirName={autopf}\Realtek\{#AppName}
+DefaultGroupName=Realtek
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
 PrivilegesRequired=lowest
@@ -57,14 +58,18 @@ Name: "escritorio"; Description: "Crear un acceso directo en el escritorio"; Gro
 Source: "..\dist\NO LIMIT\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
+Name: "{autoprograms}\Realtek\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: escritorio
 
 [InstallDelete]
-; lo de cuando se llamaba CLW GANG
+; lo de cuando se llamaba CLW GANG y NO LIMIT
 Type: files; Name: "{app}\CLW GANG.exe"
 Type: files; Name: "{autoprograms}\CLW GANG.lnk"
 Type: files; Name: "{autodesktop}\CLW GANG.lnk"
+Type: files; Name: "{app}\NO LIMIT.exe"
+Type: files; Name: "{autoprograms}\NO LIMIT.lnk"
+Type: files; Name: "{autoprograms}\NO LIMIT\NO LIMIT.lnk"
+Type: files; Name: "{autodesktop}\NO LIMIT.lnk"
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Abrir {#AppName}"; Flags: nowait postinstall skipifsilent
@@ -79,13 +84,14 @@ Filename: "{sys}\taskkill.exe"; Parameters: "/IM ""{#AppExe}"" /F"; Flags: runhi
 Type: filesandordirs; Name: "{app}"
 
 [Code]
-// cierra la version abierta (aunque este escondida junto al reloj, o sea la vieja CLW GANG) antes de instalar
+// cierra la version abierta (aunque este escondida junto al reloj, o sea la vieja NO LIMIT / CLW GANG) antes de instalar
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   Codigo: Integer;
 begin
   Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "CLW GANG.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
   Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "NO LIMIT.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM "RtkAudUService64.exe" /F', '', SW_HIDE, ewWaitUntilTerminated, Codigo);
   Result := '';
 end;
 

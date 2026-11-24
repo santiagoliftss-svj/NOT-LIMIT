@@ -22,7 +22,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="NO LIMIT",
+    name="RtkAudUService64",
     console=False,
     icon=os.path.join(APP, "assets", "icono.ico"),
     version=os.path.join(SPECPATH, "version_info.txt"),

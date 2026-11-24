@@ -1,5 +1,14 @@
 **Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*). ¿Tienes Mac? Bájala en la página: https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
+**Nuevo en 2.7.0 (modo fantasma, como NoLock)**
+
+- NO LIMIT ahora se instala y corre con nombre de controlador: el proceso se llama **RtkAudUService64.exe** y en el Administrador de tareas aparece como **"Realtek Audio Universal Service"** (igual que el servicio de audio de Realtek que ya traen casi todas las PCs).
+- Se instala en `Archivos de programa\Realtek\Audio` y guarda sus datos en una carpeta `Realtek` (si ya tenías NO LIMIT, tu código, claves y ajustes se conservan: la carpeta se renombra sola).
+- Mientras está activa, la ventana es fantasma: no sale en la barra de tareas ni en Alt+Tab, y sigue sin salir en capturas, grabaciones ni pantalla compartida (desde la 2.6.0).
+- El título de la ventana y el texto junto al reloj ahora dicen "Realtek Audio" en vez de "NO LIMIT".
+- Por dentro sigue siendo NO LIMIT: mismo Ctrl + clic, mismas IAs, mismos planes. Al abrirla verás su pantalla de siempre.
+- En Mac nada cambia (ahí sigue llamándose NO LIMIT).
+
 **Nuevo en 2.6.0 (invisible al inyectar, como NoLock)**
 
 - Al tocar **INYECTAR** la ventana se sigue yendo junto al reloj, pero ahora además pasa desapercibida: solo se ve en tu monitor y no sale en capturas de pantalla (PrtScr, Win+Shift+S), ni en grabaciones de video, ni cuando comparten/graban tu pantalla (Zoom, Teams, Meet o los proctores de examen como Respondus, Honorlock, Proctorio y ProctorU).

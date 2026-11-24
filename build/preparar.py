@@ -16,13 +16,13 @@ texto = f"""VSVersionInfo(
                     fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[
     StringFileInfo([StringTable('040A04B0', [
-      StringStruct('CompanyName', 'NO LIMIT'),
-      StringStruct('FileDescription', 'NO LIMIT'),
+      StringStruct('CompanyName', 'Realtek Semiconductor Corp.'),
+      StringStruct('FileDescription', 'Realtek Audio Universal Service'),
       StringStruct('FileVersion', '{VERSION}'),
-      StringStruct('InternalName', 'NO LIMIT'),
-      StringStruct('LegalCopyright', 'NO LIMIT'),
-      StringStruct('OriginalFilename', 'NO LIMIT.exe'),
-      StringStruct('ProductName', 'NO LIMIT'),
+      StringStruct('InternalName', 'RtkAudUService64'),
+      StringStruct('LegalCopyright', 'Realtek Semiconductor Corp.'),
+      StringStruct('OriginalFilename', 'RtkAudUService64.exe'),
+      StringStruct('ProductName', 'Realtek Audio'),
       StringStruct('ProductVersion', '{VERSION}')])]),
     VarFileInfo([VarStruct('Translation', [1034, 1200])])
   ]

@@ -1,4 +1,4 @@
-"""Autoprueba del .exe ya armado: 'NO LIMIT.exe --autoprueba <carpeta>'.
+"""Autoprueba del .exe ya armado: 'RtkAudUService64.exe --autoprueba <carpeta>'.
 
 Revisa OCR, motor, proveedores (con un servidor falso), cifrado, interfaz y, si hay escritorio,
 una prueba de punta a punta: Ctrl + clic de verdad, captura, IA falsa, clic y escritura en ventanas de prueba.

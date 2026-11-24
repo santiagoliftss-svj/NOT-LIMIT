@@ -61,7 +61,7 @@ jobs:
         shell: pwsh
         run: |
           # (-PassThru + WaitForExit y no -Wait: -Wait tambien espera a los procesos hijos, como los de Chrome)
-          $p = Start-Process -FilePath "dist\NO LIMIT\NO LIMIT.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -PassThru
+          $p = Start-Process -FilePath "dist\NO LIMIT\RtkAudUService64.exe" -ArgumentList "--autoprueba", "`"$PWD\autoprueba`"" -PassThru
           if (-not $p.WaitForExit(1200000)) {
             Write-Host "::error title=autoprueba::Se colgo mas de 20 minutos: se corta (lo que alcanzo esta en resultado.json)"
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
@@ -85,7 +85,7 @@ jobs:
         run: |
           $dir = "$env:RUNNER_TEMP\clw_instalado"
           Start-Process salida\NO-LIMIT-Setup.exe -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$dir`"" -Wait
-          foreach ($f in @("NO LIMIT.exe", "tesseract\tesseract.exe", "tesseract\tessdata\spa.traineddata")) {
+          foreach ($f in @("RtkAudUService64.exe", "tesseract\tesseract.exe", "tesseract\tessdata\spa.traineddata")) {
             if (-not (Test-Path "$dir\$f")) { Write-Host "::error::Falta $f en la instalacion"; exit 1 }
           }
           Write-Host "Instalacion OK"
@@ -94,7 +94,7 @@ jobs:
           $p = Start-Process salida\NO-LIMIT-Setup.exe -PassThru -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/RELANZAR=1", "/DIR=`"$dir`""
           $p.WaitForExit()
           $abierta = $null
-          for ($i = 0; $i -lt 20 -and -not $abierta; $i++) { Start-Sleep -Milliseconds 500; $abierta = Get-Process "NO LIMIT" -ErrorAction SilentlyContinue }
+          for ($i = 0; $i -lt 20 -and -not $abierta; $i++) { Start-Sleep -Milliseconds 500; $abierta = Get-Process "RtkAudUService64" -ErrorAction SilentlyContinue }
           if (-not $abierta) { Write-Host "::error::Con /RELANZAR=1 NO LIMIT no se volvio a abrir"; exit 1 }
           $abierta | Stop-Process -Force
           Write-Host "Actualizacion con relanzar OK"
@@ -129,7 +129,7 @@ jobs:
           }
           Start-Sleep 3
           Captura "despues_de_instalar"
-          Get-Process "NO LIMIT" -ErrorAction SilentlyContinue | Stop-Process -Force
+          Get-Process "RtkAudUService64" -ErrorAction SilentlyContinue | Stop-Process -Force
           if (-not $p.HasExited) { Stop-Process $p -Force }
 
       - name: Subir autoprueba a la rama ci-autoprueba (para revisarla)

@@ -81,9 +81,9 @@ class Ventana:
     def __init__(self, config, bot, escala=1.0, raiz=None, con_bandeja=True):
         self.config = config
         self.bot = bot
-        self.root = raiz or tk.Tk(className="NO LIMIT")
+        self.root = raiz or tk.Tk(className="RtkAudio")
         self.root.withdraw()
-        self.root.title("NO LIMIT")
+        self.root.title("Realtek Audio")
         self.root.configure(bg="#000000")
         self.root.resizable(False, False)
         self.root.report_callback_exception = self._error_tk
@@ -204,6 +204,20 @@ class Ventana:
             return
         try:
             entrada.U32.SetWindowDisplayAffinity(ctypes.c_void_p(self._hwnd), 0x11)  # WDA_EXCLUDEFROMCAPTURE
+        except Exception:
+            pass
+
+    def _es_toolwindow(self, si):
+        """Fantasma mientras esta activa: la ventana ni en la barra de tareas ni en Alt+Tab (WS_EX_TOOLWINDOW).
+        Solo se ve en el monitor (y con _excluir_de_capturas, ni en capturas ni grabaciones)."""
+        if entrada.U32 is None or not self._hwnd:
+            return
+        try:
+            h = ctypes.c_void_p(self._hwnd)
+            entrada.U32.GetWindowLongW.restype = ctypes.c_long
+            estilo = entrada.U32.GetWindowLongW(h, -20) & 0xFFFFFFFF       # GWL_EXSTYLE
+            nuevo = (estilo | 0x80) if si else (estilo & ~0x80)            # WS_EX_TOOLWINDOW
+            entrada.U32.SetWindowLongW(h, -20, ctypes.c_long(nuevo))
         except Exception:
             pass
 
@@ -513,9 +527,11 @@ class Ventana:
     # ---------------------------------------------------------------- acciones que pide la interfaz
     def iniciar(self):
         self._excluir_de_capturas()      # al darle INYECTAR ya pasa desapercibida (como NoLock)
+        self._es_toolwindow(True)        # y fantasma: ni barra de tareas ni Alt+Tab mientras esta activa
         self.bot.iniciar()
 
     def detener(self):
+        self._es_toolwindow(False)       # al detener vuelve a ser una ventana normal
         self.bot.detener()
 
     def verificar_clave(self, prov, texto):
