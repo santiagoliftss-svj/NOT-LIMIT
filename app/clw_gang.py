@@ -80,7 +80,16 @@ def main():
         salida = sys.argv[i + 1] if len(sys.argv) > i + 1 else os.path.join(os.getcwd(), "autoprueba")
         return autoprueba.main(salida)
 
-    if _ya_abierta():
+    if "--inyectada" in sys.argv and sys.platform == "win32":
+        # viene de pedir ser administrador: la copia anterior se esta cerrando, se le espera
+        import time
+        for _ in range(24):
+            if not _ya_abierta():
+                break
+            time.sleep(0.25)
+        else:
+            return 0
+    elif _ya_abierta():
         return 0
 
     from clw.bot import Bot, configurar_registro
@@ -96,6 +105,9 @@ def main():
         from clw.motor import factor_zoom
         from clw.ui.ventana import Ventana
         ventana = Ventana(config, bot, factor_zoom())
+        if "--inyectada" in sys.argv:
+            # la abrio el pedido de administrador: se inyecta sola (como si acabaran de tocar el boton)
+            ventana.root.after(700, ventana.ui.inyectar)
     ventana.root.mainloop()
     return 0
 

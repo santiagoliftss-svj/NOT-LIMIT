@@ -1,7 +1,7 @@
 """Autoprueba de NO LIMIT.app en una Mac de verdad (la corre GitHub en una Mac M1).
 
 Abre la ventana nativa, revisa que se vea (nitida y derecha), mide lo que tarda cada cuadro, prueba el icono de
-la barra de arriba y hace la prueba de punta a punta: Option + clic de verdad sobre ventanas de prueba, captura,
+la barra de arriba y hace la prueba de punta a punta: clic sostenido de verdad sobre ventanas de prueba, captura,
 IA falsa, clic y escritura. Todo corre en el hilo de AppKit con relojes (como la de Windows con Tk).
 """
 
@@ -56,18 +56,20 @@ def foto_ventana(numero):
 
 
 def option_clic(x, y, espera=0.4):
-    """Option + clic de verdad en (x, y) puntos (como si lo hiciera el usuario). espera: lo que se deja a la ventana
-    nueva para que se dibuje (en las Mac lentas de GitHub una ventana pesada, como el plano, tarda mas)."""
+    """Clic sostenido de verdad en (x, y) puntos (como si lo hiciera el usuario: presiona, aguanta mas de
+    1 s sin mover y suelta). espera: lo que se deja a la ventana nueva para que se dibuje (en las Mac lentas
+    de GitHub una ventana pesada, como el plano, tarda mas)."""
     time.sleep(espera)
     p = Q.CGPointMake(x, y)
-    for tipo, banderas in ((Q.kCGEventMouseMoved, 0), (Q.kCGEventLeftMouseDown, Q.kCGEventFlagMaskAlternate),
-                           (Q.kCGEventLeftMouseUp, Q.kCGEventFlagMaskAlternate)):
+    for tipo, banderas, pausa in ((Q.kCGEventMouseMoved, 0, 0.12),
+                                 (Q.kCGEventLeftMouseDown, 0, 1.4),      # mas de un segundo, sin mover
+                                 (Q.kCGEventLeftMouseUp, 0, 0.12)):
         ev = Q.CGEventCreateMouseEvent(None, tipo, p, Q.kCGMouseButtonLeft)
         Q.CGEventSetFlags(ev, banderas)
         if tipo != Q.kCGEventMouseMoved:
             Q.CGEventSetIntegerValueField(ev, Q.kCGMouseEventClickState, 1)
         Q.CGEventPost(Q.kCGHIDEventTap, ev)
-        time.sleep(0.12)
+        time.sleep(pausa)
 
 
 class _VistaClics(NSView):

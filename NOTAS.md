@@ -1,5 +1,13 @@
 **Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*). ¿Tienes Mac? Bájala en la página: https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
+**Nuevo en 2.10.0 (sí contesta dentro de LockDown Browser)**
+
+- Al tocar **INYECTAR**, Windows pregunta si dejar que NO LIMIT sea **administrador** (la pantalla de "¿Quiere permitir que esta aplicación de un editor desconocido haga cambios en el dispositivo?"). Acepta: NO LIMIT se vuelve a abrir solo, ya inyectado como administrador.
+- ¿Por qué? LockDown Browser corre como administrador y Windows no deja que una app normal le mande clics — por eso antes el clic sostenido no respondía dentro de él. Como administrador, NO LIMIT **contesta solo hasta dentro de LockDown Browser** (el panel flotante queda como respaldo: tocalo para cambiar de modo).
+- Si le das "No" a la pantalla, todo sigue igual: en LockDown Browser te mostrará la respuesta en el panel para que la piques tú; en Canvas, ALEKS y MyLab normales contesta solo como siempre.
+- (Lo de "debe cerrar TeamViewer/AnyDesk" que muestra LockDown Browser al abrirlo es normal: cierra apps de control remoto, y NO LIMIT no está en esa lista.)
+- En Mac no cambia nada.
+
 **Nuevo en 2.9.0 (para que sí sirva en LockDown Browser)**
 
 - Fuera el Ctrl + clic: ahora **solo se usa el clic sostenido** (mantener presionado 1 segundo sobre la pregunta, sin mover el mouse). Los atajos con teclas los bloquean los navegadores de examen; un clic sostenido no.

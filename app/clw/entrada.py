@@ -1,6 +1,7 @@
 """Mouse y teclado de Windows: clics, escribir texto y leer teclas."""
 
 import ctypes
+import os
 import sys
 import time
 
@@ -117,6 +118,29 @@ def proceso_al_frente():
 def examen_en_lockdown():
     """True si al frente esta el Respondus LockDown Browser (o su version de la escuela)."""
     return "lockdown" in proceso_al_frente()
+
+
+def es_administrador():
+    """True si NO LIMIT corre como administrador. LockDown Browser corre asi: para poder contestarle
+    dentro de el, NO LIMIT tambien tiene que correr como administrador (si no, Windows le bloquea
+    los clics hacia ventanas de administrador)."""
+    try:
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except Exception:
+        return False
+
+
+def relanzar_como_administrador(args=()):
+    """Abre otra copia de NO LIMIT como administrador (sale la pantalla de Windows: '¿Quiere permitir que
+    esta aplicacion de un editor desconocido haga cambios en el dispositivo?'). True si el usuario acepto."""
+    try:
+        exe = sys.executable
+        if not getattr(sys, "frozen", False):        # en desarrollo: python app\clw_gang.py ...
+            args = (os.path.abspath(sys.argv[0]),) + tuple(args)
+        params = " ".join(str(a) for a in args)
+        return int(ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params, None, 1)) > 32
+    except Exception:
+        return False
 
 
 def ventana_raiz_en(x, y):

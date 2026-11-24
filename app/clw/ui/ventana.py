@@ -12,6 +12,7 @@ import ctypes
 import logging
 import os
 import queue
+import sys
 import threading
 import time
 import webbrowser
@@ -538,6 +539,14 @@ class Ventana:
 
     # ---------------------------------------------------------------- acciones que pide la interfaz
     def iniciar(self):
+        if (plataforma.WINDOWS and getattr(sys, "frozen", False) and not entrada.es_administrador()
+                and "--autoprueba" not in sys.argv):
+            # como NoLock: al inyectar, Windows pregunta si dejar que NO LIMIT sea administrador (la pantalla
+            # de '¿Quiere permitir que esta aplicacion haga cambios?'). Con eso puede contestar hasta dentro
+            # de LockDown Browser, que corre como administrador y si no, no acepta los clics.
+            if entrada.relanzar_como_administrador(("--inyectada",)):
+                self.salir()             # esta copia se cierra: sigue la de administrador, ya inyectandose
+                return
         self._excluir_de_capturas()      # al darle INYECTAR ya pasa desapercibida (como NoLock)
         self._es_toolwindow(True)        # y fantasma: ni barra de tareas ni Alt+Tab mientras esta activa
         self.bot.iniciar()

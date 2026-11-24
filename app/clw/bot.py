@@ -160,10 +160,13 @@ class Bot:
     # ------------------------------------------------ modo de respuesta (panel o clic)
     def modo_panel(self):
         """True si la respuesta solo se muestra en el panel flotante (no se pica nada). En LockDown Browser
-        es obligatorio: corre como administrador y Windows no deja mandarle clics a una app normal."""
+        hace falta correr como administrador para poder picarle: como administrador, NO LIMIT contesta
+        solo hasta dentro de el."""
         if getattr(self, "_forzar_panel", None) is not None:
             return self._forzar_panel
         try:
+            if entrada.es_administrador():
+                return False                # de administrador: puede picar hasta en LockDown Browser
             return bool(entrada.examen_en_lockdown())
         except Exception:
             return False
