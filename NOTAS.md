@@ -1,5 +1,12 @@
 **Descarga:** `NO-LIMIT-Setup.exe` (abajo, en *Assets*). ¿Tienes Mac? Bájala en la página: https://santiagoliftss-svj.github.io/NOT-LIMIT/
 
+**Nuevo en 2.6.0 (invisible al inyectar, como NoLock)**
+
+- Al tocar **INYECTAR** la ventana se sigue yendo junto al reloj, pero ahora además pasa desapercibida: solo se ve en tu monitor y no sale en capturas de pantalla (PrtScr, Win+Shift+S), ni en grabaciones de video, ni cuando comparten/graban tu pantalla (Zoom, Teams, Meet o los proctores de examen como Respondus, Honorlock, Proctorio y ProctorU).
+- También al volver a abrirla desde el reloj sigue sin salir en capturas: la ves tú, no quien graba.
+- En Windows viejo (sin WDA_EXCLUDEFROMCAPTURE, antes de Windows 10 2004) no pasa nada: la app sigue funcionando igual y solo que sí sale en las capturas.
+- Todo lo demás queda igual: mismo Ctrl + clic, mismos tiempos, mismos modelos.
+
 Al abrirlo, si Windows dice *"Windows protegió tu PC"*, dale a **Más información** y luego a **Ejecutar de todas formas**.
 
 La primera vez te enseña cómo se usa (3 pasos) y aceptas los Términos. Toca **INYECTAR**, pega tu código de NO LIMIT (NL-XXXX-XXXX-XXXX) y listo: la IA ya viene incluida. Luego pon el puntero sobre una pregunta y haz **Ctrl + clic**.

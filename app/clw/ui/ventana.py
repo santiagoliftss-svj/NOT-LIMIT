@@ -3,6 +3,9 @@
 Cuando NO LIMIT queda activo, la ventana se va volando junto al reloj (icono en la bandeja): asi no dibuja nada
 ni estorba. Desde ese icono se vuelve a abrir, se detiene o se cierra. Mientras contesta no aparece nada en
 pantalla: si algo falla, el icono del reloj lo marca y el detalle queda en la app.
+
+Desde que se toca INYECTAR (como NoLock) la ventana pasa desapercibida: solo se ve en el monitor, pero no
+sale en capturas de pantalla, grabaciones ni al compartir pantalla (ver _excluir_de_capturas).
 """
 
 import ctypes
@@ -136,6 +139,7 @@ class Ventana:
             pass
         self._hwnd = self.hwnd()
         self.bot.hwnd_propio = self._hwnd
+        self._excluir_de_capturas()
         self._pintar()
         self.root.after(30, self._tick)
         self.root.after(20000, self._recoger_basura)
@@ -188,6 +192,18 @@ class Ventana:
             for atributo, valor in ((35, 0x000000), (36, 0xFFFFFF), (34, 0x262626)):  # titulo, texto, borde
                 v = ctypes.c_int(valor)
                 dwm.DwmSetWindowAttribute(h, atributo, ctypes.byref(v), 4)
+        except Exception:
+            pass
+
+    def _excluir_de_capturas(self):
+        """Como NoLock al inyectar: la ventana de NO LIMIT pasa desapercibida. Solo se ve en el monitor:
+        no sale en capturas de pantalla (PrtScr / Win+Shift+S), ni en grabaciones, ni cuando alguien comparte
+        pantalla o graba el examen (Zoom, Teams, Meet, Respondus, Honorlock, Proctorio...). En Windows viejo
+        (sin WDA_EXCLUDEFROMCAPTURE) no pasa nada: sigue saliendo como siempre."""
+        if entrada.U32 is None or not self._hwnd:
+            return
+        try:
+            entrada.U32.SetWindowDisplayAffinity(ctypes.c_void_p(self._hwnd), 0x11)  # WDA_EXCLUDEFROMCAPTURE
         except Exception:
             pass
 
@@ -290,6 +306,7 @@ class Ventana:
                 self._mover_a(*salida)
             try:
                 self.root.deiconify()
+                self._excluir_de_capturas()      # al volver del reloj sigue desapercibida
             except TclError:
                 return
             self._fundido = {"t0": time.time(), "dur": T_VUELTA, "a0": 0.0, "a1": 1.0, "de": salida,
@@ -495,6 +512,7 @@ class Ventana:
 
     # ---------------------------------------------------------------- acciones que pide la interfaz
     def iniciar(self):
+        self._excluir_de_capturas()      # al darle INYECTAR ya pasa desapercibida (como NoLock)
         self.bot.iniciar()
 
     def detener(self):
