@@ -1,29 +1,17 @@
 {
  "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). planes: numero -> basico | pro | premium (si no esta, es pro). bloqueadas: huellas bloqueadas. servidor: URL del servidor de NO LIMIT (la IA incluida). duenos: numeros sin limite de preguntas ni de compus. reiniciar_equipos: numero -> fecha/hora (libera sus compus una vez). limites / por_dia / equipos: cambian lo que trae cada plan. limite_codigo: numero -> {limite, hasta}: un codigo conserva su limite (por ejemplo los que pagaron antes de un cambio de precios) hasta esa fecha. vencen_hora: numero -> AAAA-MM-DDTHH:MM (hora de Mexico): el servidor lo corta a esa hora exacta (pruebas de minutos). EXCLUSIVE (489 al mes, 700 preguntas): pon el numero en planes como pro y en limite_codigo {\"limite\": 700, \"hasta\": \"AAAA-MM-DD\"} con la misma fecha que vencen.",
  "precio": "Basico 119, Pro 279, EXCLUSIVE 489 (lanzamiento hasta 2026-12-31, luego 889), Premium 599 MXN al mes (3 meses: 299, 729, 1339, 1649)",
- "vencen": {
-  "1": "2026-12-13",
-  "300": "2099-12-31",
-  "2": "2026-11-20",
-  "3": "2026-12-13"
- },
- "vencen_hora": {"2": "2026-11-20T13:55"},
- "planes": {
-  "300": "premium",
-  "1": "basico"
- },
+ "pausados": {"1": "2026-12-13", "2": "2026-11-20", "3": "2026-12-13", "_nota": "codigos apagados el 26 nov 2026 hasta que paguen lo que falta; para reactivar pasa su numero y fecha a vencen"},
+  "vencen": {"301": "2099-12-31"},
+ "vencen_hora": {},
+ "planes": {"301": "premium", "1": "basico"},
  "limites": {
   "basico": 300,
   "pro": 500,
   "premium": 1000
  },
- "limite_codigo": {
-  "2": {
-   "limite": 600,
-   "hasta": "2026-12-13"
-  }
- },
- "bloqueadas": [],
+ "limite_codigo": {},
+ "bloqueadas": ["ae9ffa5aa04f70344e656dbc88f9b80f9a232d82e2edee0b8bbec6db15fffb3b"],
  "extra": {},
  "codigos": {
   "2429fe28c02d07957beff29e60d247bf56fee8590a3165b421c1e51c992e47f5": 1,
@@ -325,10 +313,9 @@
   "77aa792f3582b37070e2413aa9bdcdda2440e4fa32275f5c49675f5161469269": 297,
   "375e00f7673a9bb651c704529157d459afbfaef09fa584cdf2dd946e03c47d79": 298,
   "7338d1e1f0088af39cd3285731d71537a0ebf85ce56d48f966ece3f8cb46be76": 299,
-  "ae9ffa5aa04f70344e656dbc88f9b80f9a232d82e2edee0b8bbec6db15fffb3b": 300
+  "ae9ffa5aa04f70344e656dbc88f9b80f9a232d82e2edee0b8bbec6db15fffb3b": 300,
+    "cc1b3b54dcd0d09b9e28d1212539023ffb8fbb9a19fdd314163e678f7db91ff0": 301
  },
- "duenos": [
-  300
- ],
+ "duenos": [301],
  "servidor": "https://no-limit.santiago-liftss.workers.dev"
 }
