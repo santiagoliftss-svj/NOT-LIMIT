@@ -1,6 +1,6 @@
 {
  "_ayuda": "vencen: numero de codigo -> hasta que dia esta pagado (AAAA-MM-DD). planes: numero -> basico | pro | premium (si no esta, es pro). bloqueadas: huellas bloqueadas. servidor: URL del servidor de NO LIMIT (la IA incluida). duenos: numeros sin limite de preguntas ni de compus. reiniciar_equipos: numero -> fecha/hora (libera sus compus una vez). limites / por_dia / equipos: cambian lo que trae cada plan. limite_codigo: numero -> {limite, hasta}: un codigo conserva su limite (por ejemplo los que pagaron antes de un cambio de precios) hasta esa fecha. vencen_hora: numero -> AAAA-MM-DDTHH:MM (hora de Mexico): el servidor lo corta a esa hora exacta (pruebas de minutos).",
- "precio": "Basico 99, Pro 249, Premium 599 MXN al mes (3 meses: 259, 649, 1599)",
+ "precio": "Basico 119, Pro 279, Premium 599 MXN al mes (3 meses: 299, 729, 1649)",
  "vencen": {
   "1": "2026-12-13",
   "300": "2099-12-31",
