@@ -26,7 +26,8 @@ const PLAN_NORMAL = "pro";
 const NOMBRES = { basico: "Básico", pro: "Pro", premium: "Premium" };
 
 const LLAMADAS_POR_PREGUNTA = 12;      // una pregunta son ~3 llamadas (ubicar, contestar, revisar); mas que esto cuenta otra
-const LIBRE_TRAS_HORAS = 72;           // una compu que no se usa en 3 dias deja su lugar (cambio de compu)
+// Codigo de un solo uso: se queda amarrado a la(s) primera(s) compu(s) donde se activa. Ya NO se suelta solo con el
+// tiempo; solo el dueno lo libera con reiniciar_equipos en licencias.json.
 const MAX_CUERPO = 8 * 1024 * 1024;
 
 // Las IAs de cada plan (las ligeras de cada una van incluidas: con ellas se ubica y se revisa la pregunta)
@@ -354,13 +355,9 @@ export class Cuentas {
     }
     const otros = this.sql.exec("SELECT equipo, ultimo FROM equipos WHERE num = ? ORDER BY ultimo ASC", b.num).toArray();
     if (otros.length >= b.maxEquipos) {
-      const viejo = otros[0];
-      if (b.ahora - viejo.ultimo < LIBRE_TRAS_HORAS * 3600 * 1000) {
-        const n = b.maxEquipos === 1 ? "otra compu" : `otras ${b.maxEquipos} compus`;
-        return { ok: false, status: 403, tipo: "equipo",
-                 mensaje: `Tu código ya se está usando en ${n}. Cada código es para ${b.maxEquipos === 1 ? "una compu" : `${b.maxEquipos} compus`}. Si cambiaste de compu, pídele a tu vendedor que la libere.` };
-      }
-      this.sql.exec("DELETE FROM equipos WHERE num = ? AND equipo = ?", b.num, viejo.equipo);
+      const n = b.maxEquipos === 1 ? "otra compu" : `otras ${b.maxEquipos} compus`;
+      return { ok: false, status: 403, tipo: "equipo",
+               mensaje: `Este código ya se activó en ${n}. Es de un solo uso: solo funciona donde se puso primero. Si cambiaste de compu, pídele a tu vendedor que la libere.` };
     }
     this.sql.exec("INSERT INTO equipos (num, equipo, primero, ultimo) VALUES (?, ?, ?, ?)", b.num, b.equipo, b.ahora, b.ahora);
     return null;

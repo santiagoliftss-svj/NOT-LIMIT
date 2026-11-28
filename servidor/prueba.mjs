@@ -180,9 +180,12 @@ r = await pedir("ia", { codigo: C.bas, equipo: "", modelo: "gemini-flash-lite-la
 ver("sin id de compu (app vieja) -> pide actualizar", r.status === 400 && r.j.error.tipo === "equipo", r.t);
 avanzar(73 * 3600 * 1000);
 r = await pedir("/estado", { codigo: C.bas, equipo: "compu-B" });
-ver("tras 3 dias sin usar la vieja, la compu nueva entra", r.status === 200, r.t);
+ver("un solo uso: aunque pasen 3 dias, la compu nueva NO entra", r.status === 403 && /un solo uso/.test(r.t), r.t);
+avanzar(5 * 24 * 3600 * 1000);
+r = await pedir("/estado", { codigo: C.bas, equipo: "compu-B" });
+ver("ni despues de 8 dias", r.status === 403, r.t);
 r = await pedir("/estado", { codigo: C.bas, equipo: "compu-A" });
-ver("y la vieja ya no", r.status === 403, r.t);
+ver("la primera compu sigue entrando", r.status === 200, r.t);
 lista = { ...lista, reiniciar_equipos: { 902: "2026-11-23T10" } };
 avanzar(61 * 1000);
 r = await pedir("/estado", { codigo: C.bas, equipo: "compu-A" });

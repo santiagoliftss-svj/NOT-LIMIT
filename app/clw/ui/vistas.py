@@ -41,6 +41,7 @@ ACTIVIDAD = (24, 400, 332, 138)
 PIE_Y = 566
 
 T_ENCENDER, T_ANILLO, T_APAGAR = 0.5, 0.45, 0.32
+TIEMPO_CODIGO = 40          # segundos para pegar el codigo de NO LIMIT (es de un solo uso)
 T_TRANSICION, T_CAPA, T_FILA = 0.28, 0.26, 0.4
 CICLO_BRILLO, T_BRILLO = 4.5, 1.4   # cada cuanto cruza el reflejo del logo y cuanto tarda
 VUELTA_HAZ = 3.4                    # segundos por vuelta de la luz del boton
@@ -242,7 +243,7 @@ class Interfaz:
         if prov != "licencia" and licencia.servidor():   # con la IA incluida no hay claves: falta el codigo
             prov = "licencia"
         self.clave = {"prov": prov, "texto": "", "msg": msg, "tipo": tipo, "verificando": False,
-                      "volver": volver, "iniciar": iniciar}
+                      "volver": volver, "iniciar": iniciar, "t0": self.reloj(), "guardado": False}
         self._ir("clave", 1)
 
     def _faltan_permisos(self):
@@ -269,6 +270,7 @@ class Interfaz:
                              tipo="info" if est.motivo == "sin_codigo" else "error")
             if self.config.get("licencia"):
                 self.clave["texto"] = str(self.config.get("licencia"))
+                self.clave["guardado"] = True     # va oculto y sin reloj: ya estaba en esta compu
             return
         if self._faltan_permisos():          # Mac: sin los permisos no puede leer ni dar clic
             self.msg_permisos = ""
@@ -299,6 +301,8 @@ class Interfaz:
                 else:
                     self.abrir_clave(prov, iniciar=True, msg="Agrega tu clave para empezar.", tipo="info")
         elif zid == "licencia":
+            if licencia.activa(c) and c.get("licencia"):
+                return                             # ya activo: se queda guardado en esta compu, no se cambia
             self.abrir_clave("licencia", volver="ajustes")
         elif zid == "modelo":
             self.capa = "modelos"
@@ -362,8 +366,11 @@ class Interfaz:
                 self.app.abrir_url(version.PAGINA)
         elif zid == "pegar":
             texto = (self.app.leer_portapapeles() or "").strip()
+            if self.clave.get("vencio"):
+                self.clave["t0"], self.clave["vencio"] = self.reloj(), False
             if texto:
                 self.clave["texto"] = "".join(texto.split())
+                self.clave["guardado"] = False
                 self.clave["msg"], self.clave["tipo"] = "", ""
         elif zid == "sacar_clave":
             self.app.abrir_url(PROV_UI[self.clave["prov"]].url_clave)
@@ -530,11 +537,16 @@ class Interfaz:
             elif keysym == "Escape":
                 self._ir(k["volver"], -1)
             elif keysym == "BackSpace":
-                k["texto"] = "" if ctrl else k["texto"][:-1]
+                k["texto"] = "" if (ctrl or k.get("guardado")) else k["texto"][:-1]
+                k["guardado"] = False
                 k["msg"] = ""
             elif ctrl and keysym.lower() == "v":
                 self._accion("pegar")
             elif char and char.isprintable() and not char.isspace() and not ctrl and len(k["texto"]) < 300:
+                if k.get("vencio"):
+                    k["t0"], k["vencio"] = self.reloj(), False
+                if k.get("guardado"):
+                    k["texto"], k["guardado"] = "", False
                 k["texto"] += char
                 k["msg"] = ""
             else:
@@ -551,7 +563,7 @@ class Interfaz:
         extra = ()
         if self.pantalla == "clave":
             extra = (k["prov"], k["texto"], k["msg"], k["tipo"], k["verificando"], int(t * 2) % 2,
-                     int(t * 3) % 4 if k["verificando"] else 0)
+                     int(t * 3) % 4 if k["verificando"] else 0, self._reloj_codigo(t))
         elif self.pantalla == "permisos":
             extra = (tuple(sorted(self._estado_permisos().items())), self.msg_permisos)
         elif self.pantalla == "bienvenida":
@@ -561,6 +573,21 @@ class Interfaz:
         return (self.pantalla, self.capa, self.estado, tuple(self.actividad), fila_animada, c["modelo"], c["modo_preciso"],
                 c["guardar_capturas"], tuple(sorted(c["claves"].keys())), self.nueva_version, self.descarga,
                 self.actualizacion_lista, self.restantes, self.ia_incluida(), c.get("modelo_servidor")) + extra
+
+    def _reloj_codigo(self, t):
+        """Segundos que le quedan para pegar el codigo de NO LIMIT (None si no aplica). Al acabarse, borra lo pegado."""
+        k = self.clave
+        if self.pantalla != "clave" or k.get("prov") != "licencia" or k.get("guardado") or k.get("vencio"):
+            return None
+        if k["verificando"]:
+            k["t0"] = t - (TIEMPO_CODIGO - max(1, k.get("ultimo", TIEMPO_CODIGO)))   # mientras revisa, se congela
+        quedan = TIEMPO_CODIGO - int(t - k.get("t0", t))
+        if quedan <= 0:
+            k["texto"], k["vencio"] = "", True
+            k["msg"], k["tipo"] = "Se acabó el tiempo. Toca PEGAR para intentarlo otra vez.", "error"
+            return None
+        k["ultimo"] = quedan
+        return quedan
 
     def _rect_zona(self, zid):
         if zid is None:
@@ -1265,7 +1292,7 @@ class Interfaz:
     # ---------------------------------------------------------------- clave
     def _guardar_activo(self, k=None):
         k = k or self.clave
-        return bool(k["texto"]) and not k["verificando"]
+        return bool(k["texto"]) and not k["verificando"] and not k.get("vencio")
 
     def _gotas_guardar(self, l, t):
         X, Y, W, H = l.caja_px(192, 514, 164, 54)
@@ -1295,7 +1322,11 @@ class Interfaz:
         l.vidrio(24, 150, 332, 58, 18, borde=(255, 140) if not error else (255, 220), relleno=(14, 5), grosor=1.2)
         l.zona("campo", 24, 150, 226, 58, cursor="xterm")
         if k["texto"]:
-            visible = E.recortar(k["texto"].upper() if es_lic else _enmascarar(k["texto"]), "cuerpo", self.e, 196 * self.e)
+            if es_lic and k.get("guardado"):
+                crudo = "NL-••••-••••-" + licencia.normalizar(k["texto"])[-4:]
+            else:
+                crudo = k["texto"].upper() if es_lic else _enmascarar(k["texto"])
+            visible = E.recortar(crudo, "cuerpo", self.e, 196 * self.e)
             ancho = l.texto_centrado_v(42, 179, visible, "cuerpo", TEXTO)
         else:
             ancho = -2.5
@@ -1317,6 +1348,17 @@ class Interfaz:
             col = ERROR if k["tipo"] == "error" else TEXTO if k["tipo"] == "ok" else SUAVE
             for j, linea in enumerate(E.partir(k["msg"], "cuerpo", self.e, 328 * self.e)[:4]):
                 l.texto(24, 268 + j * 19, linea, "cuerpo", col)
+
+        if es_lic and not k.get("guardado"):
+            quedan = k.get("ultimo", TIEMPO_CODIGO) if not k.get("vencio") else 0
+            l.linea_h(24, 392, 332, (255, 255, 255, 28))
+            l.texto(24, 404, f"Tienes {quedan} s para pegarlo", "nombre", ERROR if quedan <= 10 else TEXTO)
+            for j, linea in enumerate(E.partir("Tu código es de un solo uso: se activa en esta compu, se queda guardado "
+                                               "y ya no sirve en ninguna otra.", "chico", self.e, 330 * self.e)[:3]):
+                l.texto(24, 430 + j * 16, linea, "chico", SUAVE)
+            l.solido(24, 486, 332, 3, 1.5, (255, 255, 255, 30))
+            if quedan:
+                l.solido(24, 486, 332 * quedan / TIEMPO_CODIGO, 3, 1.5, (255, 105, 97, 230) if quedan <= 10 else (255, 255, 255, 220))
 
         if not es_lic and k["prov"] != "gemini" and not self.config.tiene_clave(k["prov"]):
             hov = self.hover == "usar_gemini"
